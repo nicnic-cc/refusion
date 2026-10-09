@@ -12,6 +12,12 @@ import { toSafeExternalUrl } from "@/lib/safe-url";
 const mutedAction =
   "bg-muted hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)] dark:hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)]";
 const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
+// The actions float over the title, so tints must be opaque (mixed from
+// --background), not /N alpha utilities.
+const readAction =
+  "bg-[color-mix(in_oklch,var(--background),var(--primary)_10%)] hover:bg-[color-mix(in_oklch,var(--background),var(--primary)_20%)] dark:hover:bg-[color-mix(in_oklch,var(--background),var(--primary)_20%)]";
+const starredAction =
+  "bg-amber-100 hover:bg-amber-200 dark:bg-[color-mix(in_oklch,var(--background),var(--color-amber-950)_40%)] dark:hover:bg-[color-mix(in_oklch,var(--background),var(--color-amber-950)_70%)]";
 
 interface ArticleItemProps {
   article: Item;
@@ -115,11 +121,7 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleToggleRead}
           disabled={!canToggleRead}
-          className={cn(
-            article.unread
-              ? mutedAction
-              : "bg-primary/10 hover:bg-primary/20 dark:hover:bg-primary/20",
-          )}
+          className={article.unread ? mutedAction : readAction}
           aria-label={
             article.unread
               ? t("article.action.markRead")
@@ -141,11 +143,7 @@ export function ArticleItem({
           variant="ghost"
           size="icon-sm"
           onClick={handleToggleStar}
-          className={cn(
-            isStarred
-              ? "bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/40 dark:hover:bg-amber-950/70"
-              : mutedAction,
-          )}
+          className={isStarred ? starredAction : mutedAction}
           aria-label={
             isStarred ? t("article.action.unstar") : t("article.action.star")
           }
