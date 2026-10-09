@@ -21,7 +21,8 @@ func TestFetchAndParseMediaDescriptionFallback(t *testing.T) {
     <published>2026-01-01T00:00:00Z</published>
     <media:group>
       <media:description>Line one &lt;script&gt; &amp; more
-Line two</media:description>
+Line two
+See https://example.test/a?b=1&amp;c=2. and (https://example.test/x)</media:description>
     </media:group>
   </entry>
   <entry>
@@ -58,6 +59,14 @@ Line two</media:description>
 
 	a := result.Items[0].Content
 	for _, want := range []string{"&lt;script&gt;", "&amp;", "<br>\n"} {
+		if !strings.Contains(a, want) {
+			t.Fatalf("item A content %q missing %q", a, want)
+		}
+	}
+	for _, want := range []string{
+		`<a href="https://example.test/a?b=1&amp;c=2">https://example.test/a?b=1&amp;c=2</a>.`,
+		`(<a href="https://example.test/x">https://example.test/x</a>)`,
+	} {
 		if !strings.Contains(a, want) {
 			t.Fatalf("item A content %q missing %q", a, want)
 		}
