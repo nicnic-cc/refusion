@@ -32,11 +32,17 @@ export type ReadingLayout = (typeof readingLayoutOptions)[number];
 export const dateFormatOptions = ["relative", "absolute"] as const;
 export type DateFormat = (typeof dateFormatOptions)[number];
 
+// Per device and never synced: whether the next page loads on scroll or on a
+// button press.
+export const articleLoadingOptions = ["scroll", "button"] as const;
+export type ArticleLoading = (typeof articleLoadingOptions)[number];
+
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
 const autoMarkReadSet = new Set<AutoMarkRead>(autoMarkReadOptions);
 const readingLayoutSet = new Set<ReadingLayout>(readingLayoutOptions);
 const dateFormatSet = new Set<DateFormat>(dateFormatOptions);
+const articleLoadingSet = new Set<ArticleLoading>(articleLoadingOptions);
 
 function resolveSupportedLocale(locale: string): AppLocale | null {
   const normalized = locale.toLowerCase().replace("_", "-");
@@ -61,6 +67,7 @@ const defaultArticlePageSize: ArticlePageSize = 10;
 const defaultAutoMarkRead: AutoMarkRead = "off";
 const defaultReadingLayout: ReadingLayout = "drawer";
 const defaultDateFormat: DateFormat = "relative";
+const defaultArticleLoading: ArticleLoading = "scroll";
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -100,6 +107,14 @@ function normalizeDateFormat(value: string | undefined | null): DateFormat {
     : defaultDateFormat;
 }
 
+function normalizeArticleLoading(
+  value: string | undefined | null,
+): ArticleLoading {
+  return value != null && articleLoadingSet.has(value as ArticleLoading)
+    ? (value as ArticleLoading)
+    : defaultArticleLoading;
+}
+
 // "off" disables the feature; every other member maps to a delay where 0
 // means "as soon as the article is open".
 export function autoMarkReadDelayMs(option: AutoMarkRead): number | null {
@@ -115,11 +130,13 @@ export interface PreferencesState {
   autoMarkRead: AutoMarkRead;
   readingLayout: ReadingLayout;
   dateFormat: DateFormat;
+  articleLoading: ArticleLoading;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
   setAutoMarkRead: (option: string) => void;
   setReadingLayout: (layout: string) => void;
   setDateFormat: (format: string) => void;
+  setArticleLoading: (mode: string) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -130,6 +147,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       autoMarkRead: defaultAutoMarkRead,
       readingLayout: defaultReadingLayout,
       dateFormat: defaultDateFormat,
+      articleLoading: defaultArticleLoading,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
@@ -139,6 +157,8 @@ export const usePreferencesStore = create<PreferencesState>()(
         set({ readingLayout: normalizeReadingLayout(layout) }),
       setDateFormat: (format) =>
         set({ dateFormat: normalizeDateFormat(format) }),
+      setArticleLoading: (mode) =>
+        set({ articleLoading: normalizeArticleLoading(mode) }),
     }),
     {
       name: "fusion-preferences",
@@ -149,6 +169,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         autoMarkRead: state.autoMarkRead,
         readingLayout: state.readingLayout,
         dateFormat: state.dateFormat,
+        articleLoading: state.articleLoading,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -167,6 +188,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           ),
           dateFormat: normalizeDateFormat(
             persisted?.dateFormat ?? currentState.dateFormat,
+          ),
+          articleLoading: normalizeArticleLoading(
+            persisted?.articleLoading ?? currentState.articleLoading,
           ),
         };
       },

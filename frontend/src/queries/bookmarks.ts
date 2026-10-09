@@ -103,6 +103,7 @@ export interface StarredItemsResult {
   hasNextPage: boolean;
   isLoading: boolean;
   isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
   fetchNextPage: () => void;
 }
 
@@ -142,6 +143,7 @@ export function useStarredItems(
     hasNextPage: query.hasNextPage,
     isLoading: query.isLoading,
     isFetchingNextPage: query.isFetchingNextPage,
+    isFetchNextPageError: query.isFetchNextPageError,
     fetchNextPage: () => void query.fetchNextPage(),
   };
 }
