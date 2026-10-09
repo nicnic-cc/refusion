@@ -50,8 +50,10 @@ export function formatDate(timestamp: number): string {
 }
 
 export function extractSummary(html: string, maxLength = 120): string {
-  // Strip all HTML tags to get plain text
-  const clean = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
+  // Take textContent: the string output would re-escape entities (&nbsp;, &amp;).
+  const clean =
+    DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_DOM_FRAGMENT: true })
+      .textContent ?? "";
   // Normalize whitespace
   const text = clean.replace(/\s+/g, " ").trim();
   if (text.length <= maxLength) return text;
