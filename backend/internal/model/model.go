@@ -69,6 +69,13 @@ type Item struct {
 	CreatedAt int64  `json:"created_at"`
 }
 
+// FullContent is an item's article extracted live from its original page;
+// it is never stored.
+type FullContent struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
 // Settings holds the user's synced preferences. A nil field means the user
 // has never explicitly chosen a value (clients fall back to their own default).
 type Settings struct {
