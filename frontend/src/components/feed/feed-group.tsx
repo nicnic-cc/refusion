@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
+import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedItem } from "./feed-item";
 import type { Feed } from "@/lib/api";
 
@@ -13,7 +13,11 @@ interface FeedGroupProps {
 }
 
 export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const isOpen = useCollapsedGroupsStore(
+    (s) => !s.collapsedIds.includes(groupId),
+  );
+  const setGroupOpen = useCollapsedGroupsStore((s) => s.setGroupOpen);
+  const setIsOpen = (open: boolean) => setGroupOpen(groupId, open);
   const { selectedGroupId, setSelectedGroup } = useUrlState();
   const isSelected = selectedGroupId === groupId;
 
