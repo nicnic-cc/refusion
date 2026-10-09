@@ -1,10 +1,11 @@
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCheck, Loader2 } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
+import { ArticleListFooter } from "./article-list-footer";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
@@ -40,6 +41,7 @@ export function ArticleList() {
     hasMore,
     isLoading,
     isLoadingMore,
+    isFetchNextPageError,
     fetchNextPage,
     isItemStarred,
     getBookmarkByItemId,
@@ -82,13 +84,20 @@ export function ArticleList() {
 
   // When every loaded row has been read away (hidden from the unread view),
   // keep pulling deeper pages instead of dead-ending on an empty list while
-  // the server still has unread items.
+  // the server still has unread items. A failed fetch stops it (no retry loop).
   useEffect(() => {
-    if (isLoading || isLoadingMore) return;
+    if (isLoading || isLoadingMore || isFetchNextPageError) return;
     if (articles.length === 0 && hasMore) {
       fetchNextPage();
     }
-  }, [articles.length, hasMore, isLoading, isLoadingMore, fetchNextPage]);
+  }, [
+    articles.length,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    isFetchNextPageError,
+    fetchNextPage,
+  ]);
 
   let title = t("article.list.all");
   if (selectedFeedId) {
@@ -251,24 +260,12 @@ export function ArticleList() {
                     />
                   );
                 })}
-                {hasMore && (
-                  <div className="flex justify-center py-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fetchNextPage()}
-                      disabled={isLoadingMore}
-                      className="gap-2"
-                    >
-                      {isLoadingMore && (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      )}
-                      {isLoadingMore
-                        ? t("article.list.loading")
-                        : t("article.list.loadMore")}
-                    </Button>
-                  </div>
-                )}
+                <ArticleListFooter
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  isError={isFetchNextPageError}
+                  fetchNextPage={fetchNextPage}
+                />
               </>
             )}
           </div>

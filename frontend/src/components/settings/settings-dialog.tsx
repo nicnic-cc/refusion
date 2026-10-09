@@ -25,6 +25,7 @@ import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
 import { waitForSettingsSeed } from "@/lib/settings-sync";
 import {
   dateFormatOptions,
+  articleLoadingOptions,
   readingLayoutOptions,
   type AppLocale,
 } from "@/store/preferences";
@@ -128,11 +129,13 @@ function GeneralContent() {
     autoMarkRead,
     readingLayout,
     dateFormat,
+    articleLoading,
     setLocale,
     setArticlePageSize,
     setAutoMarkRead,
     setReadingLayout,
     setDateFormat,
+    setArticleLoading,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
 
@@ -162,6 +165,10 @@ function GeneralContent() {
   const dateFormatItems = dateFormatOptions.map((option) => ({
     value: option,
     label: t(`settings.dateFormat.${option}`),
+  }));
+  const articleLoadingItems = articleLoadingOptions.map((option) => ({
+    value: option,
+    label: t(`settings.articleLoading.${option}`),
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -396,6 +403,37 @@ function GeneralContent() {
           </SelectTrigger>
           <SelectContent>
             {dateFormatItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Article loading (per device, not synced) */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.articleLoading.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.articleLoading.description")}
+          </p>
+        </div>
+        <Select
+          items={articleLoadingItems}
+          value={articleLoading}
+          onValueChange={(v) => {
+            if (!v) return;
+            setArticleLoading(v);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {articleLoadingItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>

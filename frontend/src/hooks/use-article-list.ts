@@ -96,6 +96,9 @@ export function useArticleList(filters: ArticleListFilters) {
     isLoadingMore: isStarredMode
       ? starred.isFetchingNextPage
       : itemsQuery.isFetchingNextPage,
+    isFetchNextPageError: isStarredMode
+      ? starred.isFetchNextPageError
+      : itemsQuery.isFetchNextPageError,
     isStarredMode,
     fetchNextPage: isStarredMode
       ? starred.fetchNextPage
