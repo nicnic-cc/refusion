@@ -23,7 +23,11 @@ import { localeLabels, useI18n } from "@/lib/i18n";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
 import { waitForSettingsSeed } from "@/lib/settings-sync";
-import { readingLayoutOptions, type AppLocale } from "@/store/preferences";
+import {
+  dateFormatOptions,
+  readingLayoutOptions,
+  type AppLocale,
+} from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -123,10 +127,12 @@ function GeneralContent() {
     articlePageSize,
     autoMarkRead,
     readingLayout,
+    dateFormat,
     setLocale,
     setArticlePageSize,
     setAutoMarkRead,
     setReadingLayout,
+    setDateFormat,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
 
@@ -152,6 +158,10 @@ function GeneralContent() {
   const readingLayoutItems = readingLayoutOptions.map((option) => ({
     value: option,
     label: t(`settings.readingLayout.${option}`),
+  }));
+  const dateFormatItems = dateFormatOptions.map((option) => ({
+    value: option,
+    label: t(`settings.dateFormat.${option}`),
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -355,6 +365,37 @@ function GeneralContent() {
           </SelectTrigger>
           <SelectContent>
             {readingLayoutItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Date format (per device, not synced) */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.dateFormat.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.dateFormat.description")}
+          </p>
+        </div>
+        <Select
+          items={dateFormatItems}
+          value={dateFormat}
+          onValueChange={(v) => {
+            if (!v) return;
+            setDateFormat(v);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {dateFormatItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>

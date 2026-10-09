@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import DOMPurify from "dompurify";
-import { getPreferredLocale } from "@/store/preferences";
+import { getDateFormat, getPreferredLocale } from "@/store/preferences";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,10 +11,29 @@ export function unixToDate(timestamp: number): Date {
   return new Date(timestamp * 1000);
 }
 
+// Options are shared with the test so it compares against Intl, not strings.
+export function absoluteDateOptions(
+  date: Date,
+  now: Date,
+): Intl.DateTimeFormatOptions {
+  const time = { hour: "numeric", minute: "numeric" } as const;
+  if (date.toDateString() === now.toDateString()) return time;
+  const monthDay = { month: "short", day: "numeric", ...time } as const;
+  return date.getFullYear() === now.getFullYear()
+    ? monthDay
+    : { ...monthDay, year: "numeric" };
+}
+
 export function formatDate(timestamp: number): string {
   const date = unixToDate(timestamp);
   const locale = getPreferredLocale();
   const now = new Date();
+  if (getDateFormat() === "absolute") {
+    return new Intl.DateTimeFormat(
+      locale,
+      absoluteDateOptions(date, now),
+    ).format(date);
+  }
   const diff = now.getTime() - date.getTime();
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
@@ -28,38 +47,6 @@ export function formatDate(timestamp: number): string {
   if (days < 7) return rtf.format(-days, "day");
 
   return date.toLocaleDateString(locale);
-}
-
-export function formatRelativeTime(timestamp: number): string {
-  const date = unixToDate(timestamp);
-  const now = new Date();
-  const rtf = new Intl.RelativeTimeFormat(getPreferredLocale(), {
-    numeric: "auto",
-  });
-
-  const diff = date.getTime() - now.getTime();
-  const days = Math.round(diff / 86400000);
-
-  if (Math.abs(days) < 1) {
-    const hours = Math.round(diff / 3600000);
-    if (Math.abs(hours) < 1) {
-      const minutes = Math.round(diff / 60000);
-      return rtf.format(minutes, "minute");
-    }
-    return rtf.format(hours, "hour");
-  }
-
-  if (Math.abs(days) < 30) {
-    return rtf.format(days, "day");
-  }
-
-  const months = Math.round(days / 30);
-  if (Math.abs(months) < 12) {
-    return rtf.format(months, "month");
-  }
-
-  const years = Math.round(months / 12);
-  return rtf.format(years, "year");
 }
 
 export function extractSummary(html: string, maxLength = 120): string {
