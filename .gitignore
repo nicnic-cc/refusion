@@ -20,3 +20,6 @@ backend/fusion
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# One-off research scripts
+.research/
