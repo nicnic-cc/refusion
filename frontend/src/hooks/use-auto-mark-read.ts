@@ -60,10 +60,15 @@ export function useAutoMarkRead({
   // refs avoids re-arming on object identity changes (detail refetches
   // replace the article object without changing the id).
   const targetRef = useRef(target);
-  targetRef.current = target;
   const callbacksRef = useRef({ onMarkRead, hasPendingMutation });
-  callbacksRef.current = { onMarkRead, hasPendingMutation };
   const vetoedIdRef = useRef<number | null>(null);
+
+  // Declared first: effects run in order, so the veto and timer effects
+  // below see the refs already updated for this render.
+  useEffect(() => {
+    targetRef.current = target;
+    callbacksRef.current = { onMarkRead, hasPendingMutation };
+  });
 
   // Declared before the timer effect so a veto is already recorded or
   // cleared when the timer effect evaluates its arm condition on the same
