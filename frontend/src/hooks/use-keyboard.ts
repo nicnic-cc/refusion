@@ -25,6 +25,7 @@ interface ArticleNavigationOptions {
   onToggleRead?: () => void | Promise<void>;
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
+  onToggleFullText?: () => void;
 }
 
 export function useKeyboardShortcuts() {
@@ -236,6 +237,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onToggleFullText,
   } = options;
   const latestStateRef = useRef({
     articleIds,
@@ -251,6 +253,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onToggleFullText,
     setSelectedArticle,
   });
 
@@ -269,6 +272,7 @@ export function useArticleNavigation(
       onToggleRead,
       onToggleStar,
       onOpenOriginal,
+      onToggleFullText,
       setSelectedArticle,
     };
   }, [
@@ -285,6 +289,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onToggleFullText,
     setSelectedArticle,
   ]);
 
@@ -367,6 +372,13 @@ export function useArticleNavigation(
       if ((key === "o" || key === "v") && state.onOpenOriginal) {
         event.preventDefault();
         state.onOpenOriginal();
+        return;
+      }
+
+      // W: toggle full article text
+      if (key === "w" && state.onToggleFullText) {
+        event.preventDefault();
+        state.onToggleFullText();
         return;
       }
     }

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { toast } from "sonner";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
@@ -13,11 +15,14 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
+import { itemAPI } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { useReadStatePins, usePreferencesStore } from "@/store";
 import { autoMarkReadDelayMs } from "@/store/preferences";
 
 export function useArticleViewState() {
+  const { t } = useI18n();
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -129,6 +134,37 @@ export function useArticleViewState() {
     }
   };
 
+  // Keyed by item id so navigating to another item drops the fetched text
+  // without an effect; the text is never persisted.
+  const [fullText, setFullText] = useState<{ id: number; html: string } | null>(
+    null,
+  );
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const showingFullText = article !== null && fullText?.id === article.id;
+  const loadingFullText = article !== null && loadingId === article.id;
+  // Bookmark-only snapshots have negative ids and no server item to fetch for.
+  const canLoadFullText =
+    article !== null && article.id > 0 && safeArticleLink !== null;
+
+  const handleToggleFullText = async () => {
+    if (!article || !canLoadFullText || loadingFullText) return;
+    if (showingFullText) {
+      setFullText(null);
+      return;
+    }
+    const id = article.id;
+    setLoadingId(id);
+    try {
+      const res = await itemAPI.getFullContent(id);
+      setFullText({ id, html: res.data?.content ?? "" });
+    } catch (error) {
+      console.error("Failed to load full article:", error);
+      toast.error(t("article.toast.fullTextFailed"));
+    } finally {
+      setLoadingId((current) => (current === id ? null : current));
+    }
+  };
+
   const handleOpenOriginal = () => {
     if (!safeArticleLink) return;
     window.open(safeArticleLink, "_blank", "noopener,noreferrer");
@@ -149,6 +185,9 @@ export function useArticleViewState() {
         void handleToggleStar();
       },
       onOpenOriginal: handleOpenOriginal,
+      onToggleFullText: () => {
+        void handleToggleFullText();
+      },
     });
 
   return {
@@ -162,6 +201,10 @@ export function useArticleViewState() {
     handleToggleRead,
     handleToggleStar,
     handleOpenFeed,
+    fullText: showingFullText ? fullText : null,
+    loadingFullText,
+    canLoadFullText,
+    handleToggleFullText,
     goToNext,
     goToPrevious,
     hasNext,

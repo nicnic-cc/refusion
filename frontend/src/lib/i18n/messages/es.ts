@@ -41,6 +41,7 @@ export const esMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Abrir ajustes",
   "shortcuts.action.previousArticle": "Seleccionar artículo anterior",
   "shortcuts.action.showHelp": "Abrir ayuda de atajos de teclado",
+  "shortcuts.action.toggleFullText": "Alternar el artículo completo",
   "shortcuts.action.toggleRead": "Alternar leído/no leído",
   "shortcuts.action.toggleSearch": "Alternar diálogo de búsqueda",
   "shortcuts.action.toggleStar": "Alternar destacado",
