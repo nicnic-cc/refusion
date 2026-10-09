@@ -166,13 +166,13 @@ export function ArticleList() {
         </div>
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={handleMarkAllAsRead}
           disabled={unreadCount === 0}
-          className="gap-1.5 text-xs"
+          aria-label={t("article.list.markAllRead")}
+          title={t("article.list.markAllRead")}
         >
           <CheckCheck className="h-4 w-4" />
-          {t("article.list.markAllRead")}
         </Button>
       </ContentHeader>
 
