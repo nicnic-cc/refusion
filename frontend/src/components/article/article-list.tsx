@@ -177,10 +177,11 @@ export function ArticleList() {
       </ContentHeader>
 
       {/* Article area with filter tabs */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 pt-3 pb-4 sm:px-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-3">
         {/* Filter tabs - hidden when no articles exist */}
         {!hasNoFeeds && (articles.length > 0 || articleFilter !== "all") && (
           <Tabs
+            className="px-4 sm:px-6"
             value={articleFilter}
             onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
           >
@@ -194,11 +195,11 @@ export function ArticleList() {
           </Tabs>
         )}
 
-            {/* Article list */}
+        {/* Article list */}
         <ScrollArea className="min-h-0 flex-1">
           <div>
             {isLoading || (articles.length === 0 && hasMore) ? (
-              <div className="space-y-2 p-2">
+              <div className="space-y-2 px-4 py-2 sm:px-6">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
@@ -208,7 +209,7 @@ export function ArticleList() {
               </div>
             ) : articles.length === 0 ? (
               hasNoFeeds ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center sm:px-6">
                   <p className="text-sm text-muted-foreground">
                     {t("article.list.noFeeds")}
                   </p>
@@ -221,7 +222,7 @@ export function ArticleList() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6">
                   <p className="text-sm text-muted-foreground">
                     {t("article.list.noArticles")}
                   </p>

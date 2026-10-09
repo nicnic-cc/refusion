@@ -73,7 +73,7 @@ export function ArticleItem({
         }
       }}
       className={cn(
-        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-colors hover:bg-accent/50",
+        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 sm:px-6 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
       )}
     >
