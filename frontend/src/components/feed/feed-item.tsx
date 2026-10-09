@@ -41,18 +41,18 @@ export function FeedItem({ feed }: FeedItemProps) {
           {feed.name}
         </span>
       </button>
-      <div className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center">
+      <div className="ml-2 flex h-6 w-6 shrink-0 items-center justify-end">
         <span className="text-[11px] text-muted-foreground md:group-hover:hidden md:group-focus-within:hidden">
           {feed.unread_count > 0 ? feed.unread_count : ""}
         </span>
         <Button
           variant="ghost"
           size="icon-xs"
-          className="inline-flex md:hidden md:group-hover:inline-flex md:group-focus-within:inline-flex"
+          className="inline-flex justify-end hover:bg-transparent dark:hover:bg-transparent md:hidden md:group-hover:inline-flex md:group-focus-within:inline-flex"
           onClick={handleSettingsClick}
           aria-label={t("feed.edit.title")}
         >
-          <Settings className="text-muted-foreground" />
+          <Settings className="text-muted-foreground group-hover/button:text-foreground" />
         </Button>
       </div>
     </div>
