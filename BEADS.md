@@ -10,4 +10,4 @@ The generic rules for working with beads are in the `beads` skill: load it befor
 
 ## This repo's additions
 
-(None yet. Rules that hold only for this repo go here.)
+- Every change to the app, however small, starts as a bead: plan it, show the draft bead, create it on the user's go, then build. Overrides the skill's "one-session work needs no bead". Doc-only and bead-housekeeping commits are exempt.
