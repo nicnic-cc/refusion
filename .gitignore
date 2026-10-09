@@ -17,3 +17,6 @@ backend/fusion
 
 .dolt/
 *.gate.lock*
+
+# One-off research scripts
+.research/
