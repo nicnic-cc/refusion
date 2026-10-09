@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { AlertCircle, ChevronDown, Save, Trash2, X } from "lucide-react";
 import {
   Dialog,
@@ -77,7 +77,11 @@ export function EditFeedDialog() {
     appInfo?.allowed_refresh_intervals ?? FALLBACK_REFRESH_INTERVALS,
   );
 
-  useEffect(() => {
+  // Adjusting state during render (not in an effect) when the feed changes;
+  // React re-renders immediately with the reset form.
+  const [syncedFeed, setSyncedFeed] = useState<typeof editingFeed>(null);
+  if (editingFeed !== syncedFeed) {
+    setSyncedFeed(editingFeed);
     if (editingFeed) {
       setUrl(editingFeed.link);
       setName(editingFeed.name);
@@ -91,7 +95,7 @@ export function EditFeedDialog() {
       setIsAdvancedOpen(!!editingFeed.proxy || stored != null);
       setIsMobileErrorTooltipOpen(false);
     }
-  }, [editingFeed]);
+  }
 
   const resetForm = () => {
     setUrl("");
