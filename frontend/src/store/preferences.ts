@@ -28,10 +28,15 @@ export type AutoMarkRead = (typeof autoMarkReadOptions)[number];
 export const readingLayoutOptions = ["drawer", "panes"] as const;
 export type ReadingLayout = (typeof readingLayoutOptions)[number];
 
+// Per device and never synced: how article timestamps are written.
+export const dateFormatOptions = ["relative", "absolute"] as const;
+export type DateFormat = (typeof dateFormatOptions)[number];
+
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
 const autoMarkReadSet = new Set<AutoMarkRead>(autoMarkReadOptions);
 const readingLayoutSet = new Set<ReadingLayout>(readingLayoutOptions);
+const dateFormatSet = new Set<DateFormat>(dateFormatOptions);
 
 function resolveSupportedLocale(locale: string): AppLocale | null {
   const normalized = locale.toLowerCase().replace("_", "-");
@@ -55,6 +60,7 @@ const defaultLocale: AppLocale =
 const defaultArticlePageSize: ArticlePageSize = 10;
 const defaultAutoMarkRead: AutoMarkRead = "off";
 const defaultReadingLayout: ReadingLayout = "drawer";
+const defaultDateFormat: DateFormat = "relative";
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -88,6 +94,12 @@ function normalizeReadingLayout(value: string | undefined | null): ReadingLayout
     : defaultReadingLayout;
 }
 
+function normalizeDateFormat(value: string | undefined | null): DateFormat {
+  return value != null && dateFormatSet.has(value as DateFormat)
+    ? (value as DateFormat)
+    : defaultDateFormat;
+}
+
 // "off" disables the feature; every other member maps to a delay where 0
 // means "as soon as the article is open".
 export function autoMarkReadDelayMs(option: AutoMarkRead): number | null {
@@ -102,10 +114,12 @@ export interface PreferencesState {
   articlePageSize: ArticlePageSize;
   autoMarkRead: AutoMarkRead;
   readingLayout: ReadingLayout;
+  dateFormat: DateFormat;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
   setAutoMarkRead: (option: string) => void;
   setReadingLayout: (layout: string) => void;
+  setDateFormat: (format: string) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -115,6 +129,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       articlePageSize: defaultArticlePageSize,
       autoMarkRead: defaultAutoMarkRead,
       readingLayout: defaultReadingLayout,
+      dateFormat: defaultDateFormat,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
@@ -122,6 +137,8 @@ export const usePreferencesStore = create<PreferencesState>()(
         set({ autoMarkRead: normalizeAutoMarkRead(option) }),
       setReadingLayout: (layout) =>
         set({ readingLayout: normalizeReadingLayout(layout) }),
+      setDateFormat: (format) =>
+        set({ dateFormat: normalizeDateFormat(format) }),
     }),
     {
       name: "fusion-preferences",
@@ -131,6 +148,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         articlePageSize: state.articlePageSize,
         autoMarkRead: state.autoMarkRead,
         readingLayout: state.readingLayout,
+        dateFormat: state.dateFormat,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -147,6 +165,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           readingLayout: normalizeReadingLayout(
             persisted?.readingLayout ?? currentState.readingLayout,
           ),
+          dateFormat: normalizeDateFormat(
+            persisted?.dateFormat ?? currentState.dateFormat,
+          ),
         };
       },
     },
@@ -155,6 +176,10 @@ export const usePreferencesStore = create<PreferencesState>()(
 
 export function getPreferredLocale(): AppLocale {
   return usePreferencesStore.getState().locale;
+}
+
+export function getDateFormat(): DateFormat {
+  return usePreferencesStore.getState().dateFormat;
 }
 
 export function isSupportedLocale(locale: string): locale is AppLocale {
