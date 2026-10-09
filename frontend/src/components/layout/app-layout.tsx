@@ -46,7 +46,7 @@ export function AppLayout({ children, readingPane = false }: AppLayoutProps) {
         <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent
             side="left"
-            className="w-[260px] p-0"
+            className="data-[side=left]:w-75 data-[side=left]:sm:max-w-none p-0"
             showCloseButton={false}
           >
             <SheetTitle className="sr-only">{t("common.navigation")}</SheetTitle>
