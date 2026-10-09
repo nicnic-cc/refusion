@@ -41,7 +41,7 @@ export function ArticleListFooter({
       },
       {
         root: sentinel.closest('[data-slot="scroll-area-viewport"]'),
-        rootMargin: "0px 0px 600px 0px",
+        rootMargin: "0px",
       },
     );
     observer.observe(sentinel);
