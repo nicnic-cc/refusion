@@ -39,6 +39,7 @@ export const enMessages = {
   "shortcuts.action.openSettings": "Open settings",
   "shortcuts.action.previousArticle": "Select previous article",
   "shortcuts.action.showHelp": "Open keyboard shortcuts help",
+  "shortcuts.action.toggleFullText": "Toggle full article text",
   "shortcuts.action.toggleRead": "Toggle read/unread",
   "shortcuts.action.toggleSearch": "Toggle search dialog",
   "shortcuts.action.toggleStar": "Toggle star",

@@ -42,6 +42,7 @@ export function ShortcutsDialog() {
         { keys: "m", action: t("shortcuts.action.toggleRead") },
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "o / v", action: t("shortcuts.action.openOriginal") },
+        { keys: "w", action: t("shortcuts.action.toggleFullText") },
       ],
     },
     {

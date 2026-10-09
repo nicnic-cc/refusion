@@ -41,6 +41,7 @@ export const svMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Öppna inställningar",
   "shortcuts.action.previousArticle": "Välj förra artikel",
   "shortcuts.action.showHelp": "Öppna hjälp för kortkommandon",
+  "shortcuts.action.toggleFullText": "Växla hela artikeln",
   "shortcuts.action.toggleRead": "Växla läst/oläst",
   "shortcuts.action.toggleSearch": "Växla sökdialog",
   "shortcuts.action.toggleStar": "Växla stjärnmarkering",
