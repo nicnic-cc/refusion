@@ -58,6 +58,8 @@ Handlers report failures as `{"error": "<message>"}`:
 - `404` — `"<resource> not found"`
 - `429` — `"too many login attempts"` (plus `Retry-After`)
 - `500` — `"internal server error"` (details are logged server-side only)
+- `502` — `"failed to fetch full content"`: the item's original page could not
+  be fetched or yielded no article (details logged server-side only)
 
 Three cases return the status with an empty body instead: unknown routes
 (404), CORS origin rejection (403), and panic recovery (500).

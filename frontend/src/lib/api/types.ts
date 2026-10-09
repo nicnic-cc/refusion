@@ -49,6 +49,11 @@ export interface Item {
   created_at: number;
 }
 
+export interface FullContent {
+  title: string;
+  content: string;
+}
+
 export interface Bookmark {
   id: number;
   item_id: number | null;

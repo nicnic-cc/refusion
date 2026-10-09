@@ -1,9 +1,13 @@
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   Circle,
   CircleCheck,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  FileText,
+  LoaderCircle,
   Star,
   X,
 } from "lucide-react";
@@ -13,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
+import { itemAPI } from "@/lib/api";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import type { ArticleViewState } from "@/hooks/use-article-view-state";
@@ -51,7 +56,40 @@ export function ArticleView({
     close,
   } = state;
 
+  // Keyed by item id so navigating to another item drops the fetched text
+  // without an effect; the text is never persisted.
+  const [fullText, setFullText] = useState<{ id: number; html: string } | null>(
+    null,
+  );
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+
   if (!article) return null;
+
+  const showingFullText = fullText?.id === article.id;
+  const loadingFullText = loadingId === article.id;
+  // Bookmark-only snapshots have negative ids and no server item to fetch for.
+  const canLoadFullText = article.id > 0 && safeArticleLink !== null;
+  const fullTextLabel = showingFullText
+    ? t("article.action.feedContent")
+    : t("article.action.fullText");
+
+  const handleToggleFullText = async () => {
+    if (showingFullText) {
+      setFullText(null);
+      return;
+    }
+    const id = article.id;
+    setLoadingId(id);
+    try {
+      const res = await itemAPI.getFullContent(id);
+      setFullText({ id, html: res.data?.content ?? "" });
+    } catch (error) {
+      console.error("Failed to load full article:", error);
+      toast.error(t("article.toast.fullTextFailed"));
+    } finally {
+      setLoadingId((current) => (current === id ? null : current));
+    }
+  };
 
   const readLabel = (readArticle?.unread ?? false)
     ? t("article.action.markRead")
@@ -116,6 +154,25 @@ export function ArticleView({
               title={t("article.action.original")}
             >
               <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
+          {article.id > 0 && (
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => void handleToggleFullText()}
+              disabled={!canLoadFullText || loadingFullText}
+              aria-label={fullTextLabel}
+              aria-pressed={showingFullText}
+              title={fullTextLabel}
+            >
+              {loadingFullText ? (
+                <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : (
+                <FileText
+                  className={`h-4 w-4 ${showingFullText ? "text-primary" : "text-muted-foreground"}`}
+                />
+              )}
             </Button>
           )}
         </div>
@@ -185,7 +242,7 @@ export function ArticleView({
             className="typeset typeset-article mt-6 min-w-0 max-w-none"
             dangerouslySetInnerHTML={{
               __html: processArticleContent(
-                article.content,
+                showingFullText ? fullText.html : article.content,
                 safeArticleLink ?? undefined,
               ),
             }}

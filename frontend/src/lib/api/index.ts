@@ -7,6 +7,7 @@ import type {
   Group,
   Feed,
   Item,
+  FullContent,
   Bookmark,
   CreateGroupRequest,
   UpdateGroupRequest,
@@ -102,6 +103,9 @@ export const itemAPI = {
   },
 
   get: (id: number) => api.get<APIResponse<Item>>(`/items/${id}`),
+
+  getFullContent: (id: number) =>
+    api.get<APIResponse<FullContent>>(`/items/${id}/full-content`),
 
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),
