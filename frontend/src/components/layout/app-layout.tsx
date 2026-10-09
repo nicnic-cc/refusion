@@ -17,9 +17,11 @@ import { useUIStore } from "@/store/ui";
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  // True when an ArticlePane is mounted instead of the drawer.
+  readingPane?: boolean;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, readingPane = false }: AppLayoutProps) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
@@ -57,7 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-hidden">{children}</main>
 
       {/* Modals and drawers */}
-      <ArticleDrawer />
+      {!readingPane && <ArticleDrawer />}
       <SearchDialog />
       <SettingsDialog />
       <AddGroupDialog />

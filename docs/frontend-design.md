@@ -25,7 +25,7 @@ Reading state is split between path params and search params:
 | Path param   | `filter`  | `all \| unread \| starred` | Active article filter    |
 | Path param   | `feedId`  | number                     | Selected feed scope      |
 | Path param   | `groupId` | number                     | Selected group scope     |
-| Search param | `article` | number                     | Opened article in drawer |
+| Search param | `article` | number                     | Opened article (drawer or reading pane) |
 
 Examples:
 
@@ -42,7 +42,7 @@ This keeps list context stable while opening/closing article detail. `g u` /
 
 - Fixed left sidebar (`300px`)
 - Main content on the right
-- Article detail opens in right-side drawer
+- Article detail opens in a right-side drawer or, with the panes layout, in a column beside a 400px article list
 
 ### Mobile
 
@@ -70,7 +70,8 @@ OPML import/export. Component names map to these areas directly — browse
   cache of the user's synced settings (`lib/settings-sync.ts` pulls the
   server values once per page load before the first authenticated screen
   renders, server non-null values win, and each settings-dialog change
-  PATCHes only the changed key). Theme lives in next-themes' own
+  PATCHes only the changed key). The reading layout is the one preference
+  kept per device and never synced. Theme lives in next-themes' own
   localStorage key and is mirrored through the same sync.
 
 ### Read-state changes: grayed rows are an undo affordance, not stale UI

@@ -23,7 +23,7 @@ import { localeLabels, useI18n } from "@/lib/i18n";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
 import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
 import { waitForSettingsSeed } from "@/lib/settings-sync";
-import type { AppLocale } from "@/store/preferences";
+import { readingLayoutOptions, type AppLocale } from "@/store/preferences";
 import { cn } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -122,9 +122,11 @@ function GeneralContent() {
     locale,
     articlePageSize,
     autoMarkRead,
+    readingLayout,
     setLocale,
     setArticlePageSize,
     setAutoMarkRead,
+    setReadingLayout,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
 
@@ -146,6 +148,10 @@ function GeneralContent() {
           : t("settings.autoMarkRead.afterSeconds", {
               seconds: Number.parseInt(option, 10),
             }),
+  }));
+  const readingLayoutItems = readingLayoutOptions.map((option) => ({
+    value: option,
+    label: t(`settings.readingLayout.${option}`),
   }));
   const themeItems = [
     { value: "light", label: t("settings.theme.light") },
@@ -318,6 +324,37 @@ function GeneralContent() {
           </SelectTrigger>
           <SelectContent>
             {autoMarkReadItems.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Reading layout (per device, not synced) */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.readingLayout.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.readingLayout.description")}
+          </p>
+        </div>
+        <Select
+          items={readingLayoutItems}
+          value={readingLayout}
+          onValueChange={(v) => {
+            if (!v) return;
+            setReadingLayout(v);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {readingLayoutItems.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>
