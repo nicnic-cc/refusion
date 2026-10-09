@@ -72,7 +72,7 @@ func serveFrontendIndex(c *gin.Context, fileServer http.Handler) {
 }
 
 func setFrontendSecurityHeaders(c *gin.Context) {
-	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:; font-src 'self' data:; connect-src 'self' http: https:; object-src 'none'; base-uri 'none'; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'; form-action 'self'")
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.Header("X-Frame-Options", "DENY")
 	c.Header("Referrer-Policy", "no-referrer")

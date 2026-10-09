@@ -20,6 +20,8 @@ import { processArticleContent } from "@/lib/content";
 import { itemAPI } from "@/lib/api";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { YoutubeEmbed } from "@/components/article/youtube-embed";
+import { youtubeVideo } from "@/lib/youtube";
 import type { ArticleViewState } from "@/hooks/use-article-view-state";
 
 const getLinkDomain = (url: string) => {
@@ -65,6 +67,7 @@ export function ArticleView({
 
   if (!article) return null;
 
+  const video = safeArticleLink ? youtubeVideo(safeArticleLink) : null;
   const showingFullText = fullText?.id === article.id;
   const loadingFullText = loadingId === article.id;
   // Bookmark-only snapshots have negative ids and no server item to fetch for.
@@ -237,6 +240,16 @@ export function ArticleView({
               ) : null}
             </div>
           </div>
+
+          {video && (
+            <div className="mt-6">
+              <YoutubeEmbed
+                id={video.id}
+                vertical={video.vertical}
+                title={article.title}
+              />
+            </div>
+          )}
 
           <div
             className="typeset typeset-article mt-6 min-w-0 max-w-none"
