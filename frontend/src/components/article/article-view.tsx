@@ -226,6 +226,13 @@ export function ArticleView({
 
   if (!article) return null;
 
+  const readLabel = (readArticle?.unread ?? false)
+    ? t("article.action.markRead")
+    : t("article.action.markUnread");
+  const starLabel = starred
+    ? t("article.action.unstar")
+    : t("article.action.star");
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -239,53 +246,49 @@ export function ArticleView({
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             onClick={handleToggleRead}
             disabled={!canToggleRead}
-            className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+            aria-label={readLabel}
+            title={readLabel}
           >
             {(readArticle?.unread ?? false) ? (
               <Circle className="h-4 w-4 text-muted-foreground" />
             ) : (
               <CircleCheck className="h-4 w-4 text-primary" />
             )}
-            {(readArticle?.unread ?? false)
-              ? t("article.action.markRead")
-              : t("article.action.markUnread")}
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             onClick={handleToggleStar}
-            className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+            aria-label={starLabel}
+            title={starLabel}
           >
             <Star
-              className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : ""}`}
+              className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : "text-muted-foreground"}`}
             />
-            {starred ? t("article.action.unstar") : t("article.action.star")}
           </Button>
           {safeArticleLink ? (
             <a
               href={safeArticleLink}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground",
-              )}
+              className={buttonVariants({ variant: "outline", size: "icon-sm" })}
+              aria-label={t("article.action.original")}
+              title={t("article.action.original")}
             >
-              <ExternalLink className="h-4 w-4" />
-              {t("article.action.original")}
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </a>
           ) : (
             <Button
               variant="outline"
-              size="sm"
+              size="icon-sm"
               disabled
-              className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+              aria-label={t("article.action.original")}
+              title={t("article.action.original")}
             >
-              <ExternalLink className="h-4 w-4" />
-              {t("article.action.original")}
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
         </div>
@@ -367,22 +370,22 @@ export function ArticleView({
       <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={goToPrevious}
           disabled={!hasPrevious()}
-          className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
+          aria-label={t("common.previous")}
+          title={t("common.previous")}
         >
           <ChevronLeft className="h-4 w-4" />
-          {t("common.previous")}
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={goToNext}
           disabled={!hasNext()}
-          className="h-auto gap-1.5 px-3 py-2 text-[13px] font-medium text-muted-foreground"
+          aria-label={t("common.next")}
+          title={t("common.next")}
         >
-          {t("common.next")}
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
