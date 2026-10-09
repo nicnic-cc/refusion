@@ -229,7 +229,13 @@ export function ArticleView({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+      {/* In the pane, match ContentHeader's fixed height so the borders line up. */}
+      <div
+        className={cn(
+          "flex items-center justify-between border-b px-4 sm:px-6",
+          variant === "pane" ? "h-14 shrink-0" : "py-3",
+        )}
+      >
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

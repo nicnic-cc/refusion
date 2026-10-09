@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -32,6 +33,11 @@ export function ArticleItem({
   const { t } = useI18n();
 
   const isSelected = selectedArticleId === article.id;
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isSelected) rootRef.current?.scrollIntoView({ block: "nearest" });
+  }, [isSelected]);
   const safeArticleLink = toSafeExternalUrl(article.link);
 
   const handleToggleRead = async (e: React.MouseEvent) => {
@@ -56,6 +62,7 @@ export function ArticleItem({
 
   return (
     <div
+      ref={rootRef}
       role="button"
       tabIndex={0}
       onClick={() => onSelectArticle(article.id)}

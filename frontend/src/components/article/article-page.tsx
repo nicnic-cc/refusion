@@ -1,10 +1,30 @@
 import { ArticleList } from "@/components/article/article-list";
+import { ArticlePane } from "@/components/article/article-pane";
 import { AppLayout } from "@/components/layout/app-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { usePreferencesStore } from "@/store";
 
 export function ArticlePage() {
+  const readingLayout = usePreferencesStore((s) => s.readingLayout);
+  const isMobile = useIsMobile();
+  const panes = readingLayout === "panes" && !isMobile;
+
+  if (!panes) {
+    return (
+      <AppLayout>
+        <ArticleList />
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout>
-      <ArticleList />
+    <AppLayout readingPane>
+      <div className="flex h-full">
+        <div className="h-full w-[400px] shrink-0 border-r">
+          <ArticleList />
+        </div>
+        <ArticlePane />
+      </div>
     </AppLayout>
   );
 }

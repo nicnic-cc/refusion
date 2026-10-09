@@ -23,9 +23,15 @@ export type ArticlePageSize = (typeof articlePageSizeOptions)[number];
 export const autoMarkReadOptions = ["off", "open", "5", "10", "30"] as const;
 export type AutoMarkRead = (typeof autoMarkReadOptions)[number];
 
+// Per device and never synced: whether an opened article shows in a drawer
+// over the list or in a pane beside it.
+export const readingLayoutOptions = ["drawer", "panes"] as const;
+export type ReadingLayout = (typeof readingLayoutOptions)[number];
+
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
 const autoMarkReadSet = new Set<AutoMarkRead>(autoMarkReadOptions);
+const readingLayoutSet = new Set<ReadingLayout>(readingLayoutOptions);
 
 function resolveSupportedLocale(locale: string): AppLocale | null {
   const normalized = locale.toLowerCase().replace("_", "-");
@@ -48,6 +54,7 @@ const defaultLocale: AppLocale =
   "en";
 const defaultArticlePageSize: ArticlePageSize = 10;
 const defaultAutoMarkRead: AutoMarkRead = "off";
+const defaultReadingLayout: ReadingLayout = "drawer";
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -75,6 +82,12 @@ function normalizeAutoMarkRead(value: string | undefined | null): AutoMarkRead {
     : defaultAutoMarkRead;
 }
 
+function normalizeReadingLayout(value: string | undefined | null): ReadingLayout {
+  return value != null && readingLayoutSet.has(value as ReadingLayout)
+    ? (value as ReadingLayout)
+    : defaultReadingLayout;
+}
+
 // "off" disables the feature; every other member maps to a delay where 0
 // means "as soon as the article is open".
 export function autoMarkReadDelayMs(option: AutoMarkRead): number | null {
@@ -88,9 +101,11 @@ export interface PreferencesState {
   locale: AppLocale;
   articlePageSize: ArticlePageSize;
   autoMarkRead: AutoMarkRead;
+  readingLayout: ReadingLayout;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
   setAutoMarkRead: (option: string) => void;
+  setReadingLayout: (layout: string) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -99,11 +114,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       locale: defaultLocale,
       articlePageSize: defaultArticlePageSize,
       autoMarkRead: defaultAutoMarkRead,
+      readingLayout: defaultReadingLayout,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
       setAutoMarkRead: (option) =>
         set({ autoMarkRead: normalizeAutoMarkRead(option) }),
+      setReadingLayout: (layout) =>
+        set({ readingLayout: normalizeReadingLayout(layout) }),
     }),
     {
       name: "fusion-preferences",
@@ -112,6 +130,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         locale: state.locale,
         articlePageSize: state.articlePageSize,
         autoMarkRead: state.autoMarkRead,
+        readingLayout: state.readingLayout,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -124,6 +143,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           ),
           autoMarkRead: normalizeAutoMarkRead(
             persisted?.autoMarkRead ?? currentState.autoMarkRead,
+          ),
+          readingLayout: normalizeReadingLayout(
+            persisted?.readingLayout ?? currentState.readingLayout,
           ),
         };
       },
