@@ -71,11 +71,7 @@
 # - linear.api_key  → use LINEAR_API_KEY env var instead
 # - github.token    → use GITHUB_TOKEN env var instead
 
-sync:
-    remote: "git+https://github.com/nicnic-cc/refusion.git"
-repos:
-    primary: "."
-    additional:
-        - "/Users/m/.beads-planning"
 export:
     auto: true
+routing:
+    mode: explicit
