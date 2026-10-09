@@ -289,7 +289,7 @@ func decodeNumericRef(cand string) (string, bool) {
 
 // mapItem converts gofeed.Item to ParsedItem following mapping rules:
 // - guid: prefer GUID, fallback to Link
-// - content: prefer Content, fallback to Description
+// - content: prefer Content, fallback to Description, then media:description
 // - pub_date: prefer PublishedParsed, fallback to UpdatedParsed
 // - link: convert to absolute URL
 func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
@@ -327,6 +327,10 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 	}
 	if guid == "" {
 		guid = fallbackGUID(item.Title, content, sourcePubDate, hasSourcePubDate)
+	}
+
+	if content == "" {
+		content = mediaDescription(item)
 	}
 
 	return &ParsedItem{
