@@ -7,6 +7,12 @@ import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 
+// Both hover variants are needed: ghost's dark:hover:bg-muted/50 would
+// otherwise fade the resting bg-muted on hover in dark mode.
+const mutedAction =
+  "bg-muted hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)] dark:hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)]";
+const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
+
 interface ArticleItemProps {
   article: Item;
   selectedArticleId: number | null;
@@ -109,7 +115,11 @@ export function ArticleItem({
           size="icon-sm"
           onClick={handleToggleRead}
           disabled={!canToggleRead}
-          className={cn(article.unread ? "bg-muted" : "bg-primary/10")}
+          className={cn(
+            article.unread
+              ? mutedAction
+              : "bg-primary/10 hover:bg-primary/20 dark:hover:bg-primary/20",
+          )}
           aria-label={
             article.unread
               ? t("article.action.markRead")
@@ -122,7 +132,7 @@ export function ArticleItem({
           }
         >
           {article.unread ? (
-            <Circle className="text-muted-foreground" />
+            <Circle className={mutedIcon} />
           ) : (
             <CircleCheck className="text-primary" />
           )}
@@ -131,7 +141,11 @@ export function ArticleItem({
           variant="ghost"
           size="icon-sm"
           onClick={handleToggleStar}
-          className={cn(isStarred ? "bg-amber-100 dark:bg-amber-950/40" : "bg-muted")}
+          className={cn(
+            isStarred
+              ? "bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/40 dark:hover:bg-amber-950/70"
+              : mutedAction,
+          )}
           aria-label={
             isStarred ? t("article.action.unstar") : t("article.action.star")
           }
@@ -141,7 +155,7 @@ export function ArticleItem({
             className={cn(
               isStarred
                 ? "fill-amber-500 text-amber-500"
-                : "text-muted-foreground",
+                : mutedIcon,
             )}
           />
         </Button>
@@ -151,22 +165,22 @@ export function ArticleItem({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "bg-muted")}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), mutedAction)}
             aria-label={t("article.action.openInBrowser")}
             title={t("article.action.openInBrowser")}
           >
-            <ExternalLink className="text-muted-foreground" />
+            <ExternalLink className={mutedIcon} />
           </a>
         ) : (
           <Button
             variant="ghost"
             size="icon-sm"
             disabled
-            className="bg-muted"
+            className={mutedAction}
             aria-label={t("article.action.openInBrowser")}
             title={t("article.action.openInBrowser")}
           >
-            <ExternalLink className="text-muted-foreground" />
+            <ExternalLink className={mutedIcon} />
           </Button>
         )}
       </div>
