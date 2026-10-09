@@ -1,5 +1,6 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { ArticleView, useArticleViewState } from "./article-view";
+import { ArticleView } from "./article-view";
+import { useArticleViewState } from "@/hooks/use-article-view-state";
 
 export function ArticleDrawer() {
   const state = useArticleViewState();

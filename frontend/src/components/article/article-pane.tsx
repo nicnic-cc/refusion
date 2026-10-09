@@ -1,6 +1,7 @@
 import { BookOpen } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { ArticleView, useArticleViewState } from "./article-view";
+import { ArticleView } from "./article-view";
+import { useArticleViewState } from "@/hooks/use-article-view-state";
 
 export function ArticlePane() {
   const { t } = useI18n();
