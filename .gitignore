@@ -14,3 +14,9 @@ backend/internal/web/dist/*
 # .env.example is an exception as it only contains dummy secrets.
 !.env.example
 backend/fusion
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
