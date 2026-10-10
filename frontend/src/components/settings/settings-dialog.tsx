@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bug, Download, Keyboard } from "lucide-react";
+import { Bug, Download, Keyboard, LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,8 +24,14 @@ import {
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
 import { ensureLocaleMessages } from "@/lib/i18n/messages";
-import { APIError, settingsAPI, type UpdateSettingsRequest } from "@/lib/api";
+import {
+  APIError,
+  sessionAPI,
+  settingsAPI,
+  type UpdateSettingsRequest,
+} from "@/lib/api";
 import { waitForSettingsSeed } from "@/lib/settings-sync";
+import { resetSessionGuard } from "@/routes/__root";
 import {
   dateFormatOptions,
   articleLoadingOptions,
@@ -115,6 +122,25 @@ function GeneralContent() {
     setArticleLoading,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
+  const queryClient = useQueryClient();
+
+  const handleSignOut = async () => {
+    if (!window.confirm(t("settings.signOut.confirm"))) {
+      return;
+    }
+    try {
+      await sessionAPI.logout();
+    } catch {
+      toast.error(t("settings.signOut.failed"));
+      return;
+    }
+
+    queryClient.clear();
+    // A full-page navigation leaves this document so the route guard starts
+    // fresh; the SPA router would keep its cached "session verified" verdict.
+    resetSessionGuard();
+    window.location.assign("/login");
+  };
 
   const localeItems = supportedLocales.map((localeCode) => ({
     value: localeCode,
@@ -437,6 +463,27 @@ function GeneralContent() {
         >
           <Keyboard className="h-4 w-4" />
           {t("settings.shortcuts.open")}
+        </Button>
+      </div>
+
+      {/* Log out */}
+      <div className="flex items-center justify-between gap-6 border-t pt-5">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">{t("settings.signOut.label")}</p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.signOut.description")}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => {
+            void handleSignOut();
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          {t("settings.signOut.button")}
         </Button>
       </div>
     </div>

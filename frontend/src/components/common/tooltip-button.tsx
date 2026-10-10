@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 
 type TooltipButtonProps = VariantProps<typeof buttonVariants> & {
   label: string;
+  // Shown after the label in the tooltip; not part of the aria-label.
+  shortcut?: string;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
@@ -24,6 +26,7 @@ type TooltipButtonProps = VariantProps<typeof buttonVariants> & {
 // replacing the native title attribute.
 export function TooltipButton({
   label,
+  shortcut,
   children,
   className,
   disabled,
@@ -72,7 +75,14 @@ export function TooltipButton({
       ) : (
         <TooltipTrigger render={control}>{children}</TooltipTrigger>
       )}
-      <TooltipContent side={side}>{label}</TooltipContent>
+      <TooltipContent side={side}>
+        {label}
+        {shortcut && (
+          <kbd className="ml-2 font-mono text-[11px] opacity-70">
+            {shortcut}
+          </kbd>
+        )}
+      </TooltipContent>
     </Tooltip>
   );
 }
