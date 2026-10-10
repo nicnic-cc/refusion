@@ -340,7 +340,11 @@ export function AddFeedDialog() {
             </div>
 
             {/* Advanced Section */}
-            <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+            <Collapsible
+              open={isAdvancedOpen}
+              onOpenChange={setIsAdvancedOpen}
+              className="border-t pt-4"
+            >
               <CollapsibleTrigger className="flex w-full items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
                 <ChevronDown
                   className={cn(
@@ -350,7 +354,7 @@ export function AddFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1.5 pl-5 pt-3">
+              <CollapsibleContent className="space-y-1.5 pt-3">
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-medium" id="add-feed-refresh-label">
                     {t("feed.add.refreshFrequencyLabel")}
