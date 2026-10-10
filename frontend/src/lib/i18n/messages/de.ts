@@ -127,6 +127,7 @@ export const deMessages: PartialMessages = {
   "feed.add.fullContentLabel": "Immer vollständigen Artikel laden",
   "feed.add.fullContentDescription": "Beim Öffnen eines Artikels automatisch den Volltext laden",
   "feed.add.validateTitle": "Feed-URL prüfen",
+  "feed.add.lookingForFeed": "Feed wird gesucht...",
   "feed.edit.deleteConfirm.description":
     'Möchtest du "{name}" wirklich abbestellen? Alle Artikel dieses Feeds werden gelöscht.',
   "feed.edit.deleteConfirm.title": "Feed abbestellen",

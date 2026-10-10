@@ -127,6 +127,7 @@ export const esMessages: PartialMessages = {
   "feed.add.fullContentLabel": "Cargar siempre el artículo completo",
   "feed.add.fullContentDescription": "Obtener el texto completo automáticamente al abrir un artículo",
   "feed.add.validateTitle": "Validar URL del feed",
+  "feed.add.lookingForFeed": "Buscando el feed...",
   "feed.edit.deleteConfirm.description":
     '¿Seguro que quieres cancelar la suscripción de "{name}"? Todos los artículos de este feed se eliminarán.',
   "feed.edit.deleteConfirm.title": "Darse de baja del feed",

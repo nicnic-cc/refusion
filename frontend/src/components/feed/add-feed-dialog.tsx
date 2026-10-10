@@ -64,7 +64,11 @@ export function AddFeedDialog() {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
   const [detectedFeeds, setDetectedFeeds] = useState<DiscoveredFeed[]>([]);
+  // Every feed detection returned in this dialog session; submitting one of
+  // these URLs skips a second validate round trip.
+  const [knownFeeds, setKnownFeeds] = useState<DiscoveredFeed[]>([]);
   const [isFeedSelectOpen, setIsFeedSelectOpen] = useState(false);
   const groupItems = groups.map((group) => ({
     value: group.id.toString(),
@@ -80,6 +84,7 @@ export function AddFeedDialog() {
     setFullContent(false);
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
+    setKnownFeeds([]);
     setIsFeedSelectOpen(false);
   };
 
@@ -101,6 +106,9 @@ export function AddFeedDialog() {
     toast.success(t("feed.toast.detected"));
   };
 
+  const normalizeUrl = (value: string) =>
+    value.trim().replace(/\/+$/, "").toLowerCase();
+
   const validateRequest = (target: string) => ({
     url: target,
     ...(proxy.trim() ? { proxy: proxy.trim() } : {}),
@@ -113,6 +121,7 @@ export function AddFeedDialog() {
     try {
       const response = await feedAPI.validate(validateRequest(url.trim()));
       const feeds = response.data?.feeds ?? [];
+      setKnownFeeds((prev) => [...prev, ...feeds]);
 
       if (feeds.length === 0) {
         toast.info(t("feed.toast.noFeedsForUrl"));
@@ -143,8 +152,21 @@ export function AddFeedDialog() {
     try {
       // Validate before creating so an unreachable or malformed URL fails
       // here with a clear message instead of a "successful" empty feed.
-      const check = await feedAPI.validate(validateRequest(url.trim()));
-      const feeds = check.data?.feeds ?? [];
+      const known = knownFeeds.find(
+        (f) => normalizeUrl(f.link) === normalizeUrl(url),
+      );
+      let feeds: DiscoveredFeed[];
+      if (known) {
+        feeds = [known];
+      } else {
+        setIsLookingUp(true);
+        try {
+          const check = await feedAPI.validate(validateRequest(url.trim()));
+          feeds = check.data?.feeds ?? [];
+        } finally {
+          setIsLookingUp(false);
+        }
+      }
       if (feeds.length === 0) {
         toast.error(t("feed.toast.invalidFeed"));
         return;
@@ -156,8 +178,6 @@ export function AddFeedDialog() {
       // matched; otherwise adopt a single unambiguous discovery, or make the
       // user pick when several were found.
       const entered = url.trim();
-      const normalizeUrl = (value: string) =>
-        value.trim().replace(/\/+$/, "").toLowerCase();
       const match = feeds.find(
         (f) => normalizeUrl(f.link) === normalizeUrl(entered),
       );
@@ -256,7 +276,11 @@ export function AddFeedDialog() {
                 <TooltipButton
                   variant="outline"
                   size="icon"
-                  label={t("feed.add.validateTitle")}
+                  label={
+                    isValidating
+                      ? t("feed.add.lookingForFeed")
+                      : t("feed.add.validateTitle")
+                  }
                   className="h-10 w-10 shrink-0"
                   onClick={handleValidate}
                   disabled={isValidating || !url.trim()}
@@ -402,7 +426,7 @@ export function AddFeedDialog() {
               disabled={isSubmitting || !url.trim()}
             >
               <Plus className="mr-1.5 h-4 w-4" />
-              {t("feed.add.button")}
+              {isLookingUp ? t("feed.add.lookingForFeed") : t("feed.add.button")}
             </Button>
           </div>
         </DialogContent>

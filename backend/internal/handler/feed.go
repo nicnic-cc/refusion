@@ -285,6 +285,11 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
+	if feed, ok := h.directFeed(ctx, target, proxy); ok {
+		dataResponse(c, validateFeedResponse{Feeds: []discoveredFeed{feed}})
+		return
+	}
+
 	var finderOptions *feedfinder.Options
 	if proxy != "" {
 		finderOptions = &feedfinder.Options{RequestProxy: &proxy}

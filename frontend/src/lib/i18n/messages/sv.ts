@@ -127,6 +127,7 @@ export const svMessages: PartialMessages = {
   "feed.add.fullContentLabel": "Läs alltid in hela artikeln",
   "feed.add.fullContentDescription": "Hämta hela texten automatiskt när en artikel öppnas",
   "feed.add.validateTitle": "Verifiera flödes-URL",
+  "feed.add.lookingForFeed": "Söker efter flödet...",
   "feed.edit.deleteConfirm.description":
     'Är du säker på att du vill avsluta prenumerationen på "{name}"? Alla artiklar från detta flöde kommer att raderas.',
   "feed.edit.deleteConfirm.title": "Avsluta prenumeration",

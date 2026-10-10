@@ -127,6 +127,7 @@ export const ruMessages: PartialMessages = {
   "feed.add.fullContentLabel": "Всегда загружать полную статью",
   "feed.add.fullContentDescription": "Автоматически загружать полный текст при открытии статьи",
   "feed.add.validateTitle": "Проверить URL ленты",
+  "feed.add.lookingForFeed": "Поиск ленты...",
   "feed.edit.deleteConfirm.description":
     "Вы уверены, что хотите отписаться от \"{name}\"? Все статьи этой ленты будут удалены.",
   "feed.edit.deleteConfirm.title": "Отписаться от ленты",

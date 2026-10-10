@@ -127,6 +127,7 @@ export const frMessages: PartialMessages = {
   "feed.add.fullContentLabel": "Toujours charger l'article complet",
   "feed.add.fullContentDescription": "Récupérer automatiquement le texte intégral à l'ouverture d'un article",
   "feed.add.validateTitle": "Vérifier l'URL du flux",
+  "feed.add.lookingForFeed": "Recherche du flux...",
   "feed.edit.deleteConfirm.description":
     'Voulez-vous vraiment vous désabonner de "{name}" ? Tous les articles de ce flux seront supprimés.',
   "feed.edit.deleteConfirm.title": "Se désabonner du flux",
