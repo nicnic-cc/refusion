@@ -129,6 +129,8 @@ export const ruMessages: PartialMessages = {
   "feed.add.fullContentDescription": "Автоматически загружать полный текст при открытии статьи",
   "feed.add.validateTitle": "Проверить URL ленты",
   "feed.add.lookingForFeed": "Поиск ленты...",
+  "feed.edit.checkNow": "Проверить сейчас",
+  "feed.edit.lastChecked": "Последняя проверка: {when}",
   "feed.edit.deleteConfirm.description":
     "Вы уверены, что хотите отписаться от \"{name}\"? Все статьи этой ленты будут удалены.",
   "feed.edit.deleteConfirm.title": "Отписаться от ленты",
@@ -137,6 +139,7 @@ export const ruMessages: PartialMessages = {
   "feed.edit.suspendLabel": "Приостановить ленту",
   "feed.edit.title": "Редактировать ленту",
   "feed.edit.unsubscribe": "Отписаться",
+  "feed.error.lastCheckFailed": "Последняя проверка не удалась: {error}",
   "feed.select.description": "Найдено несколько лент. Выберите одну для подстановки URL.",
   "feed.select.fallback": "Лента {index}",
   "feed.select.title": "Выбрать ленту",

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { AlertCircle, ChevronDown, Save, Trash2, X } from "lucide-react";
+import { ChevronDown, Save, Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,14 +23,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
-import { useUpdateFeed, useDeleteFeed } from "@/queries/feeds";
+import { useUpdateFeed, useDeleteFeed, useFeedLookup } from "@/queries/feeds";
+import { FeedCheckStatus } from "@/components/feed/feed-check-status";
 import { useAppInfo } from "@/queries/app";
 import type { UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
@@ -42,7 +38,6 @@ import {
   intervalOptions,
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -50,6 +45,9 @@ export function EditFeedDialog() {
   const { data: groups = [] } = useGroups();
   const updateFeedMutation = useUpdateFeed();
   const deleteFeedMutation = useDeleteFeed();
+  const { getFeedById } = useFeedLookup();
+  // The snapshot taken on open goes stale after a check; the list stays fresh.
+  const liveFeed = editingFeed ? getFeedById(editingFeed.id) : undefined;
 
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
@@ -62,10 +60,7 @@ export function EditFeedDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isMobileErrorTooltipOpen, setIsMobileErrorTooltipOpen] =
-    useState(false);
   const urlInputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobile();
   const groupItems = groups.map((group) => ({
     value: group.id.toString(),
     label: group.name,
@@ -97,7 +92,6 @@ export function EditFeedDialog() {
       setIsAdvancedOpen(
         !!editingFeed.proxy || stored != null || editingFeed.full_content,
       );
-      setIsMobileErrorTooltipOpen(false);
     }
   }
 
@@ -116,7 +110,6 @@ export function EditFeedDialog() {
   const handleClose = () => {
     setEditFeedOpen(false);
     resetForm();
-    setIsMobileErrorTooltipOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -218,37 +211,6 @@ export function EditFeedDialog() {
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
             <DialogTitle className="flex items-center gap-1.5 text-base font-semibold">
               <span>{t("feed.edit.title")}</span>
-              {editingFeed?.fetch_state.last_error && (
-                <Tooltip
-                  open={isMobile ? isMobileErrorTooltipOpen : undefined}
-                  onOpenChange={(open) => {
-                    if (!isMobile || open) return;
-                    setIsMobileErrorTooltipOpen(false);
-                  }}
-                >
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        aria-label={t("feeds.status.error")}
-                        onClick={() => {
-                          if (!isMobile) return;
-                          setIsMobileErrorTooltipOpen((open) => !open);
-                        }}
-                        className="inline-flex cursor-help items-center text-destructive"
-                      />
-                    }
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    className="max-w-sm whitespace-normal break-words"
-                  >
-                    {editingFeed.fetch_state.last_error.trim()}
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </DialogTitle>
             <Button variant="ghost" size="icon-sm" onClick={handleClose}>
               <span className="sr-only">{t("common.cancel")}</span>
@@ -276,6 +238,7 @@ export function EditFeedDialog() {
                 autoComplete="off"
                 spellCheck={false}
               />
+              {liveFeed && <FeedCheckStatus feed={liveFeed} />}
             </div>
 
             {/* Name Section */}

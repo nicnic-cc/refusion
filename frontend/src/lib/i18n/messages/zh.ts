@@ -129,6 +129,8 @@ export const zhMessages: PartialMessages = {
   "feed.add.fullContentDescription": "打开文章时自动获取全文",
   "feed.add.validateTitle": "验证订阅地址",
   "feed.add.lookingForFeed": "正在查找订阅源...",
+  "feed.edit.checkNow": "立即检查",
+  "feed.edit.lastChecked": "上次检查：{when}",
   "feed.edit.deleteConfirm.description":
     "确定要取消订阅“{name}”吗？该订阅的所有文章将被删除。",
   "feed.edit.deleteConfirm.title": "取消订阅",
@@ -137,6 +139,7 @@ export const zhMessages: PartialMessages = {
   "feed.edit.suspendLabel": "暂停订阅",
   "feed.edit.title": "编辑订阅",
   "feed.edit.unsubscribe": "取消订阅",
+  "feed.error.lastCheckFailed": "上次检查失败：{error}",
   "feed.select.description": "发现多个订阅，请选择一个填入地址。",
   "feed.select.fallback": "订阅 {index}",
   "feed.select.title": "选择订阅",

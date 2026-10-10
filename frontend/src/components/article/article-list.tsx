@@ -14,6 +14,7 @@ import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
 import { useNewArticles } from "@/hooks/use-new-articles";
 import { NewArticlesPill } from "./new-articles-pill";
+import { FeedErrorLine } from "./feed-error-line";
 import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { usePreferencesStore } from "@/store/preferences";
@@ -270,6 +271,8 @@ export function ArticleList() {
             </TabsList>
           </Tabs>
         )}
+
+        <FeedErrorLine feedId={selectedFeedId} />
 
         {/* -mt-4 cancels the flex gap while the indicator is collapsed */}
         <PullIndicator pane="list" className="-mt-4" {...pull} />

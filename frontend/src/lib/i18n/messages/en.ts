@@ -127,6 +127,8 @@ export const enMessages = {
   "feed.add.fullContentDescription": "Fetch the full text automatically when an article opens",
   "feed.add.validateTitle": "Validate feed URL",
   "feed.add.lookingForFeed": "Looking for the feed...",
+  "feed.edit.checkNow": "Check now",
+  "feed.edit.lastChecked": "Last checked {when}",
   "feed.edit.deleteConfirm.description":
     'Are you sure you want to unsubscribe from "{name}"? All items from this feed will be deleted.',
   "feed.edit.deleteConfirm.title": "Unsubscribe Feed",
@@ -135,6 +137,7 @@ export const enMessages = {
   "feed.edit.suspendLabel": "Suspend Feed",
   "feed.edit.title": "Edit Feed",
   "feed.edit.unsubscribe": "Unsubscribe",
+  "feed.error.lastCheckFailed": "Last check failed: {error}",
   "feed.select.description": "Multiple feeds were found. Choose one to fill the URL.",
   "feed.select.fallback": "Feed {index}",
   "feed.select.title": "Select Feed",
