@@ -10,6 +10,6 @@ The generic rules for working with beads are in the `beads` skill: load it befor
 
 ## This repo's additions
 
-- Every change to the app, however small, starts as a bead: plan it, show the draft bead, create it on the user's go, then build. Overrides the skill's "one-session work needs no bead". Doc-only and bead-housekeeping commits are exempt.
+- Every change to the app, however small, starts as a bead, created before any build (the skill says when to ask first). Overrides the skill's "one-session work needs no bead". Doc-only and bead-housekeeping commits are exempt.
 - Create every bead with `--id rf-<two-words>` (e.g. `rf-panes-resize`), never a random ID.
 - Passing checks don't finish an app bead. After building, report and stop: the user tries it in the running app. Commit and close only on their OK.
