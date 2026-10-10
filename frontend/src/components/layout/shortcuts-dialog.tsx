@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
+import { modKey } from "@/lib/shortcut-keys";
 import { useUIStore } from "@/store";
 
 interface ShortcutItem {
@@ -21,9 +22,9 @@ export function ShortcutsDialog() {
     {
       title: t("shortcuts.section.global"),
       items: [
-        { keys: "Cmd+K / Ctrl+K", action: t("shortcuts.action.toggleSearch") },
+        { keys: modKey("K"), action: t("shortcuts.action.toggleSearch") },
         { keys: "/", action: t("shortcuts.action.openSearch") },
-        { keys: "Cmd+, / Ctrl+,", action: t("shortcuts.action.openSettings") },
+        { keys: modKey(","), action: t("shortcuts.action.openSettings") },
         { keys: "?", action: t("shortcuts.action.showHelp") },
         { keys: "Esc", action: t("shortcuts.action.closeDialog") },
       ],

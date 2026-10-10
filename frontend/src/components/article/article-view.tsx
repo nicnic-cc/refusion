@@ -88,6 +88,7 @@ export function ArticleView({
         <div className="flex items-center gap-2">
           <TooltipButton
             label={readLabel}
+            shortcut="m"
             onClick={handleToggleRead}
             disabled={!canToggleRead}
           >
@@ -97,13 +98,18 @@ export function ArticleView({
               <CircleCheck className="h-4 w-4 text-primary" />
             )}
           </TooltipButton>
-          <TooltipButton label={starLabel} onClick={handleToggleStar}>
+          <TooltipButton
+            label={starLabel}
+            shortcut="s"
+            onClick={handleToggleStar}
+          >
             <Star
               className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : "text-muted-foreground"}`}
             />
           </TooltipButton>
           <TooltipButton
             label={t("article.action.original")}
+            shortcut="o"
             href={safeArticleLink ?? undefined}
             disabled={!safeArticleLink}
           >
@@ -112,6 +118,7 @@ export function ArticleView({
           {article.id > 0 && (
             <TooltipButton
               label={fullTextLabel}
+              shortcut="w"
               onClick={() => void handleToggleFullText()}
               disabled={!canLoadFullText || loadingFullText}
               pressed={showingFullText}
@@ -214,6 +221,7 @@ export function ArticleView({
       <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
         <TooltipButton
           label={t("common.previous")}
+          shortcut="k"
           onClick={goToPrevious}
           disabled={!hasPrevious()}
         >
@@ -221,6 +229,7 @@ export function ArticleView({
         </TooltipButton>
         <TooltipButton
           label={t("common.next")}
+          shortcut="j"
           onClick={goToNext}
           disabled={!hasNext()}
         >

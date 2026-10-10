@@ -10,7 +10,9 @@ import { cn } from "@/lib/utils";
 
 type TooltipButtonProps = VariantProps<typeof buttonVariants> & {
   label: string;
-  // Shown after the label in the tooltip; not part of the aria-label.
+  // Shown after the label in the tooltip; not part of the aria-label. Main key
+  // only (the ? dialog lists alternatives); none on article-row hover buttons,
+  // since keys act on the selected article, not the hovered row.
   shortcut?: string;
   children: ReactNode;
   className?: string;
