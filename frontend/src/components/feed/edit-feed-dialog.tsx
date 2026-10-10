@@ -219,10 +219,10 @@ export function EditFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="space-y-4 p-5">
+          <div className="space-y-5 p-5">
             {/* URL Section */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-feed-url" className="text-[13px] font-medium">
+            <div className="space-y-2">
+              <label htmlFor="edit-feed-url" className="block text-[13px] font-medium">
                 {t("feed.add.urlLabel")}
               </label>
               <Input
@@ -242,8 +242,8 @@ export function EditFeedDialog() {
             </div>
 
             {/* Name Section */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-feed-name" className="text-[13px] font-medium">
+            <div className="space-y-2">
+              <label htmlFor="edit-feed-name" className="block text-[13px] font-medium">
                 {t("feed.add.nameLabel")}
               </label>
               <Input
@@ -258,8 +258,8 @@ export function EditFeedDialog() {
             </div>
 
             {/* Group Section */}
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" id="edit-feed-group-label">
+            <div className="space-y-2">
+              <label className="block text-[13px] font-medium" id="edit-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
               <Select
@@ -287,7 +287,7 @@ export function EditFeedDialog() {
               <div>
                 <label
                   htmlFor="edit-feed-suspended"
-                  className="text-[13px] font-medium"
+                  className="block text-[13px] font-medium"
                 >
                   {t("feed.edit.suspendLabel")}
                 </label>
@@ -317,9 +317,9 @@ export function EditFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-3">
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-medium" id="edit-feed-refresh-label">
+              <CollapsibleContent className="space-y-5 pt-4">
+                <div className="space-y-2">
+                  <label className="block text-[13px] font-medium" id="edit-feed-refresh-label">
                     {t("feed.add.refreshFrequencyLabel")}
                   </label>
                   <Select
@@ -347,7 +347,7 @@ export function EditFeedDialog() {
                   <div>
                     <label
                       htmlFor="edit-feed-full-content"
-                      className="text-[13px] font-medium"
+                      className="block text-[13px] font-medium"
                     >
                       {t("feed.add.fullContentLabel")}
                     </label>
@@ -361,8 +361,8 @@ export function EditFeedDialog() {
                     onCheckedChange={setFullContent}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
+                <div className="space-y-2">
+                  <label htmlFor="edit-feed-proxy" className="block text-[13px] font-medium">
                     {t("feed.add.proxyLabel")}
                   </label>
                   <Input
