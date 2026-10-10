@@ -512,7 +512,7 @@ function AboutContent() {
           </Button>
         )}
         <a
-          href="https://github.com/0x2e/fusion"
+          href="https://github.com/nicnic-cc/refusion"
           target="_blank"
           rel="noopener noreferrer"
           className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -521,7 +521,7 @@ function AboutContent() {
           {t("settings.about.github")}
         </a>
         <a
-          href="https://github.com/0x2e/fusion/issues"
+          href="https://github.com/nicnic-cc/refusion/issues"
           target="_blank"
           rel="noopener noreferrer"
           className={buttonVariants({ variant: "outline", size: "sm" })}

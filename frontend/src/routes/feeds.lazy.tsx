@@ -148,7 +148,7 @@ function FeedsPage() {
         feedAPI.list(),
       ]);
       const opml = generateOPML(groupsRes.data, feedsRes.data);
-      downloadFile(opml, "fusion-subscriptions.opml", "application/xml");
+      downloadFile(opml, "refusion-subscriptions.opml", "application/xml");
       toast.success(t("feeds.toast.exported"));
     } catch {
       toast.error(t("feeds.toast.exportFailed"));

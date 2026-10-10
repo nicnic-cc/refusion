@@ -1,6 +1,6 @@
 {
-	"name": "Fusion RSS Reader",
-	"short_name": "Fusion",
+	"name": "refusion RSS Reader",
+	"short_name": "refusion",
 	"icons": [
 		{
 			"src": "/icon-192.png",
