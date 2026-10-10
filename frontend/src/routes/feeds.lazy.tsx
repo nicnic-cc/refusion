@@ -251,11 +251,7 @@ function FeedsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 gap-1.5"
-                  >
+                  <Button variant="outline" className="shrink-0 gap-1.5">
                     <ListFilter className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">
                       {statusFilterLabels[statusFilter]}
@@ -282,7 +278,7 @@ function FeedsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button size="sm">
+                  <Button>
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     {t("common.add")}
                     <ChevronDown className="ml-1 h-3.5 w-3.5" />
@@ -302,7 +298,6 @@ function FeedsPage() {
             </DropdownMenu>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setRefreshConfirmOpen(true)}
               disabled={refreshFeedsMutation.isPending}
             >
@@ -314,17 +309,12 @@ function FeedsPage() {
               />
               <span className="hidden sm:inline">{t("feeds.refreshAll")}</span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportOpmlOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setImportOpmlOpen(true)}>
               <Upload className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">{t("common.import")}</span>
             </Button>
             <Button
               variant="outline"
-              size="sm"
               onClick={handleExport}
               disabled={isExporting}
             >
