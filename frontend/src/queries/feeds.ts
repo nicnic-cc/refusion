@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { feedAPI, type Feed } from "@/lib/api";
 import { queryKeys } from "./keys";
+import { pullQueryKey, useStartPull } from "./pull";
 
 export const feedQueries = {
   list: () =>
@@ -76,6 +77,7 @@ export function useCreateFeed() {
       qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
         old ? [...old, feed] : [feed],
       );
+      qc.invalidateQueries({ queryKey: pullQueryKey });
     },
   });
 }
@@ -115,14 +117,7 @@ export function useDeleteFeed() {
 }
 
 export function useRefreshFeeds() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => feedAPI.refresh(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
-      qc.invalidateQueries({ queryKey: queryKeys.items.all });
-    },
-  });
+  return useStartPull();
 }
 
 export function useMoveFeedsToGroup() {

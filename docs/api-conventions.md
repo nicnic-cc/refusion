@@ -70,7 +70,8 @@ Three cases return the status with an empty body instead: unknown routes
 - `204` — body-less success: mark items read/unread, all deletes, logout,
   and the `GET /api/sessions` validity probe (valid → 204, invalid → 401)
 - `202` — feed refresh requests (`/feeds/refresh`, `/feeds/{id}/refresh`):
-  refresh happens asynchronously, no body
+  refresh happens asynchronously, no body. `POST /pull` is the same but
+  returns `{data: {queued}}`.
 
 ## Request quirks worth knowing
 

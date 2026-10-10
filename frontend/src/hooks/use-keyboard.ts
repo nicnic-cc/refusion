@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useStartPull } from "@/queries/pull";
 import { useUIStore } from "@/store";
 import { useUrlState } from "./use-url-state";
 
@@ -38,6 +39,7 @@ export function useKeyboardShortcuts() {
   const { selectedArticleId, setSelectedArticle, selectTopLevelFilter } =
     useUrlState();
   const navigate = useNavigate();
+  const { mutate: startPull } = useStartPull();
   const pendingPrefixRef = useRef<"g" | null>(null);
   const pendingPrefixTimerRef = useRef<number | null>(null);
   const latestStateRef = useRef({
@@ -51,6 +53,7 @@ export function useKeyboardShortcuts() {
     setSelectedArticle,
     selectTopLevelFilter,
     navigate,
+    startPull,
   });
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export function useKeyboardShortcuts() {
       setSelectedArticle,
       selectTopLevelFilter,
       navigate,
+      startPull,
     };
   }, [
     isSearchOpen,
@@ -77,6 +81,7 @@ export function useKeyboardShortcuts() {
     setSelectedArticle,
     selectTopLevelFilter,
     navigate,
+    startPull,
   ]);
 
   useEffect(() => {
@@ -199,6 +204,13 @@ export function useKeyboardShortcuts() {
       if (event.key === "/") {
         event.preventDefault();
         state.setSearchOpen(true);
+        return;
+      }
+
+      // Shift+R: check all feeds
+      if (key === "r" && event.shiftKey) {
+        event.preventDefault();
+        state.startPull();
         return;
       }
 
