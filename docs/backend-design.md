@@ -189,8 +189,7 @@ flowchart TD
 - `POST /feeds/:id/refresh`: refresh one feed
 - Manual refresh bypasses periodic skip logic
 - `POST /pull` and `GET /pull/status` are the tracked variant the UI uses:
-  pending feed IDs are kept in memory (`pull/progress.go`), so a restart
-  clears them and scheduled fetches never show as pending
+  see [fetch-progress.md](fetch-progress.md)
 
 ## 9. Security model
 
