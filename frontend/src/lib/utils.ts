@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import DOMPurify from "dompurify";
 import { getDateFormat, getPreferredLocale } from "@/store/preferences";
 
 export function cn(...inputs: ClassValue[]) {
@@ -47,16 +46,4 @@ export function formatDate(timestamp: number): string {
   if (days < 7) return rtf.format(-days, "day");
 
   return date.toLocaleDateString(locale);
-}
-
-export function extractSummary(html: string, maxLength = 120): string {
-  // Take textContent: the string output would re-escape entities (&nbsp;, &amp;).
-  const clean =
-    DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_DOM_FRAGMENT: true })
-      .textContent ?? "";
-  // Normalize whitespace
-  const text = clean.replace(/\s+/g, " ").trim();
-  if (text.length <= maxLength) return text;
-  // Truncate and add ellipsis
-  return text.slice(0, maxLength).trimEnd() + "…";
 }
