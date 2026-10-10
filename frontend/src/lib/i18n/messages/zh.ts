@@ -127,6 +127,7 @@ export const zhMessages: PartialMessages = {
   "feed.add.fullContentLabel": "始终加载全文",
   "feed.add.fullContentDescription": "打开文章时自动获取全文",
   "feed.add.validateTitle": "验证订阅地址",
+  "feed.add.lookingForFeed": "正在查找订阅源...",
   "feed.edit.deleteConfirm.description":
     "确定要取消订阅“{name}”吗？该订阅的所有文章将被删除。",
   "feed.edit.deleteConfirm.title": "取消订阅",

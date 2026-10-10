@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0x2E/fusion/internal/config"
 )
@@ -146,5 +147,39 @@ func TestValidateFeedReturnsCommonPathFeedForInvalidPath(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected discovery to surface %q for a broken entered path, got %+v", server.URL+"/feed.xml", body.Data.Feeds)
+	}
+}
+
+// A target that is itself a feed must be answered from one fetch, without
+// waiting for feedfinder's sequential probing of well-known paths.
+func TestValidateFeedDirectFeedSkipsPathProbing(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/blog/feed.atom" {
+			time.Sleep(2 * time.Second)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/atom+xml")
+		_, _ = fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Direct Blog</title><id>urn:x</id>
+<entry><id>e1</id><title>Post</title><link href="https://example.com/1"/><updated>2026-01-01T00:00:00Z</updated></entry>
+</feed>`)
+	}))
+	defer server.Close()
+
+	h := &Handler{config: &config.Config{AllowPrivateFeeds: true}}
+
+	start := time.Now()
+	code, body := postValidateFeed(t, h, server.URL+"/blog/feed.atom")
+	elapsed := time.Since(start)
+
+	if code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", code)
+	}
+	if elapsed > time.Second {
+		t.Fatalf("expected validate within 1s, took %s", elapsed)
+	}
+	if len(body.Data.Feeds) != 1 || body.Data.Feeds[0].Title != "Direct Blog" || body.Data.Feeds[0].Link != server.URL+"/blog/feed.atom" {
+		t.Fatalf("unexpected feeds: %+v", body.Data.Feeds)
 	}
 }
