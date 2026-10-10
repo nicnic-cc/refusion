@@ -5,6 +5,7 @@
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
 @import "./typeset.css";
+@import "./no-default-outline.css";
 
 @custom-variant dark (&:is(.dark *));
 
