@@ -203,10 +203,17 @@ export interface SearchFeed {
   site_url: string;
 }
 
+export interface TextPart {
+  text: string;
+  hit: boolean;
+}
+
 export interface SearchItem {
   id: number;
   feed_id: number;
   title: string;
+  title_parts: TextPart[];
+  excerpt_parts: TextPart[];
   pub_date: number;
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FileText, Keyboard, Loader2, Search, Settings } from "lucide-react";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { searchAPI } from "@/lib/api";
-import type { SearchFeed, SearchItem } from "@/lib/api/types";
+import type { SearchFeed, SearchItem, TextPart } from "@/lib/api/types";
 import {
   Command,
   CommandEmpty,
@@ -27,6 +27,18 @@ import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
+function HighlightedText({ parts }: { parts: TextPart[] }) {
+  return parts.map((part, i) =>
+    part.hit ? (
+      <mark key={i} className="bg-transparent font-semibold text-foreground">
+        {part.text}
+      </mark>
+    ) : (
+      <span key={i}>{part.text}</span>
+    ),
+  );
+}
+
 export function SearchDialog() {
   const { t } = useI18n();
   const { isSearchOpen, setSearchOpen, setEditFeedOpen, setShortcutsOpen } =
@@ -44,7 +56,7 @@ export function SearchDialog() {
     const timer = setTimeout(() => {
       setLoading(Boolean(query));
       setDebouncedQuery(query);
-    }, 500);
+    }, 250);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -180,16 +192,23 @@ export function SearchDialog() {
                       key={`article-${article.id}`}
                       value={`article-${article.id}`}
                       onSelect={() => handleSelectArticle(article.id)}
-                      className="flex-col items-start gap-1"
+                      className="items-start gap-2"
                     >
-                      <div className="flex w-full items-center gap-2">
-                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="flex-1 truncate">{article.title}</span>
-                      </div>
-                      <div className="flex w-full items-center gap-2 pl-6 text-xs text-muted-foreground">
-                        <span>{feed?.name ?? t("search.unknownFeed")}</span>
-                        <span>·</span>
-                        <span>{formatDate(article.pub_date)}</span>
+                      <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="truncate">
+                          <HighlightedText parts={article.title_parts} />
+                        </span>
+                        {article.excerpt_parts.length > 0 && (
+                          <div className="line-clamp-2 text-xs text-muted-foreground">
+                            <HighlightedText parts={article.excerpt_parts} />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{feed?.name ?? t("search.unknownFeed")}</span>
+                          <span>·</span>
+                          <span>{formatDate(article.pub_date)}</span>
+                        </div>
                       </div>
                     </CommandItem>
                   );
