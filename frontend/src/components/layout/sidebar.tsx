@@ -3,6 +3,12 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FeedList } from "@/components/feed/feed-list";
 import { sessionAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -63,34 +69,68 @@ export function Sidebar() {
       <FeedList />
 
       {/* Footer */}
-      <div className="p-2">
-        <button
-          className={cn(
-            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-            isFeedsPage
-              ? "bg-accent text-accent-foreground"
-              : "hover:bg-accent/50",
-          )}
+      <div className="flex h-14 shrink-0 items-center gap-2 border-t px-4">
+        <FooterButton
+          label={t("sidebar.manageFeeds")}
+          pressed={isFeedsPage}
           onClick={() => navigate({ to: "/feeds" })}
         >
-          <Rss className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span>{t("sidebar.manageFeeds")}</span>
-        </button>
-        <button
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/50"
+          <Rss className="h-4 w-4" />
+        </FooterButton>
+        <FooterButton
+          label={t("sidebar.settings")}
           onClick={() => setSettingsOpen(true)}
         >
-          <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span>{t("sidebar.settings")}</span>
-        </button>
-        <button
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/50"
+          <Settings className="h-4 w-4" />
+        </FooterButton>
+        <FooterButton
+          label={t("sidebar.signOut")}
+          className="ml-auto"
           onClick={handleSignOut}
         >
-          <LogOut className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span>{t("sidebar.signOut")}</span>
-        </button>
+          <LogOut className="h-4 w-4" />
+        </FooterButton>
       </div>
     </aside>
+  );
+}
+
+interface FooterButtonProps {
+  label: string;
+  pressed?: boolean;
+  className?: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+function FooterButton({
+  label,
+  pressed,
+  className,
+  onClick,
+  children,
+}: FooterButtonProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label={label}
+            aria-pressed={pressed}
+            className={cn(
+              "text-muted-foreground",
+              pressed && "bg-accent text-accent-foreground",
+              className,
+            )}
+            onClick={onClick}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
