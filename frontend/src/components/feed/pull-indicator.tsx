@@ -6,13 +6,27 @@ import { usePullStore } from "@/store/pull";
 const STATUS_HEIGHT_PX = 36;
 
 interface PullIndicatorProps {
+  // The sidebar pane also shows runs no pane started.
+  pane: "sidebar" | "list";
   distance: number;
   armed: boolean;
+  // Names what a release checks; without it the text says "all feeds".
+  scopeName?: string;
+  className?: string;
 }
 
-export function PullIndicator({ distance, armed }: PullIndicatorProps) {
+export function PullIndicator({
+  pane,
+  distance,
+  armed,
+  scopeName,
+  className,
+}: PullIndicatorProps) {
   const { t } = useI18n();
-  const phase = usePullStore((s) => s.phase);
+  const runPane = usePullStore((s) => s.pane);
+  const runPhase = usePullStore((s) => s.phase);
+  const mine = runPane === pane || (pane === "sidebar" && runPane === null);
+  const phase = mine ? runPhase : "idle";
   const done = usePullStore((s) => s.done);
   const total = usePullStore((s) => s.total);
   const newItems = usePullStore((s) => s.newItems);
@@ -45,7 +59,11 @@ export function PullIndicator({ distance, armed }: PullIndicatorProps) {
         <ArrowDown
           className={cn("h-4 w-4 transition-transform", armed && "rotate-180")}
         />
-        {armed ? t("pull.release") : t("pull.hint")}
+        {armed
+          ? scopeName
+            ? t("pull.releaseScope", { name: scopeName })
+            : t("pull.release")
+          : t("pull.hint")}
       </>
     );
   }
@@ -58,6 +76,7 @@ export function PullIndicator({ distance, armed }: PullIndicatorProps) {
       className={cn(
         "flex shrink-0 items-center justify-center gap-2 overflow-hidden text-xs text-muted-foreground",
         !pulling && "transition-[height] duration-200",
+        className,
       )}
     >
       {content}

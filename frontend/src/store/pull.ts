@@ -1,19 +1,28 @@
 import { create } from "zustand";
+import type { StartPullRequest } from "@/lib/api";
 
 const RESULT_MS = 1500;
 
 // starting: request in flight, no pending feed seen yet.
 type PullPhase = "idle" | "starting" | "running" | "result";
 
+// Which pane started the run; null for runs only seen through status
+// (add feed, import, Refresh All).
+export type PullPane = "sidebar" | "list" | null;
+
 interface PullState {
   phase: PullPhase;
+  pane: PullPane;
+  // What the mounted article list would check; null when none, or on Starred.
+  listScope: StartPullRequest | null;
+  setListScope: (scope: StartPullRequest | null) => void;
   done: number;
   total: number;
   // Server-wide new_items count when the run began.
   baseline: number;
   // New articles found, shown in the result phase.
   newItems: number;
-  starting: (baseline: number) => void;
+  starting: (baseline: number, pane: PullPane) => void;
   running: (pending: number, serverNewItems: number) => void;
   finish: (newItems: number) => void;
   reset: () => void;
@@ -27,15 +36,19 @@ function clearResultTimer() {
 
 export const usePullStore = create<PullState>((set, get) => ({
   phase: "idle",
+  pane: null,
+  listScope: null,
   done: 0,
   total: 0,
   baseline: 0,
   newItems: 0,
 
-  starting: (baseline) => {
+  setListScope: (listScope) => set({ listScope }),
+
+  starting: (baseline, pane) => {
     if (get().phase === "starting" || get().phase === "running") return;
     clearResultTimer();
-    set({ phase: "starting", done: 0, total: 0, baseline });
+    set({ phase: "starting", pane, done: 0, total: 0, baseline });
   },
 
   running: (pending, serverNewItems) => {
@@ -44,6 +57,7 @@ export const usePullStore = create<PullState>((set, get) => ({
       clearResultTimer();
       set({
         phase: "running",
+        pane: null,
         baseline: serverNewItems,
         total: pending,
         done: 0,
@@ -59,13 +73,13 @@ export const usePullStore = create<PullState>((set, get) => ({
     clearResultTimer();
     set({ phase: "result", newItems });
     resultTimer = window.setTimeout(
-      () => set({ phase: "idle", done: 0, total: 0 }),
+      () => set({ phase: "idle", pane: null, done: 0, total: 0 }),
       RESULT_MS,
     );
   },
 
   reset: () => {
     clearResultTimer();
-    set({ phase: "idle", done: 0, total: 0 });
+    set({ phase: "idle", pane: null, done: 0, total: 0 });
   },
 }));

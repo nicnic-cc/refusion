@@ -26,6 +26,7 @@ export function ShortcutsDialog() {
         { keys: "/", action: t("shortcuts.action.openSearch") },
         { keys: modKey(","), action: t("shortcuts.action.openSettings") },
         { keys: "?", action: t("shortcuts.action.showHelp") },
+        { keys: "r", action: t("shortcuts.action.checkView") },
         { keys: "Shift+R", action: t("shortcuts.action.checkAll") },
         { keys: "Esc", action: t("shortcuts.action.closeDialog") },
       ],

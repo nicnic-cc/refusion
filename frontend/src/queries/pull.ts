@@ -6,7 +6,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { pullAPI, type PullStatus, type StartPullRequest } from "@/lib/api";
-import { usePullStore } from "@/store/pull";
+import { usePullStore, type PullPane } from "@/store/pull";
 import { queryKeys } from "./keys";
 
 const POLL_BUSY_MS = 1000;
@@ -61,16 +61,21 @@ export function applyPullStatus(
   store.finish(Math.max(0, status.new_items - store.baseline));
 }
 
+interface StartPullVars {
+  pane?: PullPane;
+  scope?: StartPullRequest;
+}
+
 export function useStartPull() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (req: StartPullRequest | void) => {
-      const res = await pullAPI.start(req ?? {});
+    mutationFn: async (vars: StartPullVars | void) => {
+      const res = await pullAPI.start(vars?.scope ?? {});
       return res.data!;
     },
-    onMutate: () => {
+    onMutate: (vars) => {
       const known = qc.getQueryData<PullStatus>(pullQueryKey);
-      usePullStore.getState().starting(known?.new_items ?? 0);
+      usePullStore.getState().starting(known?.new_items ?? 0, vars?.pane ?? null);
     },
     onSuccess: async ({ queued }) => {
       const status = await qc.fetchQuery({
