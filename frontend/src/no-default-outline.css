@@ -1,0 +1,2 @@
+/* Browser default focus outline pops up on clicked rows after keyboard shortcuts; components that style their own focus still win. */
+@layer base { :focus-visible { outline-style: none; } }
