@@ -1,23 +1,17 @@
 import { useEffect, useRef } from "react";
-import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
+import { Circle, Star, ExternalLink } from "lucide-react";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate, extractSummary } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 
-// Both hover variants are needed: ghost's dark:hover:bg-muted/50 would
-// otherwise fade the resting bg-muted on hover in dark mode.
-const mutedAction =
-  "bg-muted hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)] dark:hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_12%)]";
+// Actions sit in the meta row: read stays visible but dimmed, the others appear
+// on hover/focus and keep their space so the date doesn't shift.
+const rowAction = "opacity-60 group-hover:opacity-100 group-focus-within:opacity-100";
+const hoverAction = "invisible group-hover:visible group-focus-within:visible";
 const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
-// The actions float over the title, so tints must be opaque (mixed from
-// --background), not /N alpha utilities.
-const readAction =
-  "bg-[color-mix(in_oklch,var(--background),var(--primary)_10%)] hover:bg-[color-mix(in_oklch,var(--background),var(--primary)_20%)] dark:hover:bg-[color-mix(in_oklch,var(--background),var(--primary)_20%)]";
-const starredAction =
-  "bg-amber-100 hover:bg-amber-200 dark:bg-[color-mix(in_oklch,var(--background),var(--color-amber-950)_40%)] dark:hover:bg-[color-mix(in_oklch,var(--background),var(--color-amber-950)_70%)]";
 
 interface ArticleItemProps {
   article: Item;
@@ -85,80 +79,74 @@ export function ArticleItem({
         }
       }}
       className={cn(
-        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 sm:px-6 text-left transition-colors hover:bg-accent/50",
+        "group flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 sm:px-6 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
       )}
     >
-      {/* Article Content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2 text-xs">
+          <FeedFavicon src={feedFaviconUrl} className="h-3.5 w-3.5 rounded-sm" />
+          <span className="min-w-0 flex-1 truncate font-medium text-muted-foreground">
+            {feedName}
+          </span>
+          <span className="shrink-0 text-muted-foreground">
+            {formatDate(article.pub_date)}
+          </span>
+          <div className="-my-1 flex shrink-0 items-center">
+            <TooltipButton
+              variant="ghost"
+              size="icon-xs"
+              label={
+                article.unread
+                  ? t("article.action.markRead")
+                  : t("article.action.markUnread")
+              }
+              onClick={handleToggleRead}
+              disabled={!canToggleRead}
+              className={rowAction}
+            >
+              <Circle
+                className={
+                  article.unread ? "fill-primary text-primary" : mutedIcon
+                }
+              />
+            </TooltipButton>
+            <TooltipButton
+              variant="ghost"
+              size="icon-xs"
+              label={
+                isStarred ? t("article.action.unstar") : t("article.action.star")
+              }
+              onClick={handleToggleStar}
+              className={hoverAction}
+            >
+              <Star
+                className={
+                  isStarred ? "fill-amber-500 text-amber-500" : mutedIcon
+                }
+              />
+            </TooltipButton>
+            <TooltipButton
+              variant="ghost"
+              size="icon-xs"
+              label={t("article.action.openInBrowser")}
+              href={safeArticleLink ?? undefined}
+              disabled={!safeArticleLink}
+              onClick={(e) => e.stopPropagation()}
+              className={hoverAction}
+            >
+              <ExternalLink className={mutedIcon} />
+            </TooltipButton>
+          </div>
+        </div>
         <h3
           className={cn(
-            "line-clamp-2 text-[15px] leading-snug font-medium",
+            "line-clamp-3 text-[15px] leading-snug font-medium",
             article.unread ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {article.title}
         </h3>
-        <p className="line-clamp-2 text-sm text-muted-foreground">
-          {extractSummary(article.content, 150)}
-        </p>
-        <div className="flex items-center gap-2 text-xs">
-          <FeedFavicon src={feedFaviconUrl} className="h-3.5 w-3.5 rounded-sm" />
-          <span className="truncate font-medium text-muted-foreground">
-            {feedName}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="shrink-0 text-muted-foreground">
-            {formatDate(article.pub_date)}
-          </span>
-        </div>
-      </div>
-
-      {/* Article Actions */}
-      <div className="absolute right-2 top-2 hidden items-center gap-1 group-hover:flex">
-        <TooltipButton
-          variant="ghost"
-          label={
-            article.unread
-              ? t("article.action.markRead")
-              : t("article.action.markUnread")
-          }
-          onClick={handleToggleRead}
-          disabled={!canToggleRead}
-          className={article.unread ? mutedAction : readAction}
-        >
-          {article.unread ? (
-            <Circle className={mutedIcon} />
-          ) : (
-            <CircleCheck className="text-primary" />
-          )}
-        </TooltipButton>
-        <TooltipButton
-          variant="ghost"
-          label={
-            isStarred ? t("article.action.unstar") : t("article.action.star")
-          }
-          onClick={handleToggleStar}
-          className={isStarred ? starredAction : mutedAction}
-        >
-          <Star
-            className={cn(
-              isStarred
-                ? "fill-amber-500 text-amber-500"
-                : mutedIcon,
-            )}
-          />
-        </TooltipButton>
-        <TooltipButton
-          variant="ghost"
-          label={t("article.action.openInBrowser")}
-          href={safeArticleLink ?? undefined}
-          disabled={!safeArticleLink}
-          onClick={(e) => e.stopPropagation()}
-          className={mutedAction}
-        >
-          <ExternalLink className={mutedIcon} />
-        </TooltipButton>
       </div>
     </div>
   );
