@@ -2,6 +2,7 @@ import { Search, Settings, Rss } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/logo";
 import { TooltipButton } from "@/components/common/tooltip-button";
+import { modKey } from "@/lib/shortcut-keys";
 import { FeedList } from "@/components/feed/feed-list";
 import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
@@ -21,7 +22,7 @@ export function Sidebar() {
         <div className="ml-auto flex items-center gap-1">
           <TooltipButton
             label={t("common.search")}
-            shortcut="Cmd+K, /"
+            shortcut={`${modKey("K")}, /`}
             className="text-muted-foreground"
             onClick={() => setSearchOpen(true)}
           >
@@ -38,7 +39,7 @@ export function Sidebar() {
           </TooltipButton>
           <TooltipButton
             label={t("sidebar.settings")}
-            shortcut="Cmd+,"
+            shortcut={modKey(",")}
             className="text-muted-foreground"
             onClick={() => setSettingsOpen(true)}
           >
