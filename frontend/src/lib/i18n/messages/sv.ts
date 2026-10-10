@@ -122,6 +122,8 @@ export const svMessages: PartialMessages = {
   "feed.add.urlLabel": "Flödes-URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
   "feed.add.refreshFrequencyLabel": "Uppdateringsfrekvens",
+  "feed.add.fullContentLabel": "Läs alltid in hela artikeln",
+  "feed.add.fullContentDescription": "Hämta hela texten automatiskt när en artikel öppnas",
   "feed.add.validateTitle": "Verifiera flödes-URL",
   "feed.edit.deleteConfirm.description":
     'Är du säker på att du vill avsluta prenumerationen på "{name}"? Alla artiklar från detta flöde kommer att raderas.',

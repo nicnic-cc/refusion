@@ -13,7 +13,7 @@ import (
 // feedSelectColumns is the shared feed + fetch-state projection used by every
 // feed read. ListFeeds appends the two item-count aggregates on top of it.
 const feedSelectColumns = `f.id, f.group_id, f.name, f.link, f.site_url,
-	       f.suspended, f.proxy, f.refresh_interval_seconds, f.created_at, f.updated_at,
+	       f.suspended, f.proxy, f.refresh_interval_seconds, f.full_content, f.created_at, f.updated_at,
 	       COALESCE(fs.etag, ''), COALESCE(fs.last_modified, ''), COALESCE(fs.cache_control, ''),
 	       COALESCE(fs.expires_at, 0), COALESCE(fs.last_checked_at, 0), COALESCE(fs.next_check_at, 0),
 	       COALESCE(fs.last_http_status, 0), COALESCE(fs.retry_after_until, 0), COALESCE(fs.last_success_at, 0),
@@ -27,7 +27,7 @@ type rowScanner interface {
 // withCounts is set, and normalizes NULL and 0/1 columns into the model.
 func scanFeed(row rowScanner, withCounts bool) (*model.Feed, error) {
 	f := &model.Feed{}
-	var suspended int
+	var suspended, fullContent int
 	var refreshIntervalSeconds sql.NullInt64
 	dest := []any{
 		&f.ID,
@@ -38,6 +38,7 @@ func scanFeed(row rowScanner, withCounts bool) (*model.Feed, error) {
 		&suspended,
 		&f.Proxy,
 		&refreshIntervalSeconds,
+		&fullContent,
 		&f.CreatedAt,
 		&f.UpdatedAt,
 		&f.FetchState.ETag,
@@ -60,6 +61,7 @@ func scanFeed(row rowScanner, withCounts bool) (*model.Feed, error) {
 		return nil, err
 	}
 	f.Suspended = intToBool(suspended)
+	f.FullContent = intToBool(fullContent)
 	if refreshIntervalSeconds.Valid {
 		f.RefreshIntervalSeconds = &refreshIntervalSeconds.Int64
 	}
@@ -75,7 +77,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
 		LEFT JOIN items i ON i.feed_id = f.id
 		GROUP BY f.id, f.group_id, f.name, f.link, f.site_url,
-		         f.suspended, f.proxy, f.refresh_interval_seconds, f.created_at, f.updated_at,
+		         f.suspended, f.proxy, f.refresh_interval_seconds, f.full_content, f.created_at, f.updated_at,
 		         fs.etag, fs.last_modified, fs.cache_control, fs.expires_at, fs.last_checked_at,
 		         fs.next_check_at, fs.last_http_status, fs.retry_after_until, fs.last_success_at,
 		         fs.last_error_at, fs.last_error, fs.consecutive_failures
@@ -160,7 +162,7 @@ func (s *Store) NextWakeTime() (next int64, ok bool, err error) {
 	return null.Int64, true, nil
 }
 
-func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, refreshIntervalSeconds *int64) (*model.Feed, error) {
+func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, refreshIntervalSeconds *int64, fullContent bool) (*model.Feed, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -168,10 +170,11 @@ func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, ref
 	defer tx.Rollback()
 
 	result, err := tx.Exec(`
-		INSERT INTO feeds (group_id, name, link, site_url, proxy, refresh_interval_seconds)
-		VALUES (:group_id, :name, :link, :site_url, :proxy, :refresh_interval_seconds)
+		INSERT INTO feeds (group_id, name, link, site_url, proxy, refresh_interval_seconds, full_content)
+		VALUES (:group_id, :name, :link, :site_url, :proxy, :refresh_interval_seconds, :full_content)
 	`, sql.Named("group_id", groupID), sql.Named("name", name), sql.Named("link", link),
-		sql.Named("site_url", siteURL), sql.Named("proxy", proxy), sql.Named("refresh_interval_seconds", refreshIntervalSeconds))
+		sql.Named("site_url", siteURL), sql.Named("proxy", proxy), sql.Named("refresh_interval_seconds", refreshIntervalSeconds),
+		sql.Named("full_content", boolToInt(fullContent)))
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +242,7 @@ type UpdateFeedParams struct {
 	// are set.
 	RefreshIntervalSeconds *int64
 	ClearRefreshInterval   bool
+	FullContent            *bool
 }
 
 // UpdateFeed performs partial update of feed fields using a single dynamic UPDATE query.
@@ -269,6 +273,10 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	if params.Proxy != nil {
 		setClauses = append(setClauses, "proxy = :proxy")
 		args = append(args, sql.Named("proxy", *params.Proxy))
+	}
+	if params.FullContent != nil {
+		setClauses = append(setClauses, "full_content = :full_content")
+		args = append(args, sql.Named("full_content", boolToInt(*params.FullContent)))
 	}
 	switch {
 	case params.ClearRefreshInterval:

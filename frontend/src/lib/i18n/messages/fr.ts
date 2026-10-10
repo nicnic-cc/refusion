@@ -122,6 +122,8 @@ export const frMessages: PartialMessages = {
   "feed.add.urlLabel": "URL du flux",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
   "feed.add.refreshFrequencyLabel": "Frequence d'actualisation",
+  "feed.add.fullContentLabel": "Toujours charger l'article complet",
+  "feed.add.fullContentDescription": "Récupérer automatiquement le texte intégral à l'ouverture d'un article",
   "feed.add.validateTitle": "Vérifier l'URL du flux",
   "feed.edit.deleteConfirm.description":
     'Voulez-vous vraiment vous désabonner de "{name}" ? Tous les articles de ce flux seront supprimés.',

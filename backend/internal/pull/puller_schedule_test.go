@@ -33,10 +33,10 @@ func TestPullDueOnlyFetchesDueFeeds(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := st.CreateFeed(1, "Due", server.URL+"/due", "", "", nil); err != nil {
+	if _, err := st.CreateFeed(1, "Due", server.URL+"/due", "", "", nil, false); err != nil {
 		t.Fatalf("create due feed: %v", err)
 	}
-	future, err := st.CreateFeed(1, "Future", server.URL+"/future", "", "", nil)
+	future, err := st.CreateFeed(1, "Future", server.URL+"/future", "", "", nil, false)
 	if err != nil {
 		t.Fatalf("create future feed: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestScheduleDelayBounds(t *testing.T) {
 	}
 
 	interval := int64(900)
-	feed, err := st.CreateFeed(1, "Feed", "https://example.com/feed", "", "", &interval)
+	feed, err := st.CreateFeed(1, "Feed", "https://example.com/feed", "", "", &interval, false)
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestStartSleepsUntilDueAndWakes(t *testing.T) {
 	}))
 	defer server.Close()
 
-	feed, err := st.CreateFeed(1, "Feed", server.URL+"/feed", "", "", nil)
+	feed, err := st.CreateFeed(1, "Feed", server.URL+"/feed", "", "", nil, false)
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}

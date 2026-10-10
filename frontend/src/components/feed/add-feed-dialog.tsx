@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,7 @@ export function AddFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [refreshInterval, setRefreshInterval] = useState<string>("");
+  const [fullContent, setFullContent] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -75,6 +77,7 @@ export function AddFeedDialog() {
     setGroupId("");
     setProxy("");
     setRefreshInterval("");
+    setFullContent(false);
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setIsFeedSelectOpen(false);
@@ -196,6 +199,10 @@ export function AddFeedDialog() {
 
       if (refreshInterval && refreshInterval !== String(globalPullInterval)) {
         request.refresh_interval_seconds = parseInt(refreshInterval, 10);
+      }
+
+      if (fullContent) {
+        request.full_content = true;
       }
 
       await createFeed.mutateAsync(request);
@@ -344,6 +351,24 @@ export function AddFeedDialog() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <label
+                      htmlFor="add-feed-full-content"
+                      className="text-[13px] font-medium"
+                    >
+                      {t("feed.add.fullContentLabel")}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {t("feed.add.fullContentDescription")}
+                    </p>
+                  </div>
+                  <Switch
+                    id="add-feed-full-content"
+                    checked={fullContent}
+                    onCheckedChange={setFullContent}
+                  />
                 </div>
                 <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
                   {t("feed.add.proxyLabel")}

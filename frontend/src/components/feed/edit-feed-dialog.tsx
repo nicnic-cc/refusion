@@ -57,6 +57,7 @@ export function EditFeedDialog() {
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<string>("");
+  const [fullContent, setFullContent] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -92,7 +93,10 @@ export function EditFeedDialog() {
       // live global fallback, and an untouched save sends nothing.
       const stored = editingFeed.refresh_interval_seconds;
       setRefreshInterval(stored && stored > 0 ? stored.toString() : "");
-      setIsAdvancedOpen(!!editingFeed.proxy || stored != null);
+      setFullContent(editingFeed.full_content);
+      setIsAdvancedOpen(
+        !!editingFeed.proxy || stored != null || editingFeed.full_content,
+      );
       setIsMobileErrorTooltipOpen(false);
     }
   }
@@ -104,6 +108,7 @@ export function EditFeedDialog() {
     setProxy("");
     setSuspended(false);
     setRefreshInterval("");
+    setFullContent(false);
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -160,6 +165,10 @@ export function EditFeedDialog() {
       if (selected !== (stored && stored > 0 ? stored : globalPullInterval)) {
         request.refresh_interval_seconds =
           selected === globalPullInterval ? 0 : selected;
+      }
+
+      if (fullContent !== editingFeed.full_content) {
+        request.full_content = fullContent;
       }
 
       if (Object.keys(request).length === 0) {
@@ -366,6 +375,24 @@ export function EditFeedDialog() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <label
+                      htmlFor="edit-feed-full-content"
+                      className="text-[13px] font-medium"
+                    >
+                      {t("feed.add.fullContentLabel")}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {t("feed.add.fullContentDescription")}
+                    </p>
+                  </div>
+                  <Switch
+                    id="edit-feed-full-content"
+                    checked={fullContent}
+                    onCheckedChange={setFullContent}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="edit-feed-proxy" className="text-[13px] font-medium">
