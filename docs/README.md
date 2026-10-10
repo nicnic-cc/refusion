@@ -28,5 +28,7 @@
   and cascade design
 - `frontend-design.md`: frontend interaction model, URL state, data-flow
   and read-state undo design
+- `fetch-progress.md` (fork): pull to refresh, check progress, the new
+  articles pill and per-feed check state
 - `old-database-schema.md`: legacy pre-migrations schema snapshot, kept
   for migration work only
