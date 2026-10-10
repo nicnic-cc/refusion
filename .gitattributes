@@ -1,0 +1,2 @@
+# Fork-owned README: keep ours on upstream merges (needs: git config merge.ours.driver true)
+README.md merge=ours
