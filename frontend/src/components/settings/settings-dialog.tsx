@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { Bug, Download, Info, Keyboard, Settings as SettingsIcon } from "lucide-react";
+import { Bug, Download, Keyboard } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
@@ -30,7 +31,6 @@ import {
   readingLayoutOptions,
   type AppLocale,
 } from "@/store/preferences";
-import { cn } from "@/lib/utils";
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -89,30 +89,6 @@ function useApplySetting() {
       }
     },
     [t],
-  );
-}
-
-interface NavItemProps {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}
-
-function NavItem({ icon, label, active, onClick }: NavItemProps) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors sm:w-full sm:gap-2.5 sm:px-2",
-        active
-          ? "bg-accent font-medium text-foreground"
-          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-      )}
-    >
-      {icon}
-      <span className="whitespace-nowrap">{label}</span>
-    </button>
   );
 }
 
@@ -485,7 +461,7 @@ function AboutContent() {
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 pb-8">
       <div className="text-center">
         <h3>
           <Logo withName className="mx-auto block h-9" />
@@ -542,45 +518,25 @@ export function SettingsDialog() {
   const { isSettingsOpen, setSettingsOpen } = useUIStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
-  const tabTitles: Record<SettingsTab, string> = {
-    general: t("settings.tab.general"),
-    about: t("settings.tab.about"),
-  };
-
   return (
     <Dialog open={isSettingsOpen} onOpenChange={setSettingsOpen}>
-      <DialogContent className="flex max-h-[85vh] flex-col sm:flex-row h-auto sm:h-[560px] sm:max-w-4xl gap-0 overflow-hidden p-0">
-        {/* Sidebar (desktop) / Tab bar (mobile) */}
-        <div className="flex shrink-0 flex-row border-b border-border bg-muted/30 px-3 pt-3 sm:w-[200px] sm:flex-col sm:border-b-0 sm:border-r sm:pt-4">
-          <h2 className="hidden px-2 text-sm font-semibold sm:block">
-            {t("common.settings")}
-          </h2>
-          <nav className="flex gap-0.5 sm:mt-2 sm:flex-col">
-            <NavItem
-              icon={<SettingsIcon className="h-4 w-4" />}
-              label={t("settings.tab.general")}
-              active={activeTab === "general"}
-              onClick={() => setActiveTab("general")}
-            />
-            <NavItem
-              icon={<Info className="h-4 w-4" />}
-              label={t("settings.tab.about")}
-              active={activeTab === "about"}
-              onClick={() => setActiveTab("about")}
-            />
-          </nav>
+      <DialogContent className="flex max-h-[85vh] flex-col h-auto sm:h-[680px] sm:max-w-2xl gap-0 overflow-hidden p-0 [&>[data-slot=dialog-close]]:top-3">
+        <div className="flex h-14 shrink-0 items-center gap-4 border-b bg-muted/30 pl-5 pr-14 sm:pl-6">
+          <h2 className="text-lg font-semibold">{t("common.settings")}</h2>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as SettingsTab)}
+          >
+            <TabsList>
+              <TabsTrigger value="general">{t("settings.tab.general")}</TabsTrigger>
+              <TabsTrigger value="about">{t("settings.tab.about")}</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Content */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
-          <h2 className="mb-4 shrink-0 text-lg font-semibold sm:mb-6">
-            {tabTitles[activeTab]}
-          </h2>
-
-          <div className="flex-1 overflow-y-auto">
-            {activeTab === "general" && <GeneralContent />}
-            {activeTab === "about" && <AboutContent />}
-          </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5 sm:p-6">
+          {activeTab === "general" && <GeneralContent />}
+          {activeTab === "about" && <AboutContent />}
         </div>
       </DialogContent>
     </Dialog>
