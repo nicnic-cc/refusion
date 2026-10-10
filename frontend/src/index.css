@@ -148,7 +148,7 @@
   --typeset-font-body: var(--font-geist);
   --typeset-font-heading: var(--font-geist);
   --typeset-font-mono: var(--font-geist-mono);
-  --typeset-size: 15px;
+  --typeset-size: calc(15px * var(--article-scale, 1));
   --typeset-leading: 1.75;
   --typeset-flow: 1.25em;
 }
