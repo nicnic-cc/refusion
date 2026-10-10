@@ -3,16 +3,10 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipButton } from "@/components/common/tooltip-button";
 import { FeedList } from "@/components/feed/feed-list";
 import { sessionAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store";
 import { resetSessionGuard } from "@/routes/__root";
 
@@ -70,67 +64,30 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-t px-4">
-        <FooterButton
+        <TooltipButton
           label={t("sidebar.manageFeeds")}
+          className="text-muted-foreground"
           pressed={isFeedsPage}
           onClick={() => navigate({ to: "/feeds" })}
         >
           <Rss className="h-4 w-4" />
-        </FooterButton>
-        <FooterButton
+        </TooltipButton>
+        <TooltipButton
           label={t("sidebar.settings")}
+          className="text-muted-foreground"
           onClick={() => setSettingsOpen(true)}
         >
           <Settings className="h-4 w-4" />
-        </FooterButton>
-        <FooterButton
+        </TooltipButton>
+        <TooltipButton
           label={t("sidebar.signOut")}
-          className="ml-auto"
+          className="ml-auto text-muted-foreground"
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
-        </FooterButton>
+        </TooltipButton>
       </div>
     </aside>
   );
 }
 
-interface FooterButtonProps {
-  label: string;
-  pressed?: boolean;
-  className?: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-function FooterButton({
-  label,
-  pressed,
-  className,
-  onClick,
-  children,
-}: FooterButtonProps) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="outline"
-            size="icon-sm"
-            aria-label={label}
-            aria-pressed={pressed}
-            className={cn(
-              "text-muted-foreground",
-              pressed && "bg-accent text-accent-foreground",
-              className,
-            )}
-            onClick={onClick}
-          />
-        }
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
