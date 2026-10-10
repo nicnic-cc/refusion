@@ -20,7 +20,7 @@ export function ArticlePage() {
   return (
     <AppLayout readingPane>
       <div className="flex h-full">
-        <div className="h-full w-[400px] shrink-0 border-r">
+        <div className="h-full w-80 shrink-0 border-r">
           <ArticleList />
         </div>
         <ArticlePane />
