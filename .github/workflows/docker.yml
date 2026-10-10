@@ -1,19 +1,10 @@
 name: docker
 
+# fork: images only on published releases (no :main image per push); the
+# push-only steps below are left in place to keep upstream merges small
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - main
-    paths:
-      - backend/**
-      - frontend/**
-      - Dockerfile
-      - .dockerignore
-      - scripts.sh
-      - .github/workflows/docker.yml
-      - .github/actions/setup-toolchains/action.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
