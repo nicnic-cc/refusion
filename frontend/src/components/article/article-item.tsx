@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Circle, Star, ExternalLink } from "lucide-react";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { useI18n } from "@/lib/i18n";
@@ -15,7 +15,7 @@ const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
 
 interface ArticleItemProps {
   article: Item;
-  selectedArticleId: number | null;
+  isSelected: boolean;
   onSelectArticle: (articleId: number | null) => void;
   onToggleRead: (article: Item) => Promise<void>;
   onToggleStar: (article: Item) => Promise<void>;
@@ -25,9 +25,9 @@ interface ArticleItemProps {
   feedFaviconUrl: string | null;
 }
 
-export function ArticleItem({
+export const ArticleItem = memo(function ArticleItem({
   article,
-  selectedArticleId,
+  isSelected,
   onSelectArticle,
   onToggleRead,
   onToggleStar,
@@ -38,7 +38,6 @@ export function ArticleItem({
 }: ArticleItemProps) {
   const { t } = useI18n();
 
-  const isSelected = selectedArticleId === article.id;
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,4 +149,4 @@ export function ArticleItem({
       </div>
     </div>
   );
-}
+});

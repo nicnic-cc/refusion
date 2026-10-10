@@ -1,4 +1,3 @@
-import { useEffect, useEffectEvent, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -19,33 +18,6 @@ export function ArticleListFooter({
 }: ArticleListFooterProps) {
   const { t } = useI18n();
   const articleLoading = usePreferencesStore((s) => s.articleLoading);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // fetchNextPage is a fresh closure each render; an effect event keeps the
-  // observer from being rebuilt for that alone.
-  const onSentinelVisible = useEffectEvent(fetchNextPage);
-
-  const observing =
-    articleLoading === "scroll" && hasMore && !isLoadingMore && !isError;
-
-  // Re-attaching after each load makes the observer report the current state
-  // again, so a page too short to fill the viewport still pulls the next one.
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!observing || !sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) onSentinelVisible();
-      },
-      {
-        root: sentinel.closest('[data-slot="scroll-area-viewport"]'),
-        rootMargin: "0px",
-      },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [observing]);
 
   if (!hasMore) return null;
 
@@ -69,7 +41,7 @@ export function ArticleListFooter({
   }
 
   return (
-    <div ref={sentinelRef} className="flex justify-center py-4">
+    <div className="flex justify-center py-4">
       {isError ? (
         <Button variant="outline" size="sm" onClick={fetchNextPage}>
           {t("article.list.retry")}
