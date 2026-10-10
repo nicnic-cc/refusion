@@ -94,7 +94,9 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
 ## 7. Search and bookmarks
 
 - Unified search (`GET /api/search`) returns feeds and items in one
-  request; results open the feed context or article drawer.
+  request; results open the feed context or article drawer. Article
+  results show an excerpt with matched words bold, built in Go because
+  `items_fts` can't give clean snippets (migration 901).
 - The "starred" view is powered by bookmarks, which are content
   snapshots — starred items survive deletion of the source feed/item
   (see the bookmarks rationale in `backend-design.md` §5).

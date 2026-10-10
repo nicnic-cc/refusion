@@ -403,6 +403,9 @@ type SearchItemResult struct {
 	FeedID  int64  `json:"feed_id"`
 	Title   string `json:"title"`
 	PubDate int64  `json:"pub_date"`
+
+	TitleParts   []TextPart `json:"title_parts"`
+	ExcerptParts []TextPart `json:"excerpt_parts"`
 }
 
 func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error) {
@@ -412,7 +415,7 @@ func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error
 	}
 
 	rows, err := s.db.Query(`
-		SELECT i.id, i.feed_id, i.title, i.pub_date
+		SELECT i.id, i.feed_id, i.title, i.pub_date, COALESCE(i.content, '')
 		FROM items_fts
 		INNER JOIN items i ON i.id = items_fts.rowid
 		WHERE items_fts MATCH :query
@@ -427,9 +430,11 @@ func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error
 	items := []*SearchItemResult{}
 	for rows.Next() {
 		i := &SearchItemResult{}
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate); err != nil {
+		var content string
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate, &content); err != nil {
 			return nil, err
 		}
+		fillSearchParts(i, content, query)
 		items = append(items, i)
 	}
 	return items, rows.Err()
@@ -456,7 +461,7 @@ func buildFTSQuery(query string) string {
 
 func (s *Store) searchItemsLike(query string, limit int) ([]*SearchItemResult, error) {
 	rows, err := s.db.Query(`
-		SELECT id, feed_id, title, pub_date
+		SELECT id, feed_id, title, pub_date, COALESCE(content, '')
 		FROM items
 		WHERE title LIKE :query OR content LIKE :query
 		ORDER BY pub_date DESC, id DESC
@@ -470,9 +475,11 @@ func (s *Store) searchItemsLike(query string, limit int) ([]*SearchItemResult, e
 	items := []*SearchItemResult{}
 	for rows.Next() {
 		i := &SearchItemResult{}
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate); err != nil {
+		var content string
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.Title, &i.PubDate, &content); err != nil {
 			return nil, err
 		}
+		fillSearchParts(i, content, query)
 		items = append(items, i)
 	}
 	return items, rows.Err()
