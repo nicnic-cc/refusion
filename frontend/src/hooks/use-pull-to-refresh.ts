@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 
 const VIEWPORT_SELECTOR = "[data-slot=scroll-area-viewport]";
-const THRESHOLD_PX = 64;
-const MAX_PULL_PX = 96;
-const RESISTANCE = 0.5;
+// How far the content moves down: arms at THRESHOLD_PX, stops at MAX_PULL_PX.
+const THRESHOLD_PX = 40;
+const MAX_PULL_PX = 56;
+// Finger or wheel px needed to arm. Wheel needs more: a mouse notch or
+// trackpad flick at the top sends 100+ px, which would fire by accident.
+const TOUCH_TRAVEL_PX = 128;
+const WHEEL_TRAVEL_PX = 220;
+const TOUCH_RESISTANCE = THRESHOLD_PX / TOUCH_TRAVEL_PX;
+const WHEEL_RESISTANCE = THRESHOLD_PX / WHEEL_TRAVEL_PX;
 const LINE_HEIGHT_PX = 16;
 // A wheel gesture starts after this much silence and ends after RELEASE_MS.
 const GESTURE_GAP_MS = 200;
@@ -19,8 +25,8 @@ function scrollElementOf(container: HTMLElement): HTMLElement {
   return container.querySelector<HTMLElement>(VIEWPORT_SELECTOR) ?? container;
 }
 
-function shownDistance(rawPx: number): number {
-  return Math.min(MAX_PULL_PX, rawPx * RESISTANCE);
+function shownDistance(rawPx: number, resistance: number): number {
+  return Math.min(MAX_PULL_PX, rawPx * resistance);
 }
 
 /**
@@ -66,7 +72,7 @@ export function usePullToRefresh({
       const dy = e.touches[0].clientY - touchStartY;
       if (dy > 0 && scrollElementOf(container).scrollTop <= 0) {
         if (e.cancelable) e.preventDefault();
-        show(shownDistance(dy));
+        show(shownDistance(dy, TOUCH_RESISTANCE));
       } else if (current > 0) {
         show(0);
       }
@@ -99,7 +105,7 @@ export function usePullToRefresh({
       raw = Math.max(0, raw - e.deltaY * unit);
       if (raw > 0) {
         if (e.cancelable) e.preventDefault();
-        show(shownDistance(raw));
+        show(shownDistance(raw, WHEEL_RESISTANCE));
       } else if (current > 0) {
         show(0);
       }
