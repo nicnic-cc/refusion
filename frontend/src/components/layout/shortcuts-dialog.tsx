@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
 
@@ -58,11 +58,11 @@ export function ShortcutsDialog() {
 
   return (
     <Dialog open={isShortcutsOpen} onOpenChange={setShortcutsOpen}>
-      <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("shortcuts.title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
+      <DialogContent className="flex max-h-[80vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[560px] [&>[data-slot=dialog-close]]:top-3">
+        <div className="flex h-14 shrink-0 items-center border-b bg-muted/30 pl-6 pr-14">
+          <DialogTitle className="text-lg font-semibold">{t("shortcuts.title")}</DialogTitle>
+        </div>
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
           {sections.map((section) => (
             <section key={section.title} className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
