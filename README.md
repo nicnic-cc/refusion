@@ -55,3 +55,6 @@ Design notes and API conventions: [`docs/`](./docs/README.md).
 
 - [Fusion](https://github.com/0x2E/fusion) by Rook1e, which refusion is forked from
 - Feed parsing by [gofeed](https://github.com/mmcdole/gofeed)
+
+> [!NOTE]
+> **Built with AI help.** Most of what refusion adds to Fusion was written by coding agents, then reviewed, tried in the app and kept or thrown out by me. It's a personal tool shaped around how I read, not a polished product. The reader itself stays AI-free: no summaries, no recommendations, just your feeds.
