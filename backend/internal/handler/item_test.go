@@ -53,7 +53,7 @@ func TestListItemsCursorPagination(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateGroup: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/feed", "https://example.com", "", nil)
+	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/feed", "https://example.com", "", nil, false)
 	if err != nil {
 		t.Fatalf("CreateFeed: %v", err)
 	}

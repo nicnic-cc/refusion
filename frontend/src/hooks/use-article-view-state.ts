@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
@@ -140,6 +140,10 @@ export function useArticleViewState() {
     null,
   );
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  // Last item whose full text was requested. Auto-load skips it (so w back to
+  // feed text, or a failure, sticks) and older responses that land late are
+  // dropped instead of overwriting it.
+  const requestedIdRef = useRef<number | null>(null);
   const showingFullText = article !== null && fullText?.id === article.id;
   const loadingFullText = article !== null && loadingId === article.id;
   // Bookmark-only snapshots have negative ids and no server item to fetch for.
@@ -153,17 +157,33 @@ export function useArticleViewState() {
       return;
     }
     const id = article.id;
+    requestedIdRef.current = id;
     setLoadingId(id);
     try {
       const res = await itemAPI.getFullContent(id);
-      setFullText({ id, html: res.data?.content ?? "" });
+      if (requestedIdRef.current === id) {
+        setFullText({ id, html: res.data?.content ?? "" });
+      }
     } catch (error) {
       console.error("Failed to load full article:", error);
-      toast.error(t("article.toast.fullTextFailed"));
+      if (requestedIdRef.current === id) {
+        toast.error(t("article.toast.fullTextFailed"));
+      }
     } finally {
       setLoadingId((current) => (current === id ? null : current));
     }
   };
+
+  const autoLoadFullText = useEffectEvent(() => {
+    void handleToggleFullText();
+  });
+  const autoLoadId =
+    feed?.full_content && canLoadFullText ? article.id : null;
+  useEffect(() => {
+    if (autoLoadId !== null && autoLoadId !== requestedIdRef.current) {
+      autoLoadFullText();
+    }
+  }, [autoLoadId]);
 
   const handleOpenOriginal = () => {
     if (!safeArticleLink) return;

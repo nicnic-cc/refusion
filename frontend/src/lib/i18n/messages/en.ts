@@ -120,6 +120,8 @@ export const enMessages = {
   "feed.add.urlLabel": "Feed URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
   "feed.add.refreshFrequencyLabel": "Refresh Frequency",
+  "feed.add.fullContentLabel": "Always load full article",
+  "feed.add.fullContentDescription": "Fetch the full text automatically when an article opens",
   "feed.add.validateTitle": "Validate feed URL",
   "feed.edit.deleteConfirm.description":
     'Are you sure you want to unsubscribe from "{name}"? All items from this feed will be deleted.',

@@ -122,6 +122,8 @@ export const deMessages: PartialMessages = {
   "feed.add.urlLabel": "Feed-URL",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
   "feed.add.refreshFrequencyLabel": "Aktualisierungsfrequenz",
+  "feed.add.fullContentLabel": "Immer vollständigen Artikel laden",
+  "feed.add.fullContentDescription": "Beim Öffnen eines Artikels automatisch den Volltext laden",
   "feed.add.validateTitle": "Feed-URL prüfen",
   "feed.edit.deleteConfirm.description":
     'Möchtest du "{name}" wirklich abbestellen? Alle Artikel dieses Feeds werden gelöscht.',

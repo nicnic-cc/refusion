@@ -122,6 +122,8 @@ export const zhMessages: PartialMessages = {
   "feed.add.urlLabel": "订阅地址",
   "feed.add.urlPlaceholder": "https://example.com/feed.xml",
   "feed.add.refreshFrequencyLabel": "刷新频率",
+  "feed.add.fullContentLabel": "始终加载全文",
+  "feed.add.fullContentDescription": "打开文章时自动获取全文",
   "feed.add.validateTitle": "验证订阅地址",
   "feed.edit.deleteConfirm.description":
     "确定要取消订阅“{name}”吗？该订阅的所有文章将被删除。",

@@ -18,6 +18,7 @@ type Feed struct {
 	Suspended              bool   `json:"suspended"`
 	Proxy                  string `json:"proxy,omitempty"`
 	RefreshIntervalSeconds *int64 `json:"refresh_interval_seconds,omitempty"`
+	FullContent            bool   `json:"full_content"`
 	CreatedAt              int64  `json:"created_at"`
 	UpdatedAt              int64  `json:"updated_at"`
 
