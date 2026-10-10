@@ -36,4 +36,4 @@ jobs:
         run: |
           tag="${GITHUB_REF_NAME}"
           gh release view "$tag" || gh release create "$tag" --draft --generate-notes
-          gh release upload "$tag" ./dist/*.zip ./dist/fusion-linux-* ./dist/checksums.txt --clobber
+          gh release upload "$tag" ./dist/*.zip ./dist/refusion-linux-* ./dist/checksums.txt --clobber
