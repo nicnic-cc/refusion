@@ -1,6 +1,6 @@
 ---
 name: "💎 Feature Request"
-about: Propose an improvement for Fusion
+about: Propose an improvement for refusion
 title: "[FR] "
 labels: enhancement
 assignees: ""
