@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -21,10 +21,9 @@ export function ArticleListFooter({
   const articleLoading = usePreferencesStore((s) => s.articleLoading);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // fetchNextPage is a fresh closure each render; the ref keeps the observer
-  // from being rebuilt for that alone.
-  const fetchRef = useRef(fetchNextPage);
-  fetchRef.current = fetchNextPage;
+  // fetchNextPage is a fresh closure each render; an effect event keeps the
+  // observer from being rebuilt for that alone.
+  const onSentinelVisible = useEffectEvent(fetchNextPage);
 
   const observing =
     articleLoading === "scroll" && hasMore && !isLoadingMore && !isError;
@@ -37,7 +36,7 @@ export function ArticleListFooter({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) fetchRef.current();
+        if (entries.some((e) => e.isIntersecting)) onSentinelVisible();
       },
       {
         root: sentinel.closest('[data-slot="scroll-area-viewport"]'),
