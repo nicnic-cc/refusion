@@ -11,6 +11,7 @@ import { useUIStore } from "@/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { groupAPI, feedAPI } from "@/lib/api";
 import { queryKeys } from "@/queries/keys";
+import { pullQueryKey } from "@/queries/pull";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -144,6 +145,7 @@ export function ImportOpmlDialog() {
           queryClient.invalidateQueries({ queryKey: queryKeys.groups.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.items.all }),
+          queryClient.invalidateQueries({ queryKey: pullQueryKey }),
         ]);
 
         if (created > 0) {

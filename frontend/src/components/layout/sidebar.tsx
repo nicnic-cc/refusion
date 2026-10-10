@@ -1,9 +1,14 @@
+import { useRef } from "react";
 import { Search, Settings, Rss } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/logo";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { modKey } from "@/lib/shortcut-keys";
 import { FeedList } from "@/components/feed/feed-list";
+import { PullIndicator } from "@/components/feed/pull-indicator";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useStartPull } from "@/queries/pull";
+import { usePullStore } from "@/store/pull";
 import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
 
@@ -13,6 +18,14 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isFeedsPage = pathname === "/feeds";
+  const feedListRef = useRef<HTMLDivElement>(null);
+  const isPullIdle = usePullStore((s) => s.phase === "idle");
+  const { mutate: startPull } = useStartPull();
+  const { distance, armed } = usePullToRefresh({
+    containerRef: feedListRef,
+    enabled: isPullIdle,
+    onRefresh: () => startPull(),
+  });
 
   return (
     <aside className="sidebar-typography flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
@@ -48,8 +61,15 @@ export function Sidebar() {
         </div>
       </div>
 
+      <PullIndicator distance={distance} armed={armed} />
+
       {/* Feed list */}
-      <FeedList />
+      <div
+        ref={feedListRef}
+        className="flex min-h-0 flex-1 flex-col [&_[data-slot=scroll-area-viewport]]:overscroll-y-contain"
+      >
+        <FeedList />
+      </div>
     </aside>
   );
 }

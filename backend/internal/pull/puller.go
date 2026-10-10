@@ -28,6 +28,7 @@ type Puller struct {
 	maxBackoff  time.Duration
 	concurrency *semaphore.Weighted
 	wake        chan struct{}
+	progress    progress
 }
 
 func (p *Puller) effectiveInterval(feed *model.Feed) time.Duration {
@@ -241,6 +242,7 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		p.logger.Error("failed to batch create items", "feed_id", feed.ID, "error", err)
 		return
 	}
+	p.progress.addNewItems(newCount)
 
 	if err := p.store.UpdateFeedFetchSuccess(feed.ID, store.UpdateFeedFetchSuccessParams{
 		CheckedAt:       checkedAt,
@@ -322,6 +324,9 @@ func (p *Puller) dispatchFeeds(ctx context.Context, feeds []*model.Feed, shouldP
 // RefreshFeed manually triggers refresh for specific feed (bypasses skip logic).
 // Used by HTTP handler for manual refresh requests.
 func (p *Puller) RefreshFeed(ctx context.Context, feedID int64) error {
+	p.progress.mark(feedID)
+	defer p.progress.unmark(feedID)
+
 	feed, err := p.store.GetFeed(feedID)
 	if err != nil {
 		return fmt.Errorf("get feed: %w", err)
