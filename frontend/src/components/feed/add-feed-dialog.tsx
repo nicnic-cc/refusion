@@ -254,10 +254,10 @@ export function AddFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="space-y-4 p-5">
+          <div className="space-y-5 p-5">
             {/* URL Section */}
-            <div className="space-y-1.5">
-              <label htmlFor="add-feed-url" className="text-[13px] font-medium">
+            <div className="space-y-2">
+              <label htmlFor="add-feed-url" className="block text-[13px] font-medium">
                 {t("feed.add.urlLabel")}
               </label>
               <div className="flex gap-2">
@@ -299,8 +299,8 @@ export function AddFeedDialog() {
             </div>
 
             {/* Name Section */}
-            <div className="space-y-1.5">
-              <label htmlFor="add-feed-name" className="text-[13px] font-medium">
+            <div className="space-y-2">
+              <label htmlFor="add-feed-name" className="block text-[13px] font-medium">
                 {t("feed.add.nameLabel")}
               </label>
               <Input
@@ -315,8 +315,8 @@ export function AddFeedDialog() {
             </div>
 
             {/* Group Section */}
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-medium" id="add-feed-group-label">
+            <div className="space-y-2">
+              <label className="block text-[13px] font-medium" id="add-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
               <Select
@@ -354,9 +354,9 @@ export function AddFeedDialog() {
                 />
                 {t("feed.add.advanced")}
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1.5 pt-3">
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-medium" id="add-feed-refresh-label">
+              <CollapsibleContent className="space-y-5 pt-4">
+                <div className="space-y-2">
+                  <label className="block text-[13px] font-medium" id="add-feed-refresh-label">
                     {t("feed.add.refreshFrequencyLabel")}
                   </label>
                   <Select
@@ -384,7 +384,7 @@ export function AddFeedDialog() {
                   <div>
                     <label
                       htmlFor="add-feed-full-content"
-                      className="text-[13px] font-medium"
+                      className="block text-[13px] font-medium"
                     >
                       {t("feed.add.fullContentLabel")}
                     </label>
@@ -398,24 +398,26 @@ export function AddFeedDialog() {
                     onCheckedChange={setFullContent}
                   />
                 </div>
-                <label htmlFor="add-feed-proxy" className="text-[13px] font-medium">
-                  {t("feed.add.proxyLabel")}
-                </label>
-                <Input
-                  id="add-feed-proxy"
-                  name="feed-proxy"
-                  type="url"
-                  inputMode="url"
-                  placeholder={t("feed.add.proxyPlaceholder")}
-                  value={proxy}
-                  onChange={(e) => setProxy(e.target.value)}
-                  className="h-10"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("feed.add.proxyHint")}
-                </p>
+                <div className="space-y-2">
+                  <label htmlFor="add-feed-proxy" className="block text-[13px] font-medium">
+                    {t("feed.add.proxyLabel")}
+                  </label>
+                  <Input
+                    id="add-feed-proxy"
+                    name="feed-proxy"
+                    type="url"
+                    inputMode="url"
+                    placeholder={t("feed.add.proxyPlaceholder")}
+                    value={proxy}
+                    onChange={(e) => setProxy(e.target.value)}
+                    className="h-10"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("feed.add.proxyHint")}
+                  </p>
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </div>
