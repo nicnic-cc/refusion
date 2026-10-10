@@ -49,8 +49,9 @@ here, it duplicates the migrations and rots.
   `feed.fetch_state.*`.
 - `items` — unique `(feed_id, guid)`; unread partial index, `pub_date` and
   `(feed_id, unread)` indexes.
-- `items_fts` — FTS5 virtual table (`title`, `content`), kept in sync with
-  `items` by triggers.
+- `items_fts` — FTS5 index of title and tag-stripped `content`, over external
+  content (`content='items'`, no second copy). Triggers keep it in sync, and
+  only title/content edits re-index, so marking read doesn't (migration 901).
 - `bookmarks` — content snapshots; `link` unique; `item_id` and `feed_id`
   are nullable soft associations, so snapshots survive source deletions
   (see migrations 001 and 003 for the rationale).
