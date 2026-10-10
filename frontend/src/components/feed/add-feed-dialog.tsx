@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { TooltipButton } from "@/components/common/tooltip-button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -245,14 +246,13 @@ export function AddFeedDialog() {
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <Button
+                <TooltipButton
                   variant="outline"
                   size="icon"
+                  label={t("feed.add.validateTitle")}
                   className="h-10 w-10 shrink-0"
                   onClick={handleValidate}
                   disabled={isValidating || !url.trim()}
-                  aria-label={t("feed.add.validateTitle")}
-                  title={t("feed.add.validateTitle")}
                 >
                   <Radar
                     className={cn(
@@ -260,7 +260,7 @@ export function AddFeedDialog() {
                       isValidating && "animate-pulse",
                     )}
                   />
-                </Button>
+                </TooltipButton>
               </div>
               <p className="text-xs text-muted-foreground">
                 {t("feed.add.detectHint")}

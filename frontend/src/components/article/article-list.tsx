@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TooltipButton } from "@/components/common/tooltip-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
@@ -173,16 +174,13 @@ export function ArticleList() {
           <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        <Button
-          variant="outline"
-          size="icon-sm"
+        <TooltipButton
+          label={t("article.list.markAllRead")}
           onClick={handleMarkAllAsRead}
           disabled={unreadCount === 0}
-          aria-label={t("article.list.markAllRead")}
-          title={t("article.list.markAllRead")}
         >
           <CheckCheck className="h-4 w-4" />
-        </Button>
+        </TooltipButton>
       </ContentHeader>
 
       {/* Article area with filter tabs */}

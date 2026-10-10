@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { TooltipButton } from "@/components/common/tooltip-button";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
@@ -116,38 +116,30 @@ export function ArticleItem({
 
       {/* Article Actions */}
       <div className="absolute right-2 top-2 hidden items-center gap-1 group-hover:flex">
-        <Button
+        <TooltipButton
           variant="ghost"
-          size="icon-sm"
+          label={
+            article.unread
+              ? t("article.action.markRead")
+              : t("article.action.markUnread")
+          }
           onClick={handleToggleRead}
           disabled={!canToggleRead}
           className={article.unread ? mutedAction : readAction}
-          aria-label={
-            article.unread
-              ? t("article.action.markRead")
-              : t("article.action.markUnread")
-          }
-          title={
-            article.unread
-              ? t("article.action.markRead")
-              : t("article.action.markUnread")
-          }
         >
           {article.unread ? (
             <Circle className={mutedIcon} />
           ) : (
             <CircleCheck className="text-primary" />
           )}
-        </Button>
-        <Button
+        </TooltipButton>
+        <TooltipButton
           variant="ghost"
-          size="icon-sm"
-          onClick={handleToggleStar}
-          className={isStarred ? starredAction : mutedAction}
-          aria-label={
+          label={
             isStarred ? t("article.action.unstar") : t("article.action.star")
           }
-          title={isStarred ? t("article.action.unstar") : t("article.action.star")}
+          onClick={handleToggleStar}
+          className={isStarred ? starredAction : mutedAction}
         >
           <Star
             className={cn(
@@ -156,31 +148,17 @@ export function ArticleItem({
                 : mutedIcon,
             )}
           />
-        </Button>
-        {safeArticleLink ? (
-          <a
-            href={safeArticleLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), mutedAction)}
-            aria-label={t("article.action.openInBrowser")}
-            title={t("article.action.openInBrowser")}
-          >
-            <ExternalLink className={mutedIcon} />
-          </a>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled
-            className={mutedAction}
-            aria-label={t("article.action.openInBrowser")}
-            title={t("article.action.openInBrowser")}
-          >
-            <ExternalLink className={mutedIcon} />
-          </Button>
-        )}
+        </TooltipButton>
+        <TooltipButton
+          variant="ghost"
+          label={t("article.action.openInBrowser")}
+          href={safeArticleLink ?? undefined}
+          disabled={!safeArticleLink}
+          onClick={(e) => e.stopPropagation()}
+          className={mutedAction}
+        >
+          <ExternalLink className={mutedIcon} />
+        </TooltipButton>
       </div>
     </div>
   );
