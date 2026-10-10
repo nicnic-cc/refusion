@@ -24,7 +24,7 @@ export function Sidebar() {
   const { distance, armed } = usePullToRefresh({
     containerRef: feedListRef,
     enabled: isPullIdle,
-    onRefresh: () => startPull(),
+    onRefresh: () => startPull({ pane: "sidebar" }),
   });
 
   return (
@@ -61,7 +61,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <PullIndicator distance={distance} armed={armed} />
+      <PullIndicator pane="sidebar" distance={distance} armed={armed} />
 
       {/* Feed list */}
       <div

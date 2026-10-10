@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStartPull } from "@/queries/pull";
 import { useUIStore } from "@/store";
+import { usePullStore } from "@/store/pull";
 import { useUrlState } from "./use-url-state";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -211,6 +212,16 @@ export function useKeyboardShortcuts() {
       if (key === "r" && event.shiftKey) {
         event.preventDefault();
         state.startPull();
+        return;
+      }
+
+      // r: check what the article list shows (nothing without a list or on Starred)
+      if (key === "r" && !event.shiftKey) {
+        const scope = usePullStore.getState().listScope;
+        if (scope) {
+          event.preventDefault();
+          state.startPull({ pane: "list", scope });
+        }
         return;
       }
 

@@ -11,6 +11,8 @@ import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
+import { useListPull } from "@/hooks/use-list-pull";
+import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { usePreferencesStore } from "@/store/preferences";
 import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
@@ -158,6 +160,14 @@ export function ArticleList() {
     title = group?.name ?? t("article.groupFallback");
   }
 
+  const pull = useListPull({
+    containerRef: scrollRef,
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    starred: articleFilter === "starred",
+    name: selectedFeedId || selectedGroupId ? title : undefined,
+  });
+
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
@@ -251,8 +261,14 @@ export function ArticleList() {
           </Tabs>
         )}
 
+        {/* -mt-4 cancels the flex gap while the indicator is collapsed */}
+        <PullIndicator pane="list" className="-mt-4" {...pull} />
+
         {/* Article list */}
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+        >
           {isLoading || (articles.length === 0 && hasMore) ? (
             <div className="space-y-2 px-4 py-2 sm:px-6">
               {[1, 2, 3, 4, 5].map((i) => (
