@@ -63,7 +63,7 @@ export function Sidebar() {
       <FeedList />
 
       {/* Footer */}
-      <div className="flex h-14 shrink-0 items-center gap-2 border-t px-4">
+      <div className="flex shrink-0 items-center gap-2 border-t px-4 py-3">
         <TooltipButton
           label={t("sidebar.manageFeeds")}
           className="text-muted-foreground"
