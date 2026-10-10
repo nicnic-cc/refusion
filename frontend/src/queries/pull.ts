@@ -5,7 +5,12 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { pullAPI, type PullStatus, type StartPullRequest } from "@/lib/api";
+import {
+  pullAPI,
+  type NewCountParams,
+  type PullStatus,
+  type StartPullRequest,
+} from "@/lib/api";
 import { usePullStore, type PullPane } from "@/store/pull";
 import { queryKeys } from "./keys";
 
@@ -24,6 +29,22 @@ export const pullQueries = {
       },
       refetchInterval: (query) =>
         query.state.data?.pending.length ? POLL_BUSY_MS : POLL_IDLE_MS,
+      // Polling pauses while the tab is hidden; ask again as soon as it is back.
+      refetchOnWindowFocus: "always",
+    }),
+};
+
+export const newCountQueries = {
+  // upTo (the server's last_item_id) is in the key so each new arrival asks again.
+  count: (params: NewCountParams, upTo: number, enabled: boolean) =>
+    queryOptions({
+      queryKey: ["pull", "new-count", params, upTo] as const,
+      queryFn: async () => {
+        const res = await pullAPI.newCount(params);
+        return res.data!.count;
+      },
+      enabled,
+      placeholderData: (prev) => prev,
     }),
 };
 

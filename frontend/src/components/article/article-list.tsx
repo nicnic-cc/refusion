@@ -12,6 +12,8 @@ import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
+import { useNewArticles } from "@/hooks/use-new-articles";
+import { NewArticlesPill } from "./new-articles-pill";
 import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { usePreferencesStore } from "@/store/preferences";
@@ -168,6 +170,14 @@ export function ArticleList() {
     name: selectedFeedId || selectedGroupId ? title : undefined,
   });
 
+  const { newCount, showNew, freshAfter } = useNewArticles({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+    articleCount: articles.length,
+    scrollRef,
+  });
+
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
@@ -269,6 +279,7 @@ export function ArticleList() {
           ref={scrollRef}
           className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
         >
+          <NewArticlesPill count={newCount} onClick={showNew} />
           {isLoading || (articles.length === 0 && hasMore) ? (
             <div className="space-y-2 px-4 py-2 sm:px-6">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -314,6 +325,7 @@ export function ArticleList() {
                     onToggleRead={handleToggleRead}
                     onToggleStar={handleToggleStar}
                     canToggleRead={article.id > 0}
+                    isFresh={freshAfter !== null && article.id > freshAfter}
                     isStarred={isItemStarred(article.id)}
                     feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
                     feedFaviconUrl={

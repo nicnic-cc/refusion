@@ -135,6 +135,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.POST("/feeds/:id/refresh", h.refreshFeed)
 
 			auth.GET("/pull/status", h.pullStatus)
+			auth.GET("/pull/new-count", h.pullNewCount)
 			auth.POST("/pull", h.startPull)
 
 			auth.GET("/app", h.getAppInfo)

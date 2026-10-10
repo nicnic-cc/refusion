@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/store"
@@ -23,8 +24,9 @@ type startPullRequest struct {
 }
 
 type pullStatusResponse struct {
-	Pending  []int64 `json:"pending"`
-	NewItems int64   `json:"new_items"`
+	Pending    []int64 `json:"pending"`
+	NewItems   int64   `json:"new_items"`
+	LastItemID int64   `json:"last_item_id"`
 }
 
 func (h *Handler) pullStatus(c *gin.Context) {
@@ -34,8 +36,50 @@ func (h *Handler) pullStatus(c *gin.Context) {
 		return
 	}
 
+	// Read the max id first: an item saved in between is then counted as new
+	// by the next poll instead of being missed.
+	lastItemID, err := h.store.MaxItemID()
+	if err != nil {
+		internalError(c, err, "max item id")
+		return
+	}
+
 	pending, newItems := tracker.PullStatus()
-	dataResponse(c, pullStatusResponse{Pending: pending, NewItems: newItems})
+	dataResponse(c, pullStatusResponse{Pending: pending, NewItems: newItems, LastItemID: lastItemID})
+}
+
+// pullNewCount counts items saved after after_id within the list's feed or group.
+func (h *Handler) pullNewCount(c *gin.Context) {
+	afterID, err := strconv.ParseInt(c.Query("after_id"), 10, 64)
+	if err != nil || afterID < 0 {
+		badRequestError(c, "invalid after_id")
+		return
+	}
+
+	var feedID, groupID *int64
+	if raw := c.Query("feed_id"); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid feed_id")
+			return
+		}
+		feedID = &id
+	}
+	if raw := c.Query("group_id"); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			badRequestError(c, "invalid group_id")
+			return
+		}
+		groupID = &id
+	}
+
+	count, err := h.store.CountItemsAfter(afterID, feedID, groupID)
+	if err != nil {
+		internalError(c, err, "count new items")
+		return
+	}
+	dataResponse(c, gin.H{"count": count})
 }
 
 // startPull queues a tracked fetch of one feed, one group, or all feeds.
