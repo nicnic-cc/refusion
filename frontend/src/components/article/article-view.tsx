@@ -10,7 +10,8 @@ import {
   X,
 } from "lucide-react";
 import { SheetTitle } from "@/components/ui/sheet";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { TooltipButton } from "@/components/common/tooltip-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
@@ -85,62 +86,35 @@ export function ArticleView({
         )}
       >
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon-sm"
+          <TooltipButton
+            label={readLabel}
             onClick={handleToggleRead}
             disabled={!canToggleRead}
-            aria-label={readLabel}
-            title={readLabel}
           >
             {(readArticle?.unread ?? false) ? (
               <Circle className="h-4 w-4 text-muted-foreground" />
             ) : (
               <CircleCheck className="h-4 w-4 text-primary" />
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={handleToggleStar}
-            aria-label={starLabel}
-            title={starLabel}
-          >
+          </TooltipButton>
+          <TooltipButton label={starLabel} onClick={handleToggleStar}>
             <Star
               className={`h-4 w-4 ${starred ? "fill-current text-amber-500" : "text-muted-foreground"}`}
             />
-          </Button>
-          {safeArticleLink ? (
-            <a
-              href={safeArticleLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "outline", size: "icon-sm" })}
-              aria-label={t("article.action.original")}
-              title={t("article.action.original")}
-            >
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </a>
-          ) : (
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled
-              aria-label={t("article.action.original")}
-              title={t("article.action.original")}
-            >
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          )}
+          </TooltipButton>
+          <TooltipButton
+            label={t("article.action.original")}
+            href={safeArticleLink ?? undefined}
+            disabled={!safeArticleLink}
+          >
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+          </TooltipButton>
           {article.id > 0 && (
-            <Button
-              variant="outline"
-              size="icon-sm"
+            <TooltipButton
+              label={fullTextLabel}
               onClick={() => void handleToggleFullText()}
               disabled={!canLoadFullText || loadingFullText}
-              aria-label={fullTextLabel}
-              aria-pressed={showingFullText}
-              title={fullTextLabel}
+              pressed={showingFullText}
             >
               {loadingFullText ? (
                 <LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -149,7 +123,7 @@ export function ArticleView({
                   className={`h-4 w-4 ${showingFullText ? "text-primary" : "text-muted-foreground"}`}
                 />
               )}
-            </Button>
+            </TooltipButton>
           )}
         </div>
 
@@ -238,26 +212,20 @@ export function ArticleView({
 
       {/* Footer - Navigation */}
       <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
-        <Button
-          variant="outline"
-          size="icon-sm"
+        <TooltipButton
+          label={t("common.previous")}
           onClick={goToPrevious}
           disabled={!hasPrevious()}
-          aria-label={t("common.previous")}
-          title={t("common.previous")}
         >
           <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon-sm"
+        </TooltipButton>
+        <TooltipButton
+          label={t("common.next")}
           onClick={goToNext}
           disabled={!hasNext()}
-          aria-label={t("common.next")}
-          title={t("common.next")}
         >
           <ChevronRight className="h-4 w-4" />
-        </Button>
+        </TooltipButton>
       </div>
     </div>
   );
