@@ -1,6 +1,6 @@
 ---
 name: "🐛 Bug Report"
-about: Report a reproducible bug in Fusion
+about: Report a reproducible bug in refusion
 title: "[BUG] "
 labels: bug
 assignees: ""
@@ -14,7 +14,7 @@ assignees: ""
 
 ## Environment
 
-- Fusion version:
+- refusion version:
 - Deployment type: (Docker / binary / source)
 - OS:
 - Browser and version (if frontend issue):

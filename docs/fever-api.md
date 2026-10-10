@@ -1,6 +1,6 @@
 # Fever API Compatibility
 
-Fusion provides a Fever-compatible endpoint for third-party RSS clients such as Reeder, Unread, and FeedMe.
+refusion provides a Fever-compatible endpoint for third-party RSS clients such as Reeder, Unread, and FeedMe.
 
 ## Endpoint
 
@@ -18,7 +18,7 @@ Fever clients should send:
 - `api_key=<md5(username:password)>`
 
 Username is configured by `FUSION_FEVER_USERNAME` (default: `fusion`).
-Password is your Fusion login password (`FUSION_PASSWORD`).
+Password is your refusion login password (`FUSION_PASSWORD`).
 
 Example (macOS):
 
@@ -37,13 +37,13 @@ printf 'fusion:your_password' | md5sum | cut -d' ' -f1
 Use these values in your mobile/desktop RSS client:
 
 - Account type: `Fever`
-- Server URL: your Fusion base URL, for example:
+- Server URL: your refusion base URL, for example:
   - `https://rss.example.com`
   - `http://192.168.1.10:8080`
 - Username: `FUSION_FEVER_USERNAME` (default: `fusion`)
 - Password: `FUSION_PASSWORD`
 
-Most clients only need the base URL. Fusion supports all common Fever paths:
+Most clients only need the base URL. refusion supports all common Fever paths:
 
 - `/fever`
 - `/fever/`
@@ -72,8 +72,8 @@ Expected success response includes:
 
 ### Client Notes
 
-- Reeder / Unread / FeedMe: choose `Fever` account type and use Fusion password directly.
-- If you deploy Fusion behind a reverse proxy, ensure `POST /fever*` is forwarded to Fusion unchanged.
+- Reeder / Unread / FeedMe: choose `Fever` account type and use refusion password directly.
+- If you deploy refusion behind a reverse proxy, ensure `POST /fever*` is forwarded to refusion unchanged.
 
 ## Implemented Fever Features
 
@@ -94,6 +94,6 @@ Write APIs:
 
 ## Notes
 
-- Saved items map to Fusion bookmarks.
+- Saved items map to refusion bookmarks.
 - `links`, `sparks`, and `kindlings` are not implemented.
 - This compatibility API is outside `/api`; it is intentionally separate from the `/api` conventions documented in `docs/api-conventions.md`.

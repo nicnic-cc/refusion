@@ -1,4 +1,4 @@
-# Fusion Frontend Design
+# refusion Frontend Design
 
 ## 1. Goals
 
