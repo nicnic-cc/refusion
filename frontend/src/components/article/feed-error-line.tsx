@@ -25,12 +25,12 @@ export function FeedErrorLine({ feedId }: { feedId: number | null }) {
   // The tooltip only earns its place when the preview cut the error short.
   if (preview === error.replace(/\s+/g, " ")) {
     return (
-      <p className="truncate px-4 text-xs text-destructive sm:px-6">{text}</p>
+      <p className="truncate px-4 py-2 text-xs text-destructive sm:px-6">{text}</p>
     );
   }
 
   return (
-    <div className="px-4 sm:px-6">
+    <div className="px-4 py-2 sm:px-6">
       <Tooltip
         open={isMobile ? mobileOpen : undefined}
         onOpenChange={(open) => {

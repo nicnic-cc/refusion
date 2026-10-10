@@ -3,13 +3,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArticleFilterSwitch } from "./article-filter-switch";
 import { ArticleItem } from "./article-item";
 import { ArticleListFooter } from "./article-list-footer";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
-import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
+import { useUrlState } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
 import { useNewArticles } from "@/hooks/use-new-articles";
@@ -253,29 +253,19 @@ export function ArticleList() {
         </TooltipButton>
       </ContentHeader>
 
-      {/* Article area with filter tabs */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-3">
-        {/* Filter tabs - hidden when no articles exist */}
-        {!hasNoFeeds && (articles.length > 0 || articleFilter !== "all") && (
-          <Tabs
-            className="px-4 sm:px-6"
+      {!hasNoFeeds && (
+        <div className="flex h-11 shrink-0 items-center justify-center border-b">
+          <ArticleFilterSwitch
             value={articleFilter}
-            onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
-          >
-            <TabsList>
-              <TabsTrigger value="all">{t("article.filter.all")}</TabsTrigger>
-              <TabsTrigger value="unread">{t("article.filter.unread")}</TabsTrigger>
-              <TabsTrigger value="starred">
-                {t("article.filter.starred")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
+            onValueChange={setArticleFilter}
+          />
+        </div>
+      )}
 
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <FeedErrorLine feedId={selectedFeedId} />
 
-        {/* -mt-4 cancels the flex gap while the indicator is collapsed */}
-        <PullIndicator pane="list" className="-mt-4" {...pull} />
+        <PullIndicator pane="list" {...pull} />
 
         {/* Article list */}
         <div
