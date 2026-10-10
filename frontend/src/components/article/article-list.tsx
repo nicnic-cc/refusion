@@ -1,9 +1,8 @@
-import { useCallback, useEffect } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
 import { ArticleListFooter } from "./article-list-footer";
@@ -12,6 +11,8 @@ import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
+import { useStableCallback } from "@/hooks/use-stable-callback";
+import { usePreferencesStore } from "@/store/preferences";
 import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
@@ -100,6 +101,54 @@ export function ArticleList() {
     fetchNextPage,
   ]);
 
+  const articleLoading = usePreferencesStore((s) => s.articleLoading);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Same rule as yarr's itemListCloseToBottom: load only near the bottom, and
+  // not while the empty-list refill above is already fetching.
+  const loadMoreIfNearBottom = useEffectEvent(() => {
+    const el = scrollRef.current;
+    if (!el || el.scrollHeight === 0 || articles.length === 0) return;
+    if (articleLoading !== "scroll") return;
+    if (isLoading || isLoadingMore || isFetchNextPageError || !hasMore) return;
+
+    const scale =
+      (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) /
+      16;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 70 * scale) {
+      fetchNextPage();
+    }
+  });
+
+  // Wait until scrolling stops, so a page never lands mid-fling.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(loadMoreIfNearBottom, 200);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  // Once a page has landed, check again so a list shorter than the viewport
+  // keeps filling.
+  useEffect(() => {
+    loadMoreIfNearBottom();
+  }, [
+    articles.length,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    isFetchNextPageError,
+    articleLoading,
+  ]);
+
   let title = t("article.list.all");
   if (selectedFeedId) {
     const feed = getFeedById(selectedFeedId);
@@ -112,7 +161,7 @@ export function ArticleList() {
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
-  const handleToggleRead = useCallback(
+  const handleToggleRead = useStableCallback(
     async (article: Item) => {
       if (article.id <= 0) return;
 
@@ -130,10 +179,9 @@ export function ArticleList() {
         console.error("Failed to toggle read status:", error);
       }
     },
-    [markItemsRead, markItemsUnread, pinRead, unpinRead],
   );
 
-  const handleToggleStar = useCallback(
+  const handleToggleStar = useStableCallback(
     async (article: Item) => {
       try {
         if (isItemStarred(article.id)) {
@@ -149,8 +197,9 @@ export function ArticleList() {
         console.error("Failed to toggle star:", error);
       }
     },
-    [createBookmark, deleteBookmark, getBookmarkByItemId, isItemStarred],
   );
+
+  const handleSelectArticle = useStableCallback(setSelectedArticle);
 
   const handleMarkAllAsRead = async () => {
     const unreadIds = articles
@@ -203,71 +252,69 @@ export function ArticleList() {
         )}
 
         {/* Article list */}
-        <ScrollArea className="min-h-0 flex-1">
-          <div>
-            {isLoading || (articles.length === 0 && hasMore) ? (
-              <div className="space-y-2 px-4 py-2 sm:px-6">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-24 animate-pulse rounded-md bg-accent"
-                  />
-                ))}
-              </div>
-            ) : articles.length === 0 ? (
-              hasNoFeeds ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center sm:px-6">
-                  <p className="text-sm text-muted-foreground">
-                    {t("article.list.noFeeds")}
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate({ to: "/feeds" })}
-                  >
-                    {t("article.list.openFeedManagement")}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6">
-                  <p className="text-sm text-muted-foreground">
-                    {t("article.list.noArticles")}
-                  </p>
-                </div>
-              )
-            ) : (
-              <>
-                {articles.map((article) => {
-                  const feed = getFeedById(article.feed_id);
-                  const bookmark = getBookmarkByItemId(article.id);
-
-                  return (
-                    <ArticleItem
-                      key={article.id}
-                      article={article}
-                      selectedArticleId={selectedArticleId}
-                      onSelectArticle={setSelectedArticle}
-                      onToggleRead={handleToggleRead}
-                      onToggleStar={handleToggleStar}
-                      canToggleRead={article.id > 0}
-                      isStarred={isItemStarred(article.id)}
-                      feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
-                      feedFaviconUrl={
-                        feed ? getFaviconUrl(feed.link, feed.site_url) : null
-                      }
-                    />
-                  );
-                })}
-                <ArticleListFooter
-                  hasMore={hasMore}
-                  isLoadingMore={isLoadingMore}
-                  isError={isFetchNextPageError}
-                  fetchNextPage={fetchNextPage}
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+          {isLoading || (articles.length === 0 && hasMore) ? (
+            <div className="space-y-2 px-4 py-2 sm:px-6">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-md bg-accent"
                 />
-              </>
-            )}
-          </div>
-        </ScrollArea>
+              ))}
+            </div>
+          ) : articles.length === 0 ? (
+            hasNoFeeds ? (
+              <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center sm:px-6">
+                <p className="text-sm text-muted-foreground">
+                  {t("article.list.noFeeds")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate({ to: "/feeds" })}
+                >
+                  {t("article.list.openFeedManagement")}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6">
+                <p className="text-sm text-muted-foreground">
+                  {t("article.list.noArticles")}
+                </p>
+              </div>
+            )
+          ) : (
+            <>
+              {articles.map((article) => {
+                const feed = getFeedById(article.feed_id);
+                const bookmark = getBookmarkByItemId(article.id);
+
+                return (
+                  <ArticleItem
+                    key={article.id}
+                    article={article}
+                    isSelected={selectedArticleId === article.id}
+                    onSelectArticle={handleSelectArticle}
+                    onToggleRead={handleToggleRead}
+                    onToggleStar={handleToggleStar}
+                    canToggleRead={article.id > 0}
+                    isStarred={isItemStarred(article.id)}
+                    feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                    feedFaviconUrl={
+                      feed ? getFaviconUrl(feed.link, feed.site_url) : null
+                    }
+                  />
+                );
+              })}
+              <ArticleListFooter
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                isError={isFetchNextPageError}
+                fetchNextPage={fetchNextPage}
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
