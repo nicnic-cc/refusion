@@ -1,13 +1,8 @@
-# Contributing to Fusion
+# Contributing to refusion
 
-Thanks for your interest in Fusion.
+refusion is my personal fork of [Fusion](https://github.com/0x2E/fusion), built around my own reading habits. I'm not accepting pull requests, but you're welcome to fork it and shape it to your own needs.
 
-Fusion is maintained by a small team working closely with coding agents, and
-the sustainable way to contribute is [issues](https://github.com/0x2E/fusion/issues):
-report bugs, propose features, or ask questions there. There is no need to
-open pull requests.
-
-Fusion values simple, maintainable changes over complex abstractions.
+You can leave notes as [issues](https://github.com/nicnic-cc/refusion/issues). I read them when I can, but I can't promise a reply or a fix. If a bug also happens in upstream Fusion, it's best reported in the [Fusion issues](https://github.com/0x2E/fusion/issues).
 
 ## 1. Reporting problems
 
