@@ -34,7 +34,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
     >
       <div
         className={cn(
-          "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors",
+          "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-[15px] leading-6 transition-colors",
           isSelected
             ? "bg-accent text-accent-foreground"
             : "hover:bg-accent/50",
@@ -62,7 +62,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
         >
           <span className="block min-w-0 flex-1 truncate">{name}</span>
           {unreadCount > 0 && (
-            <span className="shrink-0 text-[11px] text-muted-foreground">
+            <span className="shrink-0 text-xs text-muted-foreground">
               {unreadCount}
             </span>
           )}
