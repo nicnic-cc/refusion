@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useUIStore } from "@/store";
-import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
-import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { FeedRowIcon } from "@/components/feed/feed-row-icon";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -18,7 +17,6 @@ export function FeedItem({ feed }: FeedItemProps) {
   const { setEditFeedOpen } = useUIStore();
 
   const isSelected = selectedFeedId === feed.id;
-  const faviconUrl = getFaviconUrl(feed.link, feed.site_url);
 
   const handleSettingsClick = () => {
     setEditFeedOpen(true, feed);
@@ -36,7 +34,7 @@ export function FeedItem({ feed }: FeedItemProps) {
         onClick={() => setSelectedFeed(feed.id)}
         className="flex min-w-0 flex-1 items-center gap-2 text-left"
       >
-        <FeedFavicon src={faviconUrl} className="h-4 w-4" />
+        <FeedRowIcon feed={feed} />
         <span className="block min-w-0 max-w-full flex-1 truncate">
           {feed.name}
         </span>

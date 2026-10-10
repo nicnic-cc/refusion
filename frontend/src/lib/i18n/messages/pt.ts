@@ -129,6 +129,8 @@ export const ptMessages: PartialMessages = {
   "feed.add.fullContentDescription": "Buscar o texto completo automaticamente ao abrir um artigo",
   "feed.add.validateTitle": "Validar URL do feed",
   "feed.add.lookingForFeed": "Procurando o feed...",
+  "feed.edit.checkNow": "Verificar agora",
+  "feed.edit.lastChecked": "Última verificação: {when}",
   "feed.edit.deleteConfirm.description":
     'Tem certeza de que deseja cancelar a inscrição de "{name}"? Todos os artigos deste feed serão excluídos.',
   "feed.edit.deleteConfirm.title": "Cancelar inscrição do feed",
@@ -137,6 +139,7 @@ export const ptMessages: PartialMessages = {
   "feed.edit.suspendLabel": "Suspender feed",
   "feed.edit.title": "Editar feed",
   "feed.edit.unsubscribe": "Cancelar inscrição",
+  "feed.error.lastCheckFailed": "A última verificação falhou: {error}",
   "feed.select.description": "Vários feeds encontrados. Escolha um para preencher a URL.",
   "feed.select.fallback": "Feed {index}",
   "feed.select.title": "Selecionar feed",

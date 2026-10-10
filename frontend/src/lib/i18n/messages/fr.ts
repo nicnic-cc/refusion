@@ -129,6 +129,8 @@ export const frMessages: PartialMessages = {
   "feed.add.fullContentDescription": "Récupérer automatiquement le texte intégral à l'ouverture d'un article",
   "feed.add.validateTitle": "Vérifier l'URL du flux",
   "feed.add.lookingForFeed": "Recherche du flux...",
+  "feed.edit.checkNow": "Vérifier maintenant",
+  "feed.edit.lastChecked": "Dernière vérification : {when}",
   "feed.edit.deleteConfirm.description":
     'Voulez-vous vraiment vous désabonner de "{name}" ? Tous les articles de ce flux seront supprimés.',
   "feed.edit.deleteConfirm.title": "Se désabonner du flux",
@@ -137,6 +139,7 @@ export const frMessages: PartialMessages = {
   "feed.edit.suspendLabel": "Suspendre le flux",
   "feed.edit.title": "Modifier le flux",
   "feed.edit.unsubscribe": "Se désabonner",
+  "feed.error.lastCheckFailed": "Dernière vérification échouée : {error}",
   "feed.select.description": "Plusieurs flux ont été trouvés. Choisissez-en un.",
   "feed.select.fallback": "Flux {index}",
   "feed.select.title": "Sélectionner un flux",

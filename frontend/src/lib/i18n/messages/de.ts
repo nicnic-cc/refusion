@@ -129,6 +129,8 @@ export const deMessages: PartialMessages = {
   "feed.add.fullContentDescription": "Beim Öffnen eines Artikels automatisch den Volltext laden",
   "feed.add.validateTitle": "Feed-URL prüfen",
   "feed.add.lookingForFeed": "Feed wird gesucht...",
+  "feed.edit.checkNow": "Jetzt prüfen",
+  "feed.edit.lastChecked": "Zuletzt geprüft: {when}",
   "feed.edit.deleteConfirm.description":
     'Möchtest du "{name}" wirklich abbestellen? Alle Artikel dieses Feeds werden gelöscht.',
   "feed.edit.deleteConfirm.title": "Feed abbestellen",
@@ -137,6 +139,7 @@ export const deMessages: PartialMessages = {
   "feed.edit.suspendLabel": "Feed pausieren",
   "feed.edit.title": "Feed bearbeiten",
   "feed.edit.unsubscribe": "Abbestellen",
+  "feed.error.lastCheckFailed": "Letzte Prüfung fehlgeschlagen: {error}",
   "feed.select.description": "Mehrere Feeds gefunden. Einen zum Ausfüllen der URL auswählen.",
   "feed.select.fallback": "Feed {index}",
   "feed.select.title": "Feed auswählen",

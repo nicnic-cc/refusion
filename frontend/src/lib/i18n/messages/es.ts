@@ -129,6 +129,8 @@ export const esMessages: PartialMessages = {
   "feed.add.fullContentDescription": "Obtener el texto completo automáticamente al abrir un artículo",
   "feed.add.validateTitle": "Validar URL del feed",
   "feed.add.lookingForFeed": "Buscando el feed...",
+  "feed.edit.checkNow": "Comprobar ahora",
+  "feed.edit.lastChecked": "Última comprobación: {when}",
   "feed.edit.deleteConfirm.description":
     '¿Seguro que quieres cancelar la suscripción de "{name}"? Todos los artículos de este feed se eliminarán.',
   "feed.edit.deleteConfirm.title": "Darse de baja del feed",
@@ -137,6 +139,7 @@ export const esMessages: PartialMessages = {
   "feed.edit.suspendLabel": "Suspender feed",
   "feed.edit.title": "Editar feed",
   "feed.edit.unsubscribe": "Darse de baja",
+  "feed.error.lastCheckFailed": "La última comprobación falló: {error}",
   "feed.select.description": "Se encontraron varios feeds. Elige uno para completar la URL.",
   "feed.select.fallback": "Feed {index}",
   "feed.select.title": "Seleccionar feed",
