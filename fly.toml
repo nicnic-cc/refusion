@@ -7,7 +7,7 @@ app = "{APP_NAME}"
 primary_region = "{REGION}"
 
 [build]
-image = 'ghcr.io/0x2e/fusion:latest'
+image = 'ghcr.io/nicnic-cc/refusion:latest'
 
 [http_service]
 internal_port = 8080

@@ -2,6 +2,8 @@
 
 set -eu
 
+app_name=refusion
+
 test_backend() {
   echo "testing backend"
   (cd backend && go test ./...)
@@ -43,7 +45,7 @@ build_backend() {
   target_os=${1:-$(go env GOOS)}
   target_arch=${2:-$(go env GOARCH)}
   root=$(pwd)
-  output_path=${3:-"${root}/build/fusion"}
+  output_path=${3:-"${root}/build/${app_name}"}
 
   case "$output_path" in
   /*) ;;
@@ -83,18 +85,18 @@ release() {
     arch=${platform#*/}
     echo "--- building ${os}/${arch} ---"
 
-    bin_name="fusion"
+    bin_name="${app_name}"
     if [ "$os" = "windows" ]; then
-      bin_name="fusion.exe"
+      bin_name="${app_name}.exe"
     fi
 
     build_backend "$os" "$arch" "./dist/${bin_name}"
 
     if [ "$os" = "linux" ]; then
-      cp "./dist/${bin_name}" "./dist/fusion-linux-${arch}"
+      cp "./dist/${bin_name}" "./dist/${app_name}-linux-${arch}"
     fi
 
-    archive="fusion_${os}_${arch}.zip"
+    archive="${app_name}_${os}_${arch}.zip"
     zip -j "./dist/${archive}" "./dist/${bin_name}" LICENSE* README* || \
       zip -j "./dist/${archive}" "./dist/${bin_name}"
     rm "./dist/${bin_name}"
@@ -102,7 +104,7 @@ release() {
 
   (
     cd ./dist
-    sha256sum ./*.zip ./fusion-linux-* > checksums.txt
+    sha256sum ./*.zip ./${app_name}-linux-* > checksums.txt
   )
 
   echo "release artifacts:"
