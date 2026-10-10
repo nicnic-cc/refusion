@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -74,14 +75,9 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 p-4">
         <div className="flex flex-col items-center gap-2">
-          <img
-            src="/icon-96.png"
-            alt={t("common.fusionLogo")}
-            width={48}
-            height={48}
-            className="h-12 w-12 rounded-xl"
-          />
-          <h1 className="text-2xl font-bold">Fusion</h1>
+          <h1>
+            <Logo withName className="h-10" />
+          </h1>
           <p className="text-sm text-muted-foreground">
             {t("login.enterPassword")}
           </p>
