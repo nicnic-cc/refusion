@@ -23,7 +23,7 @@ export function ArticleListFooter({
 
   if (articleLoading === "button") {
     return (
-      <div className="flex justify-center py-4">
+      <div className="flex h-14 items-center justify-center">
         <Button
           variant="outline"
           size="sm"
@@ -41,7 +41,7 @@ export function ArticleListFooter({
   }
 
   return (
-    <div className="flex justify-center py-4">
+    <div className="flex h-14 items-center justify-center">
       {isError ? (
         <Button variant="outline" size="sm" onClick={fetchNextPage}>
           {t("article.list.retry")}
