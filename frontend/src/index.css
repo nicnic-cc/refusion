@@ -152,3 +152,14 @@
   --typeset-leading: 1.75;
   --typeset-flow: 1.25em;
 }
+
+/* Rows that arrived with a reload; no "to" frame, so a selected row keeps its colour. */
+@keyframes fresh-row {
+  from {
+    background-color: color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+}
+
+.fresh-row {
+  animation: fresh-row 2s ease-out;
+}

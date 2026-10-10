@@ -23,6 +23,8 @@ interface ArticleItemProps {
   isStarred: boolean;
   feedName: string;
   feedFaviconUrl: string | null;
+  // Arrived with the last reload: plays the fade-out tint once.
+  isFresh?: boolean;
 }
 
 export const ArticleItem = memo(function ArticleItem({
@@ -35,6 +37,7 @@ export const ArticleItem = memo(function ArticleItem({
   isStarred,
   feedName,
   feedFaviconUrl,
+  isFresh,
 }: ArticleItemProps) {
   const { t } = useI18n();
 
@@ -80,6 +83,7 @@ export const ArticleItem = memo(function ArticleItem({
       className={cn(
         "group flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 sm:px-6 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
+        isFresh && "fresh-row",
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
