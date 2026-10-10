@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Settings as SettingsIcon } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -485,15 +486,10 @@ function AboutContent() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 pb-8">
-      <img
-        src="/icon-96.png"
-        alt={t("common.fusionLogo")}
-        width={64}
-        height={64}
-        className="h-16 w-16 rounded-2xl"
-      />
       <div className="text-center">
-        <h3 className="text-xl font-semibold">Fusion</h3>
+        <h3>
+          <Logo withName className="mx-auto block h-9" />
+        </h3>
         <p className="mt-1 text-xs text-muted-foreground">{__APP_VERSION__}</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {t("settings.about.description")}

@@ -2,6 +2,7 @@ import { LogOut, Search, Settings, Rss } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Logo } from "@/components/brand/logo";
 import { FeedList } from "@/components/feed/feed-list";
 import { sessionAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -39,14 +40,7 @@ export function Sidebar() {
     <aside className="sidebar-typography flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-        <img
-          src="/icon-96.png"
-          alt={t("common.fusionLogo")}
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-md"
-        />
-        <span className="text-base font-semibold">Fusion</span>
+        <Logo className="h-6" />
       </div>
 
       {/* Search button */}
