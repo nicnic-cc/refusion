@@ -238,6 +238,7 @@ export const enMessages = {
   "article.list.retry": "Retry",
   "article.pane.empty": "Select an article to read",
   "article.toast.fullTextFailed": "Failed to load full article",
+  "article.toast.starFailed": "Failed to update star",
   "pull.checking": "Checking...",
   "pull.hint": "Pull to check for new articles",
   "pull.newArticles.one": "{count} new article",

@@ -239,6 +239,7 @@ export const svMessages: PartialMessages = {
   "article.list.retry": "Försök igen",
   "article.pane.empty": "Välj en artikel att läsa",
   "article.toast.fullTextFailed": "Det gick inte att hämta hela artikeln",
+  "article.toast.starFailed": "Det gick inte att ändra stjärnmärkningen",
   "pull.checking": "Kontrollerar...",
   "pull.hint": "Dra för att söka efter nya artiklar",
   "pull.newArticles.one": "{count} ny artikel",

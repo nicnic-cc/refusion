@@ -239,6 +239,7 @@ export const ruMessages: PartialMessages = {
   "article.list.retry": "Повторить",
   "article.pane.empty": "Выберите статью для чтения",
   "article.toast.fullTextFailed": "Не удалось загрузить полную статью",
+  "article.toast.starFailed": "Не удалось изменить отметку",
   "pull.checking": "Проверка...",
   "pull.hint": "Потяните, чтобы проверить новые статьи",
   "pull.newArticles.one": "Новых статей: {count}",
