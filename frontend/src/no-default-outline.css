@@ -3,3 +3,6 @@
 
 /* Same for the shadcn scroll viewport's ring (focusable when scrollable); unlayered so it beats Tailwind utilities. */
 [data-slot="scroll-area-viewport"]:focus-visible { box-shadow: none; outline: none; }
+
+/* Component focus rings (`focus-visible:` utilities) only while tabbing (focus-tab-only.ts) or in text fields. */
+@custom-variant focus-visible (&:focus-visible:is([data-tabbing] *, input, textarea, select, [contenteditable]));
