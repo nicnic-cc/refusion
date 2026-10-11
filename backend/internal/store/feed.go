@@ -75,7 +75,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 		       COALESCE(COUNT(i.id), 0) AS item_count
 		FROM feeds f
 		LEFT JOIN feed_fetch_state fs ON fs.feed_id = f.id
-		LEFT JOIN items i ON i.feed_id = f.id
+		LEFT JOIN items i ON i.feed_id = f.id AND i.filtered = 0
 		GROUP BY f.id, f.group_id, f.name, f.link, f.site_url,
 		         f.suspended, f.proxy, f.refresh_interval_seconds, f.full_content, f.created_at, f.updated_at,
 		         fs.etag, fs.last_modified, fs.cache_control, fs.expires_at, fs.last_checked_at,

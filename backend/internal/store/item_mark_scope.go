@@ -6,7 +6,7 @@ import "database/sql"
 // (both nil) everywhere. maxID is the list's snapshot, so items saved after
 // the user loaded the list stay unread.
 func (s *Store) MarkScopeRead(maxID int64, feedID, groupID *int64) error {
-	query := `UPDATE items SET unread = 0 WHERE unread = 1 AND id <= :max_id`
+	query := `UPDATE items SET unread = 0 WHERE unread = 1 AND filtered = 0 AND id <= :max_id`
 	args := []any{sql.Named("max_id", maxID)}
 
 	if feedID != nil {

@@ -70,10 +70,15 @@ async function get<T>(endpoint: string): Promise<T> {
   return request<T>(endpoint, { method: "GET" });
 }
 
-async function post<T>(endpoint: string, data?: unknown): Promise<T> {
+async function post<T>(
+  endpoint: string,
+  data?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   return request<T>(endpoint, {
     method: "POST",
     body: data ? JSON.stringify(data) : undefined,
+    signal,
   });
 }
 

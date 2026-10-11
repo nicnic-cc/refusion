@@ -47,6 +47,7 @@ export interface Item {
   content: string;
   pub_date: number;
   unread: boolean;
+  filtered: boolean;
   created_at: number;
 }
 
@@ -193,6 +194,71 @@ export interface ListItemsParams {
   limit?: number;
   before?: string;
   order_by?: "pub_date" | "created_at";
+  // Only valid together with feed_id.
+  include_filtered?: boolean;
+}
+
+export type FilterAction = "remove" | "keep";
+export type FilterJoin = "and" | "or";
+export type FilterTextTrigger =
+  | "title"
+  | "content"
+  | "title_or_content"
+  | "url"
+  | "url_path";
+export type FilterMediaTrigger =
+  | "has_pictures"
+  | "no_pictures"
+  | "has_video"
+  | "no_video";
+export type FilterTrigger = FilterTextTrigger | FilterMediaTrigger;
+export type FilterOperator =
+  | "contains"
+  | "not_contains"
+  | "is"
+  | "is_not"
+  | "begins_with"
+  | "ends_with"
+  | "regex"
+  | "not_regex";
+
+// operator and value are unused by the picture and video triggers.
+export interface FilterCondition {
+  trigger: FilterTrigger;
+  operator?: FilterOperator;
+  value?: string;
+}
+
+export interface FilterRule {
+  action: FilterAction;
+  join: FilterJoin;
+  whole_words: boolean;
+  conditions: FilterCondition[];
+}
+
+export interface FeedFilter extends FilterRule {
+  feed_id: number;
+  enabled: boolean;
+  hidden_count: number;
+  updated_at: number;
+}
+
+// PUT /feeds/:id/filter; enabled defaults to true.
+export interface SaveFeedFilterRequest extends FilterRule {
+  enabled?: boolean;
+}
+
+export interface FilterPreviewItem {
+  id: number;
+  title: string;
+  pub_date: number;
+  hidden: boolean;
+}
+
+export interface FilterPreview {
+  checked: number;
+  hidden: number;
+  items: FilterPreviewItem[];
 }
 
 export interface ListBookmarksParams {
