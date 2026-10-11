@@ -73,7 +73,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Search:** covers feeds and article text, with an excerpt and the matched words in bold.
 - **Stars:** starred articles are saved as copies, so they survive when the feed or article is deleted.
-- **Shortcuts:** Google Reader style (`j`/`k`, `m`, `s`, `g u`). Press `?` for the full list.
+- **Shortcuts:** Google Reader style (`j`/`k`, `m`, `s`, `g u`), and Inoreader style for the sidebar (`shift+n`/`shift+p`, `shift+x`). Press `?` for the full list.
 
 ### Self-hosting and apps
 
@@ -92,6 +92,7 @@ Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks
 - pull to refresh with progress per feed, and the new-articles pill
 - feed and global filters
 - reorder mode, search excerpts and the text settings
+- sidebar keyboard navigation, taken from the still-open upstream PR [#264](https://github.com/0x2E/fusion/pull/264)
 
 Upstream changes are merged in.
 

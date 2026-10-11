@@ -108,7 +108,7 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
 
 ## 8. Keyboard interactions
 
-The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
+The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
 ## 9. Authentication UX
 

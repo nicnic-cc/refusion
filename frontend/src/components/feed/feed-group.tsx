@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
+import { sidebarNodeKey, useSidebarNavStore } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedItem } from "./feed-item";
 import type { Feed } from "@/lib/api";
@@ -17,7 +18,22 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
     (s) => !s.collapsedIds.includes(groupId),
   );
   const setGroupOpen = useCollapsedGroupsStore((s) => s.setGroupOpen);
-  const setIsOpen = (open: boolean) => setGroupOpen(groupId, open);
+  const groupKey = sidebarNodeKey.group(groupId);
+  const isFocused = useSidebarNavStore((s) => s.focusedKey === groupKey);
+  const isFocusInsideGroup = useSidebarNavStore(
+    (s) =>
+      s.focusedKey !== null &&
+      feeds.some((feed) => sidebarNodeKey.feed(feed.id) === s.focusedKey),
+  );
+  const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
+
+  // Collapsing hides the child feeds; keep the keyboard highlight on the group.
+  const setIsOpen = (open: boolean) => {
+    setGroupOpen(groupId, open);
+    if (!open && isFocusInsideGroup) {
+      setFocusedKey(groupKey);
+    }
+  };
   const { selectedGroupId, setSelectedGroup } = useUrlState();
   const isSelected = selectedGroupId === groupId;
 
@@ -33,11 +49,13 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
       className="w-full min-w-0"
     >
       <div
+        data-sidebar-key={groupKey}
         className={cn(
           "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-[15px] leading-6 transition-colors",
           isSelected
             ? "bg-accent text-accent-foreground"
             : "hover:bg-accent/50",
+          isFocused && "ring-2 ring-inset ring-ring",
         )}
       >
         <button
@@ -57,7 +75,10 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
         </button>
         <button
           type="button"
-          onClick={() => setSelectedGroup(groupId)}
+          onClick={() => {
+            setFocusedKey(groupKey);
+            setSelectedGroup(groupId);
+          }}
           className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
         >
           <span className="block min-w-0 flex-1 truncate">{name}</span>
