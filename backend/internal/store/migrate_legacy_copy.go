@@ -122,13 +122,33 @@ func copyLegacyGroups(tx *sql.Tx) (map[int64]int64, error) {
 		if row.HasUpdated {
 			updatedAt = row.UpdatedAt
 		}
-		if _, err := insertStmt.Exec(
+		res, err := insertStmt.Exec(
 			sql.Named("id", row.ID),
 			sql.Named("name", row.Name),
 			sql.Named("created_at", row.CreatedAt),
 			sql.Named("updated_at", updatedAt),
-		); err != nil {
+		)
+		if err != nil {
 			return nil, fmt.Errorf("insert migrated group %d: %w", row.ID, err)
+		}
+		if n, err := res.RowsAffected(); err != nil || n > 0 {
+			continue
+		}
+
+		// Ignored because the name already exists under another id (e.g. a legacy DB
+		// without id 1 keeps the seeded "Default"): reuse that group for its feeds.
+		var existingID int64
+		err = tx.QueryRow(`SELECT id FROM groups WHERE name = :name`, sql.Named("name", row.Name)).Scan(&existingID)
+		if err == sql.ErrNoRows {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("look up existing group %q: %w", row.Name, err)
+		}
+		for legacyID, mappedID := range groupMap {
+			if mappedID == row.ID {
+				groupMap[legacyID] = existingID
+			}
 		}
 	}
 

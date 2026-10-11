@@ -31,6 +31,9 @@ type stateEntry struct {
 
 const stateMaxAge = 10 * time.Minute
 
+// maxPendingStates bounds memory against unauthenticated /login floods.
+const maxPendingStates = 1000
+
 func NewOIDC(ctx context.Context, issuer, clientID, clientSecret, redirectURI string) (*OIDCAuthenticator, error) {
 	provider, err := oidc.NewProvider(ctx, issuer)
 	if err != nil {
@@ -71,10 +74,7 @@ func (a *OIDCAuthenticator) AuthURL() (authURL string, err error) {
 		return "", fmt.Errorf("generate code verifier: %w", err)
 	}
 
-	a.mu.Lock()
-	a.cleanExpiredStates()
-	a.states[state] = stateEntry{codeVerifier: codeVerifier, createdAt: time.Now()}
-	a.mu.Unlock()
+	a.addState(state, codeVerifier)
 
 	challenge := s256Challenge(codeVerifier)
 	url := a.oauth2Config.AuthCodeURL(state,
@@ -136,6 +136,26 @@ func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code string) (s
 	}
 
 	return userID, nil
+}
+
+// addState stores a pending login, evicting the oldest entries beyond the cap.
+func (a *OIDCAuthenticator) addState(state, codeVerifier string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	a.cleanExpiredStates()
+	for len(a.states) >= maxPendingStates {
+		var oldestKey string
+		var oldest time.Time
+		first := true
+		for k, v := range a.states {
+			if first || v.createdAt.Before(oldest) {
+				oldestKey, oldest, first = k, v.createdAt, false
+			}
+		}
+		delete(a.states, oldestKey)
+	}
+	a.states[state] = stateEntry{codeVerifier: codeVerifier, createdAt: time.Now()}
 }
 
 func (a *OIDCAuthenticator) cleanExpiredStates() {

@@ -60,12 +60,11 @@ func CalculateBackoff(interval time.Duration, failures int64, maxBackoff time.Du
 	}
 
 	backoff := float64(interval) * math.Pow(backoffBase, float64(failures))
-	duration := time.Duration(backoff)
-	if duration > maxBackoff {
+	if backoff >= float64(maxBackoff) {
 		return maxBackoff
 	}
 
-	return duration
+	return time.Duration(backoff)
 }
 
 func ComputeNextCheckAt(
@@ -143,12 +142,12 @@ func calculateBackoffSeconds(intervalSeconds, failures, maxBackoffSeconds int64)
 	}
 
 	backoff := float64(intervalSeconds) * math.Pow(backoffBase, float64(failures))
-	seconds := int64(backoff)
-	if seconds > maxBackoffSeconds {
+	// Clamp before converting: float64 -> int64 overflow is undefined and wraps on amd64.
+	if backoff >= float64(maxBackoffSeconds) {
 		return maxBackoffSeconds
 	}
 
-	return seconds
+	return int64(backoff)
 }
 
 func parseCacheControlMaxAgeSeconds(cacheControl string) int64 {
