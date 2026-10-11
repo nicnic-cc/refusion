@@ -95,7 +95,10 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 		i.Filtered = intToBool(filtered)
 		items = append(items, i)
 	}
-	return items, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, s.markFilteredGlobal(items...)
 }
 
 func (s *Store) GetItem(id int64) (*model.Item, error) {
@@ -115,7 +118,7 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 
 	i.Unread = intToBool(unread)
 	i.Filtered = intToBool(filtered)
-	return i, nil
+	return i, s.markFilteredGlobal(i)
 }
 
 func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubDate int64) (*model.Item, error) {
@@ -143,7 +146,8 @@ type BatchCreateItemInput struct {
 	Content string
 	PubDate int64
 
-	Filtered bool
+	Filtered       bool
+	FilteredGlobal bool
 }
 
 // BatchCreateItemsIgnore inserts items in one transaction and ignores duplicates by (feed_id, guid).
@@ -160,8 +164,8 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO items (feed_id, guid, title, link, content, pub_date, filtered)
-		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date, :filtered)
+		INSERT INTO items (feed_id, guid, title, link, content, pub_date, filtered, filtered_global)
+		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date, :filtered, :filtered_global)
 		ON CONFLICT(feed_id, guid) DO NOTHING
 	`)
 	if err != nil {
@@ -179,6 +183,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 			sql.Named("content", input.Content),
 			sql.Named("pub_date", input.PubDate),
 			sql.Named("filtered", boolToInt(input.Filtered)),
+			sql.Named("filtered_global", boolToInt(input.FilteredGlobal)),
 		)
 		if err != nil {
 			return 0, err

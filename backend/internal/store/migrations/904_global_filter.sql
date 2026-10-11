@@ -1,6 +1,7 @@
 -- One global article filter (Remove only), next to the per-feed ones in 903.
 -- A single-row table: changing feed_filters' primary key would rebuild it.
 -- It sets the same items.filtered flag; see docs/feed-filter.md.
+-- items.filtered_global = 1 when only the global filter hides the article.
 
 CREATE TABLE global_filter (
 	id          INTEGER PRIMARY KEY CHECK (id = 1),
@@ -11,3 +12,5 @@ CREATE TABLE global_filter (
 	conditions  TEXT NOT NULL DEFAULT '[]',
 	updated_at  INTEGER NOT NULL DEFAULT (unixepoch())
 );
+
+ALTER TABLE items ADD COLUMN filtered_global INTEGER NOT NULL DEFAULT 0;

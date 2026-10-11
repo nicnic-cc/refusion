@@ -47,6 +47,7 @@ import {
 import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
 import { useUIStore } from "@/store";
 import { FeedGroupCard } from "@/components/feed/feed-group-card";
+import { GlobalFilterRow } from "@/components/feed/global-filter-row";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useReorder } from "@/hooks/use-reorder";
 
@@ -375,6 +376,7 @@ function FeedsPage() {
               </div>
             ) : (
               <>
+                <GlobalFilterRow />
                 {visibleGroups.map(({ group, feeds: groupFeeds }, groupIndex) => {
                   const isCollapsed = collapsedGroups.has(group.id);
                   const isEditing = editingGroupId === group.id;

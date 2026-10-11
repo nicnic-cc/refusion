@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { feedFilterAPI } from "@/lib/api";
+import { feedFilterAPI, globalFilterAPI } from "@/lib/api";
 import type {
   Feed,
   FeedFilter,
@@ -27,7 +27,10 @@ import type {
   FilterJoin,
   FilterOperator,
   FilterPreview,
+  FilterRule,
   FilterTrigger,
+  GlobalFilter,
+  GlobalPreview,
 } from "@/lib/api";
 import {
   OPERATORS,
@@ -49,6 +52,10 @@ import {
   useDeleteFeedFilter,
   useSaveFeedFilter,
 } from "@/queries/feed-filters";
+import {
+  useDeleteGlobalFilter,
+  useSaveGlobalFilter,
+} from "@/queries/global-filter";
 
 const PREVIEW_DEBOUNCE_MS = 300;
 
@@ -60,7 +67,7 @@ interface RowError {
 interface PreviewState {
   // JSON of the rule this result belongs to; a mismatch means "still loading".
   key: string | null;
-  data: FilterPreview | null;
+  data: FilterPreview | GlobalPreview | null;
   error: RowError | null;
 }
 
@@ -75,7 +82,7 @@ function newCondition(): DraftCondition {
   };
 }
 
-function initialDraft(filter?: FeedFilter): DraftRule {
+function initialDraft(filter?: FilterRule): DraftRule {
   if (!filter) {
     return {
       action: "remove",
@@ -98,8 +105,9 @@ function initialDraft(filter?: FeedFilter): DraftRule {
 }
 
 interface FilterDialogProps {
-  feed: Feed;
-  filter?: FeedFilter;
+  // Without a feed the dialog edits the global filter (Remove only).
+  feed?: Feed;
+  filter?: FeedFilter | GlobalFilter;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -118,9 +126,11 @@ export function FilterDialog({
       >
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle className="text-base font-semibold">
-            {t("feedFilter.title")}
+            {t(feed ? "feedFilter.title" : "globalFilter.title")}
           </DialogTitle>
-          <DialogDescription className="truncate">{feed.name}</DialogDescription>
+          <DialogDescription className="truncate">
+            {feed ? feed.name : t("globalFilter.description")}
+          </DialogDescription>
         </DialogHeader>
         <FilterForm
           feed={feed}
@@ -137,13 +147,19 @@ function FilterForm({
   filter,
   onClose,
 }: {
-  feed: Feed;
-  filter?: FeedFilter;
+  feed?: Feed;
+  filter?: FeedFilter | GlobalFilter;
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const saveMutation = useSaveFeedFilter();
-  const deleteMutation = useDeleteFeedFilter();
+  const saveFeed = useSaveFeedFilter();
+  const deleteFeed = useDeleteFeedFilter();
+  const saveGlobal = useSaveGlobalFilter();
+  const deleteGlobal = useDeleteGlobalFilter();
+  const isGlobal = !feed;
+  const feedId = feed?.id;
+  const saveMutation = isGlobal ? saveGlobal : saveFeed;
+  const deleteMutation = isGlobal ? deleteGlobal : deleteFeed;
   const [draft, setDraft] = useState(() => initialDraft(filter));
   const [saveError, setSaveError] = useState<RowError | null>(null);
   const [onlyHidden, setOnlyHidden] = useState(false);
@@ -177,8 +193,10 @@ function FilterForm({
     if (!ready) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      feedFilterAPI
-        .preview(feed.id, rule, controller.signal)
+      (feedId !== undefined
+        ? feedFilterAPI.preview(feedId, rule, controller.signal)
+        : globalFilterAPI.preview(rule, controller.signal)
+      )
         .then((res) => {
           setPreview({ key: ruleKey, data: res.data ?? null, error: null });
         })
@@ -196,7 +214,7 @@ function FilterForm({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [ready, rule, ruleKey, feed.id]);
+  }, [ready, rule, ruleKey, feedId]);
 
   const previewCurrent = preview.key === ruleKey;
   const loading = ready && !previewCurrent;
@@ -216,11 +234,16 @@ function FilterForm({
   const handleSave = async () => {
     try {
       // Saving keeps the row's on/off state; only the switch changes it.
-      await saveMutation.mutateAsync({
-        feedId: feed.id,
-        rule: { ...rule, enabled: filter?.enabled ?? true },
-      });
-      toast.success(t("feedFilter.toast.saved"));
+      const body = { ...rule, enabled: filter?.enabled ?? true };
+      if (feed) {
+        await saveFeed.mutateAsync({ feedId: feed.id, rule: body });
+        toast.success(t("feedFilter.toast.saved"));
+      } else {
+        const res = await saveGlobal.mutateAsync(body);
+        toast.success(
+          t("globalFilter.toast.saved", { count: res.data?.hidden_total ?? 0 }),
+        );
+      }
       onClose();
     } catch (err) {
       setSaveError(
@@ -231,7 +254,8 @@ function FilterForm({
 
   const handleDelete = async () => {
     try {
-      await deleteMutation.mutateAsync(feed.id);
+      if (feed) await deleteFeed.mutateAsync(feed.id);
+      else await deleteGlobal.mutateAsync();
       toast.success(t("feedFilter.toast.deleted"));
       onClose();
     } catch {
@@ -259,19 +283,23 @@ function FilterForm({
   return (
     <>
       <div className="space-y-5 overflow-y-auto p-5">
-        <Tabs
-          value={draft.action}
-          onValueChange={(v) =>
-            edit((d) => ({ ...d, action: v as FilterAction }))
-          }
-        >
-          <TabsList>
-            <TabsTrigger value="remove">
-              {t("feedFilter.action.remove")}
-            </TabsTrigger>
-            <TabsTrigger value="keep">{t("feedFilter.action.keep")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {feed && (
+          <Tabs
+            value={draft.action}
+            onValueChange={(v) =>
+              edit((d) => ({ ...d, action: v as FilterAction }))
+            }
+          >
+            <TabsList>
+              <TabsTrigger value="remove">
+                {t("feedFilter.action.remove")}
+              </TabsTrigger>
+              <TabsTrigger value="keep">
+                {t("feedFilter.action.keep")}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
 
         <div className="space-y-3">
           {draft.conditions.map((c, i) => {
@@ -440,10 +468,15 @@ function FilterForm({
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[13px] font-medium">
-                    {t("feedFilter.preview.summary", {
-                      hidden: preview.data.hidden,
-                      checked: preview.data.checked,
-                    })}
+                    {t(
+                      isGlobal
+                        ? "globalFilter.preview.summary"
+                        : "feedFilter.preview.summary",
+                      {
+                        hidden: preview.data.hidden,
+                        checked: preview.data.checked,
+                      },
+                    )}
                   </p>
                   <Checkbox
                     checked={onlyHidden}
@@ -451,6 +484,14 @@ function FilterForm({
                     label={t("feedFilter.preview.onlyRemoved")}
                   />
                 </div>
+                {"global_hidden" in preview.data &&
+                  preview.data.global_hidden > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("feedFilter.preview.globalHidden", {
+                        count: preview.data.global_hidden,
+                      })}
+                    </p>
+                  )}
                 <ul className="max-h-56 divide-y divide-border/50 overflow-y-auto rounded-md border">
                   {shownItems.length === 0 && (
                     <li className="px-3 py-2 text-xs text-muted-foreground">
@@ -461,12 +502,27 @@ function FilterForm({
                     <li
                       key={item.id}
                       className={cn(
-                        "truncate px-3 py-1.5 text-[13px]",
+                        "flex items-center gap-2 px-3 py-1.5 text-[13px]",
                         item.hidden &&
                           "text-muted-foreground line-through opacity-60",
+                        "global_hidden" in item &&
+                          item.global_hidden &&
+                          "text-muted-foreground opacity-60",
                       )}
                     >
-                      {item.title || t("feedFilter.preview.untitled")}
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.title || t("feedFilter.preview.untitled")}
+                      </span>
+                      {"feed_name" in item && (
+                        <span className="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">
+                          {item.feed_name}
+                        </span>
+                      )}
+                      {"global_hidden" in item && item.global_hidden && (
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {t("feedFilter.preview.globalHiddenTag")}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -496,7 +552,9 @@ function FilterForm({
             {t("common.cancel")}
           </Button>
           <Button disabled={!ready || busy} onClick={handleSave}>
-            {t("feedFilter.save")}
+            {isGlobal && saveMutation.isPending
+              ? t("globalFilter.applying")
+              : t("feedFilter.save")}
           </Button>
         </div>
       </div>
@@ -506,7 +564,9 @@ function FilterForm({
           <DialogHeader>
             <DialogTitle>{t("feedFilter.deleteConfirm.title")}</DialogTitle>
             <DialogDescription>
-              {t("feedFilter.deleteConfirm.description", { name: feed.name })}
+              {feed
+                ? t("feedFilter.deleteConfirm.description", { name: feed.name })
+                : t("globalFilter.deleteConfirm.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

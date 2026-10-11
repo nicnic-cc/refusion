@@ -3,13 +3,18 @@ package model
 import "github.com/0x2E/fusion/internal/filter"
 
 // FeedFilter is a feed's article filter with its stored state.
-// HiddenCount is how many of the feed's stored articles it currently hides.
 type FeedFilter struct {
 	FeedID int64 `json:"feed_id"`
 	filter.Rule
-	Enabled     bool  `json:"enabled"`
-	HiddenCount int64 `json:"hidden_count"`
-	UpdatedAt   int64 `json:"updated_at"`
+	Enabled   bool  `json:"enabled"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
+// HiddenCounts splits a feed's hidden articles: Feed by its own filter, Global
+// by the global filter alone. Together they are everything hidden in the feed.
+type HiddenCounts struct {
+	Feed   int64 `json:"feed"`
+	Global int64 `json:"global"`
 }
 
 // FilterPreviewItem is one article in a filter preview.

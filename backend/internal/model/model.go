@@ -59,16 +59,18 @@ type FeedFetchState struct {
 
 // Item represents a feed item.
 type Item struct {
-	ID        int64  `json:"id"`
-	FeedID    int64  `json:"feed_id"`
-	GUID      string `json:"guid"`
-	Title     string `json:"title"`
-	Link      string `json:"link"`
-	Content   string `json:"content"`
-	PubDate   int64  `json:"pub_date"`
-	Unread    bool   `json:"unread"`
-	Filtered  bool   `json:"filtered"`
-	CreatedAt int64  `json:"created_at"`
+	ID       int64  `json:"id"`
+	FeedID   int64  `json:"feed_id"`
+	GUID     string `json:"guid"`
+	Title    string `json:"title"`
+	Link     string `json:"link"`
+	Content  string `json:"content"`
+	PubDate  int64  `json:"pub_date"`
+	Unread   bool   `json:"unread"`
+	Filtered bool   `json:"filtered"`
+	// FilteredGlobal: hidden by the global filter and not by the feed's own.
+	FilteredGlobal bool  `json:"filtered_global"`
+	CreatedAt      int64 `json:"created_at"`
 }
 
 // FullContent is an item's article extracted live from its original page;

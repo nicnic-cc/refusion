@@ -48,6 +48,8 @@ export interface Item {
   pub_date: number;
   unread: boolean;
   filtered: boolean;
+  // Hidden by the global filter and not by the feed's own; implies filtered.
+  filtered_global: boolean;
   created_at: number;
 }
 
@@ -239,8 +241,14 @@ export interface FilterRule {
 export interface FeedFilter extends FilterRule {
   feed_id: number;
   enabled: boolean;
-  hidden_count: number;
   updated_at: number;
+}
+
+// GET /filters/hidden-counts, keyed by feed id; only feeds hiding something.
+// feed: hidden by the feed's own filter; global: by the global filter alone.
+export interface HiddenCounts {
+  feed: number;
+  global: number;
 }
 
 // PUT /feeds/:id/filter; enabled defaults to true.
