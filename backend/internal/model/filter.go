@@ -13,18 +13,55 @@ type FeedFilter struct {
 }
 
 // FilterPreviewItem is one article in a filter preview.
+// GlobalHidden marks articles the saved global filter already hides.
 type FilterPreviewItem struct {
-	ID      int64  `json:"id"`
-	Title   string `json:"title"`
-	PubDate int64  `json:"pub_date"`
-	Hidden  bool   `json:"hidden"`
+	ID           int64  `json:"id"`
+	Title        string `json:"title"`
+	PubDate      int64  `json:"pub_date"`
+	Hidden       bool   `json:"hidden"`
+	GlobalHidden bool   `json:"global_hidden"`
 }
 
 // FilterPreview is the result of running a draft rule over a feed's stored
 // articles: Checked of them were tested, Hidden would be hidden, and Items
-// lists the latest ones.
+// lists the latest ones. GlobalHidden counts the articles the saved global
+// filter hides, apart from the draft rule's own Hidden.
 type FilterPreview struct {
+	Checked      int                 `json:"checked"`
+	Hidden       int                 `json:"hidden"`
+	GlobalHidden int                 `json:"global_hidden"`
+	Items        []FilterPreviewItem `json:"items"`
+}
+
+// GlobalFilter is the one filter that hides articles in every feed (Remove
+// only). It has no hidden count: that would need re-running the matcher.
+type GlobalFilter struct {
+	filter.Rule
+	Enabled   bool  `json:"enabled"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
+// GlobalFilterSaved is the answer to saving, switching or deleting the global
+// filter. HiddenTotal is every article now hidden by any filter.
+type GlobalFilterSaved struct {
+	*GlobalFilter
+	HiddenTotal int64 `json:"hidden_total"`
+}
+
+// GlobalPreviewItem is one article in a global filter preview.
+type GlobalPreviewItem struct {
+	ID       int64  `json:"id"`
+	FeedID   int64  `json:"feed_id"`
+	FeedName string `json:"feed_name"`
+	Title    string `json:"title"`
+	PubDate  int64  `json:"pub_date"`
+	Hidden   bool   `json:"hidden"`
+}
+
+// GlobalPreview runs a draft global rule over the latest articles of all
+// feeds only: Checked is capped, so Hidden is a sample, not the total.
+type GlobalPreview struct {
 	Checked int                 `json:"checked"`
 	Hidden  int                 `json:"hidden"`
-	Items   []FilterPreviewItem `json:"items"`
+	Items   []GlobalPreviewItem `json:"items"`
 }

@@ -253,12 +253,44 @@ export interface FilterPreviewItem {
   title: string;
   pub_date: number;
   hidden: boolean;
+  // Already hidden by the saved global filter.
+  global_hidden: boolean;
 }
 
 export interface FilterPreview {
   checked: number;
   hidden: number;
+  // Articles the saved global filter hides, apart from the draft's `hidden`.
+  global_hidden: number;
   items: FilterPreviewItem[];
+}
+
+// The one filter for all feeds; Remove only, so action is always "remove".
+export interface GlobalFilter extends FilterRule {
+  enabled: boolean;
+  updated_at: number;
+}
+
+// PUT and PATCH /global-filter; hidden_total counts every article hidden by
+// any filter after the re-check.
+export interface GlobalFilterSaved extends GlobalFilter {
+  hidden_total: number;
+}
+
+export interface GlobalPreviewItem {
+  id: number;
+  feed_id: number;
+  feed_name: string;
+  title: string;
+  pub_date: number;
+  hidden: boolean;
+}
+
+// Runs over the latest articles of all feeds only, so `hidden` is a sample.
+export interface GlobalPreview {
+  checked: number;
+  hidden: number;
+  items: GlobalPreviewItem[];
 }
 
 export interface ListBookmarksParams {
