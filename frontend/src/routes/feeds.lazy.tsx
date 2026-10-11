@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { WithTooltip } from "@/components/common/with-tooltip";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
@@ -317,12 +318,21 @@ function FeedsPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant={isReordering ? "default" : "outline"}
-              onClick={toggleReorder}
-              aria-pressed={isReordering}
-              aria-label={
+            <WithTooltip
+              label={
                 isReordering ? t("feeds.reorder.done") : t("feeds.reorder.start")
+              }
+              render={
+                <Button
+                  variant={isReordering ? "default" : "outline"}
+                  onClick={toggleReorder}
+                  aria-pressed={isReordering}
+                  aria-label={
+                    isReordering
+                      ? t("feeds.reorder.done")
+                      : t("feeds.reorder.start")
+                  }
+                />
               }
             >
               {isReordering ? (
@@ -333,7 +343,7 @@ function FeedsPage() {
               <span className={cn(!isReordering && "hidden sm:inline")}>
                 {isReordering ? t("feeds.reorder.done") : t("feeds.reorder.start")}
               </span>
-            </Button>
+            </WithTooltip>
             <Button
               variant="outline"
               onClick={() => setRefreshConfirmOpen(true)}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Filter } from "lucide-react";
 import { toast } from "sonner";
+import { WithTooltip } from "@/components/common/with-tooltip";
 import { FilterDialog } from "@/components/feed/filter-dialog";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
@@ -28,15 +29,21 @@ export function GlobalFilterRow() {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className={cn(
-            "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent",
-            dim ? "text-muted-foreground/70" : "text-foreground",
+        <WithTooltip
+          label={t(
+            filter ? "globalFilter.tooltip.edit" : "globalFilter.tooltip.add",
           )}
-          aria-label={t("globalFilter.title")}
-          title={t(filter ? "feedFilter.action.remove" : "feedFilter.button.add")}
+          render={
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className={cn(
+                "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent",
+                dim ? "text-muted-foreground/70" : "text-foreground",
+              )}
+              aria-label={t("globalFilter.title")}
+            />
+          }
         >
           <Filter className="h-3.5 w-3.5 shrink-0" />
           {filter && (
@@ -44,17 +51,27 @@ export function GlobalFilterRow() {
               {t("feedFilter.action.remove")}
             </span>
           )}
-        </button>
+        </WithTooltip>
         {filter && (
-          <Switch
-            size="sm"
-            checked={filter.enabled}
-            disabled={setEnabled.isPending}
-            aria-label={t("feedFilter.enabled")}
-            onCheckedChange={(enabled) =>
-              setEnabled.mutate(enabled, {
-                onError: () => toast.error(t("feedFilter.toast.toggleFailed")),
-              })
+          <WithTooltip
+            label={t(
+              filter.enabled
+                ? "feedFilter.tooltip.turnOff"
+                : "feedFilter.tooltip.turnOn",
+            )}
+            render={
+              <Switch
+                size="sm"
+                checked={filter.enabled}
+                disabled={setEnabled.isPending}
+                aria-label={t("feedFilter.enabled")}
+                onCheckedChange={(enabled) =>
+                  setEnabled.mutate(enabled, {
+                    onError: () =>
+                      toast.error(t("feedFilter.toast.toggleFailed")),
+                  })
+                }
+              />
             }
           />
         )}
