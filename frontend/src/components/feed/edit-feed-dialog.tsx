@@ -146,8 +146,9 @@ export function EditFeedDialog() {
         request.suspended = suspended;
       }
 
-      const newProxy = proxy.trim() || undefined;
-      if (newProxy !== editingFeed.proxy) {
+      // "" (not undefined) clears the proxy: undefined is dropped by JSON.stringify.
+      const newProxy = proxy.trim();
+      if (newProxy !== (editingFeed.proxy ?? "")) {
         request.proxy = newProxy;
       }
 
