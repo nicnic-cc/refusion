@@ -139,6 +139,8 @@ export function SearchDialog() {
             placeholder={t("search.placeholder")}
             value={query}
             onValueChange={setQuery}
+            autoComplete="off"
+            data-1p-ignore
           />
           <CommandList>
             {loading && debouncedQuery && (

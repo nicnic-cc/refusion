@@ -103,6 +103,8 @@ export function FeedGroupCard({
               }}
               className="h-7 w-40 px-2 text-sm"
               aria-label={t("group.add.placeholder")}
+              autoComplete="off"
+              data-1p-ignore
               autoFocus={!isMobile}
             />
             <span
