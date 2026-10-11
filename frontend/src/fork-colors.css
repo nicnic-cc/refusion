@@ -1,7 +1,11 @@
 /*
- * Fork colour overrides (dark mode): lighter reading area, sidebar a step darker as a frame.
+ * Fork colour overrides: lighter dark-mode reading area, sidebar a step darker as a frame, tinted dialog headers.
  * `:root.dark` outranks index.css's `.dark`, which comes later in the bundle because imports are hoisted.
  */
+:root {
+  --dialog-header: oklch(0.967 0.001 286.375);
+}
+
 :root.dark {
   --background: oklch(0.21 0.006 285.885);
   --card: oklch(0.25 0.006 285.885);
@@ -12,4 +16,11 @@
   --accent: oklch(0.29 0.006 286.033);
   --sidebar: oklch(0.18 0.006 285.885);
   --sidebar-accent: oklch(0.29 0.006 286.033);
+  --dialog-header: var(--background);
+}
+
+/* Bordered header strips of the settings, feed, filter and OPML dialogs; selectors avoid editing upstream files. */
+[data-slot="dialog-header"].border-b,
+[data-slot="dialog-content"] > div.border-b:first-child {
+  background-color: var(--dialog-header);
 }
