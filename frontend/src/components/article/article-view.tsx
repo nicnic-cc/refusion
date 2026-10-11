@@ -180,8 +180,8 @@ export function ArticleView({
         </div>
       </div>
 
-      {/* Content */}
-      <ScrollArea className="min-h-0 flex-1">
+      {/* Content. Keyed so each article opens at the top; the subtree holds no state worth keeping. */}
+      <ScrollArea key={article.id} className="min-h-0 flex-1">
         <article className="min-w-0 px-4 py-6 sm:px-6 sm:py-8">
           <div className="space-y-3">
             <h1
