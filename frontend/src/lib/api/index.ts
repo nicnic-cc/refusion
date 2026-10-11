@@ -11,6 +11,8 @@ import type {
   Bookmark,
   CreateGroupRequest,
   UpdateGroupRequest,
+  ReorderGroupsRequest,
+  ReorderFeedsRequest,
   CreateFeedRequest,
   UpdateFeedRequest,
   ValidateFeedRequest,
@@ -60,6 +62,9 @@ export const groupAPI = {
     api.patch<APIResponse<Group>>(`/groups/${id}`, data),
 
   delete: (id: number) => api.delete<void>(`/groups/${id}`),
+
+  reorder: (ids: ReorderGroupsRequest["ids"]) =>
+    api.put<void>("/groups/order", { ids } satisfies ReorderGroupsRequest),
 };
 
 // Feed APIs
@@ -75,6 +80,12 @@ export const feedAPI = {
     api.patch<APIResponse<Feed>>(`/feeds/${id}`, data),
 
   delete: (id: number) => api.delete<void>(`/feeds/${id}`),
+
+  reorder: (groupId: number, ids: number[]) =>
+    api.put<void>("/feeds/order", {
+      group_id: groupId,
+      ids,
+    } satisfies ReorderFeedsRequest),
 
   validate: (data: ValidateFeedRequest) =>
     api.post<APIResponse<ValidateFeedResponse>>("/feeds/validate", data),

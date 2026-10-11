@@ -119,6 +119,15 @@ export interface UpdateGroupRequest {
   name: string;
 }
 
+export interface ReorderGroupsRequest {
+  ids: number[];
+}
+
+export interface ReorderFeedsRequest {
+  group_id: number;
+  ids: number[];
+}
+
 export interface CreateFeedRequest {
   group_id: number;
   name: string;
