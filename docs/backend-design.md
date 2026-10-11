@@ -48,7 +48,11 @@ here, it duplicates the migrations and rots.
   `feed_id` (`ON DELETE CASCADE`); exposed through the API as
   `feed.fetch_state.*`.
 - `items` — unique `(feed_id, guid)`; unread partial index, `pub_date` and
-  `(feed_id, unread)` indexes.
+  `(feed_id, unread)` indexes. `filtered` / `filtered_global` hold the
+  stored filter result (migrations 903, 904; see [feed-filter.md](feed-filter.md)).
+- `feed_filters` — one optional filter per feed, 1:1 via `feed_id`
+  (`ON DELETE CASCADE`).
+- `global_filter` — single row (`id = 1`), the filter applied to every feed.
 - `items_fts` — FTS5 index of title and tag-stripped `content`, over external
   content (`content='items'`, no second copy). Triggers keep it in sync, and
   only title/content edits re-index, so marking read doesn't (migration 901).
