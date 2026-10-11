@@ -466,18 +466,20 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		return
 	}
 
-	inputs := make([]store.BatchCreateFeedsInput, len(req.Feeds))
-	for i, f := range req.Feeds {
+	// One bad link must not sink an OPML import: skip it and report it instead.
+	inputs := make([]store.BatchCreateFeedsInput, 0, len(req.Feeds))
+	var errs []string
+	for _, f := range req.Feeds {
 		if err := httpc.ValidateRequestURL(c.Request.Context(), f.Link, h.config.AllowPrivateFeeds); err != nil {
-			badRequestError(c, "invalid link")
-			return
+			errs = append(errs, "invalid link: "+f.Link)
+			continue
 		}
-		inputs[i] = store.BatchCreateFeedsInput{
+		inputs = append(inputs, store.BatchCreateFeedsInput{
 			GroupID: f.GroupID,
 			Name:    f.Name,
 			Link:    f.Link,
 			SiteURL: f.SiteURL,
-		}
+		})
 	}
 
 	result, err := h.store.BatchCreateFeeds(inputs)
@@ -498,9 +500,10 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		}(id)
 	}
 
+	errs = append(errs, result.Errors...)
 	dataResponse(c, gin.H{
 		"created": result.Created,
-		"failed":  len(result.Errors),
-		"errors":  result.Errors,
+		"failed":  len(errs),
+		"errors":  errs,
 	})
 }

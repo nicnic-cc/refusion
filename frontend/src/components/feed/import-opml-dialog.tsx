@@ -140,14 +140,6 @@ export function ImportOpmlDialog() {
       if (response.data) {
         const { created, failed, errors } = response.data;
 
-        // Invalidate all caches after import
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: queryKeys.groups.all }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.items.all }),
-          queryClient.invalidateQueries({ queryKey: pullQueryKey }),
-        ]);
-
         if (created > 0) {
           toast.success(t("opml.toast.imported", { count: created }));
         }
@@ -170,6 +162,13 @@ export function ImportOpmlDialog() {
         error instanceof Error ? error.message : t("opml.toast.failed"),
       );
     } finally {
+      // Also on failure: groups created before the error must show up.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.groups.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all }),
+        queryClient.invalidateQueries({ queryKey: pullQueryKey }),
+      ]);
       setIsImporting(false);
     }
   };
