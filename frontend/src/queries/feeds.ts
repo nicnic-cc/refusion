@@ -93,9 +93,16 @@ export function useUpdateFeed() {
       return res.data!;
     },
     onSuccess: (updated) => {
+      const previous = qc
+        .getQueryData<Feed[]>(queryKeys.feeds.list())
+        ?.find((f) => f.id === updated.id);
       qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
         old?.map((f) => (f.id === updated.id ? updated : f)),
       );
+      // The backend appends a moved feed to the end of its new group.
+      if (previous && previous.group_id !== updated.group_id) {
+        qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+      }
     },
   });
 }
@@ -143,6 +150,7 @@ export function useMoveFeedsToGroup() {
           f.group_id === fromGroupId ? { ...f, group_id: toGroupId } : f,
         ),
       );
+      qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
     },
   });
 }

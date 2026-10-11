@@ -1,6 +1,7 @@
 import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { ReorderControls } from "@/components/feed/reorder-controls";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -10,11 +11,20 @@ import {
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { getFeedErrorPreview } from "@/lib/feed-error";
 import type { TranslationKey } from "@/lib/i18n";
+import type { Move } from "@/lib/reorder";
 import { cn, formatDate } from "@/lib/utils";
 import type { Feed, Group } from "@/lib/api";
 
+export interface FeedGroupReorder {
+  groupIndex: number;
+  groupCount: number;
+  onMoveGroup: (group: Group, move: Move) => void;
+  onMoveFeed: (feed: Feed, move: Move) => void;
+}
+
 interface FeedGroupCardProps {
   group: Group;
+  reorder?: FeedGroupReorder;
   groupFeeds: Feed[];
   isCollapsed: boolean;
   isEditing: boolean;
@@ -43,6 +53,7 @@ function getDomain(url: string) {
 
 export function FeedGroupCard({
   group,
+  reorder,
   groupFeeds,
   isCollapsed,
   isEditing,
@@ -143,7 +154,20 @@ export function FeedGroupCard({
             </span>
           </button>
         )}
-        <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
+        {reorder && (
+          <ReorderControls
+            index={reorder.groupIndex}
+            count={reorder.groupCount}
+            onMove={(move) => reorder.onMoveGroup(group, move)}
+            t={t}
+          />
+        )}
+        <div
+          className={cn(
+            "flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100",
+            reorder && "max-sm:hidden",
+          )}
+        >
           <button
             type="button"
             onClick={(e) => {
@@ -262,11 +286,22 @@ export function FeedGroupCard({
                 <button
                   type="button"
                   onClick={() => onOpenEditFeed(feed)}
-                  className="rounded p-1 hover:bg-accent"
+                  className={cn(
+                    "rounded p-1 hover:bg-accent",
+                    reorder && "max-sm:hidden",
+                  )}
                   aria-label={t("feed.edit.title")}
                 >
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
+                {reorder && (
+                  <ReorderControls
+                    index={index}
+                    count={groupFeeds.length}
+                    onMove={(move) => reorder.onMoveFeed(feed, move)}
+                    t={t}
+                  />
+                )}
               </div>
             </div>
           ))}

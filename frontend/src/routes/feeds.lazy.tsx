@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import {
+  ArrowUpDown,
+  Check,
   ChevronDown,
   Download,
   Folder,
@@ -46,6 +48,7 @@ import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
 import { useUIStore } from "@/store";
 import { FeedGroupCard } from "@/components/feed/feed-group-card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useReorder } from "@/hooks/use-reorder";
 
 export const Route = createLazyFileRoute("/feeds")({
   component: FeedsPage,
@@ -71,6 +74,8 @@ function FeedsPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [isReordering, setIsReordering] = useState(false);
+  const { moveGroup, moveFeed, flush } = useReorder();
   const [isExporting, setIsExporting] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(
     new Set(),
@@ -118,6 +123,16 @@ function FeedsPage() {
       feeds: getFeedsByGroup(group.id).filter(matchesFeed),
     }));
   }, [groups, searchQuery, statusFilter, getFeedsByGroup]);
+
+  const toggleReorder = () => {
+    if (isReordering) {
+      flush();
+    } else {
+      setSearchQuery("");
+      setStatusFilter("all");
+    }
+    setIsReordering(!isReordering);
+  };
 
   const toggleGroup = (groupId: number) => {
     setCollapsedGroups((prev) => {
@@ -242,6 +257,7 @@ function FeedsPage() {
                 placeholder={t("feeds.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={isReordering}
                 className="h-9 w-full pl-9 sm:w-[280px]"
                 name="feed-search"
                 autoComplete="off"
@@ -251,7 +267,11 @@ function FeedsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" className="shrink-0 gap-1.5">
+                  <Button
+                    variant="outline"
+                    className="shrink-0 gap-1.5"
+                    disabled={isReordering}
+                  >
                     <ListFilter className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">
                       {statusFilterLabels[statusFilter]}
@@ -278,7 +298,7 @@ function FeedsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button>
+                  <Button disabled={isReordering}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     {t("common.add")}
                     <ChevronDown className="ml-1 h-3.5 w-3.5" />
@@ -297,9 +317,26 @@ function FeedsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
+              variant={isReordering ? "default" : "outline"}
+              onClick={toggleReorder}
+              aria-pressed={isReordering}
+              aria-label={
+                isReordering ? t("feeds.reorder.done") : t("feeds.reorder.start")
+              }
+            >
+              {isReordering ? (
+                <Check className="h-3.5 w-3.5 sm:mr-1.5" />
+              ) : (
+                <ArrowUpDown className="h-3.5 w-3.5 sm:mr-1.5" />
+              )}
+              <span className={cn(!isReordering && "hidden sm:inline")}>
+                {isReordering ? t("feeds.reorder.done") : t("feeds.reorder.start")}
+              </span>
+            </Button>
+            <Button
               variant="outline"
               onClick={() => setRefreshConfirmOpen(true)}
-              disabled={refreshFeedsMutation.isPending}
+              disabled={refreshFeedsMutation.isPending || isReordering}
             >
               <RefreshCw
                 className={cn(
@@ -309,14 +346,18 @@ function FeedsPage() {
               />
               <span className="hidden sm:inline">{t("feeds.refreshAll")}</span>
             </Button>
-            <Button variant="outline" onClick={() => setImportOpmlOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setImportOpmlOpen(true)}
+              disabled={isReordering}
+            >
               <Upload className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">{t("common.import")}</span>
             </Button>
             <Button
               variant="outline"
               onClick={handleExport}
-              disabled={isExporting}
+              disabled={isExporting || isReordering}
             >
               <Download className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">
@@ -334,7 +375,7 @@ function FeedsPage() {
               </div>
             ) : (
               <>
-                {visibleGroups.map(({ group, feeds: groupFeeds }) => {
+                {visibleGroups.map(({ group, feeds: groupFeeds }, groupIndex) => {
                   const isCollapsed = collapsedGroups.has(group.id);
                   const isEditing = editingGroupId === group.id;
 
@@ -342,6 +383,17 @@ function FeedsPage() {
                     <FeedGroupCard
                       key={group.id}
                       group={group}
+                      reorder={
+                        isReordering
+                          ? {
+                              groupIndex,
+                              groupCount: visibleGroups.length,
+                              onMoveGroup: (g, move) => moveGroup(g.id, move),
+                              onMoveFeed: (f, move) =>
+                                moveFeed(group.id, f.id, move),
+                            }
+                          : undefined
+                      }
                       groupFeeds={groupFeeds}
                       isCollapsed={isCollapsed}
                       isEditing={isEditing}
