@@ -47,16 +47,21 @@ export function SearchDialog() {
   const { setSelectedFeed, setSelectedArticle } = useUrlState();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [feeds, setFeeds] = useState<SearchFeed[]>([]);
-  const [items, setItems] = useState<SearchItem[]>([]);
+  // Results are keyed by the query they answer, so a cleared or changed
+  // query never shows stale results and loading needs no effect-side state.
+  const [result, setResult] = useState<{
+    query: string;
+    feeds: SearchFeed[];
+    items: SearchItem[];
+  } | null>(null);
+  const current = result?.query === debouncedQuery ? result : null;
+  const feeds = current?.feeds ?? [];
+  const items = current?.items ?? [];
+  const loading = Boolean(debouncedQuery) && !current;
 
   // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(Boolean(query));
-      setDebouncedQuery(query);
-    }, 250);
+    const timer = setTimeout(() => setDebouncedQuery(query), 250);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -72,16 +77,15 @@ export function SearchDialog() {
       .search(debouncedQuery)
       .then((res) => {
         if (cancelled) return;
-        setFeeds(res.data?.feeds ?? []);
-        setItems(res.data?.items ?? []);
+        setResult({
+          query: debouncedQuery,
+          feeds: res.data?.feeds ?? [],
+          items: res.data?.items ?? [],
+        });
       })
       .catch(() => {
         if (cancelled) return;
-        setFeeds([]);
-        setItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        setResult({ query: debouncedQuery, feeds: [], items: [] });
       });
 
     return () => {
@@ -112,9 +116,7 @@ export function SearchDialog() {
     if (!open) {
       setQuery("");
       setDebouncedQuery("");
-      setFeeds([]);
-      setItems([]);
-      setLoading(false);
+      setResult(null);
     }
     setSearchOpen(open);
   };
