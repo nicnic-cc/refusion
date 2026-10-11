@@ -23,6 +23,7 @@ import { youtubeVideo } from "@/lib/youtube";
 import { ArticleAppearance } from "@/components/article/article-appearance";
 import { useArticleAppearanceStyles } from "@/hooks/use-article-appearance-styles";
 import type { ArticleViewState } from "@/hooks/use-article-view-state";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const getLinkDomain = (url: string) => {
   try {
@@ -63,6 +64,7 @@ export function ArticleView({
   } = state;
 
   const appearance = useArticleAppearanceStyles();
+  const isMobile = useIsMobile();
 
   if (!article) return null;
 
@@ -78,6 +80,27 @@ export function ArticleView({
   const starLabel = starred
     ? t("article.action.unstar")
     : t("article.action.star");
+
+  const prevButton = (
+    <TooltipButton
+      label={t("common.previous")}
+      shortcut="k"
+      onClick={goToPrevious}
+      disabled={!hasPrevious()}
+    >
+      <ChevronLeft className="h-4 w-4" />
+    </TooltipButton>
+  );
+  const nextButton = (
+    <TooltipButton
+      label={t("common.next")}
+      shortcut="j"
+      onClick={goToNext}
+      disabled={!hasNext()}
+    >
+      <ChevronRight className="h-4 w-4" />
+    </TooltipButton>
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -143,14 +166,18 @@ export function ArticleView({
         <SheetTitle className="sr-only">{article.title}</SheetTitle>
       )}
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={close}
-          aria-label={t("common.cancel")}
-        >
-          <X className="h-[18px] w-[18px] text-muted-foreground" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {!isMobile && prevButton}
+          {!isMobile && nextButton}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={close}
+            aria-label={t("common.cancel")}
+          >
+            <X className="h-[18px] w-[18px] text-muted-foreground" />
+          </Button>
+        </div>
       </div>
 
       {/* Content */}
@@ -226,25 +253,13 @@ export function ArticleView({
         </article>
       </ScrollArea>
 
-      {/* Footer - Navigation */}
-      <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
-        <TooltipButton
-          label={t("common.previous")}
-          shortcut="k"
-          onClick={goToPrevious}
-          disabled={!hasPrevious()}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </TooltipButton>
-        <TooltipButton
-          label={t("common.next")}
-          shortcut="j"
-          onClick={goToNext}
-          disabled={!hasNext()}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </TooltipButton>
-      </div>
+      {/* Footer - Navigation (mobile only: in thumb reach; desktop has it in the header) */}
+      {isMobile && (
+        <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
+          {prevButton}
+          {nextButton}
+        </div>
+      )}
     </div>
   );
 }
