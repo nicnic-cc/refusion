@@ -87,6 +87,12 @@ func New(store *store.Store, config *config.Config, puller interface {
 	return h, nil
 }
 
+// passwordAuthDisabled is true in OIDC-only mode: an empty password must not
+// authenticate there, or bcrypt("") and md5("fusion:") would bypass OIDC.
+func (h *Handler) passwordAuthDisabled() bool {
+	return h.config != nil && !h.allowAnonAPI && strings.TrimSpace(h.config.Password) == ""
+}
+
 func (h *Handler) SetupRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(requestLogMiddleware(), recoveryMiddleware())

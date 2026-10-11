@@ -131,6 +131,11 @@ func (h *Handler) login(c *gin.Context) {
 		badRequestError(c, "invalid request")
 		return
 	}
+	if h.passwordAuthDisabled() {
+		h.limiter.recordFailure(ip, time.Now())
+		unauthorizedError(c)
+		return
+	}
 
 	if err := auth.CheckPassword(h.passwordHash, *req.Password); err != nil {
 		h.limiter.recordFailure(ip, time.Now())
