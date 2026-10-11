@@ -1,13 +1,13 @@
 import { ArticleList } from "@/components/article/article-list";
 import { ArticlePane } from "@/components/article/article-pane";
 import { AppLayout } from "@/components/layout/app-layout";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { usePanesFit } from "@/hooks/use-panes-fit";
 import { usePreferencesStore } from "@/store";
 
 export function ArticlePage() {
   const readingLayout = usePreferencesStore((s) => s.readingLayout);
-  const isMobile = useIsMobile();
-  const panes = readingLayout === "panes" && !isMobile;
+  const panesFit = usePanesFit();
+  const panes = readingLayout === "panes" && panesFit;
 
   if (!panes) {
     return (

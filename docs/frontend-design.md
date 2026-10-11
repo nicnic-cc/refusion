@@ -42,7 +42,7 @@ This keeps list context stable while opening/closing article detail. `g u` /
 
 - Fixed left sidebar (`300px`)
 - Main content on the right
-- Article detail opens in a right-side drawer or, with the panes layout, in a column beside a 400px article list
+- Article detail opens in a right-side drawer or, with the panes layout, in a column beside the article list; windows narrower than 1280px use the drawer even with panes chosen, since the article column would be too narrow
 
 ### Mobile
 
