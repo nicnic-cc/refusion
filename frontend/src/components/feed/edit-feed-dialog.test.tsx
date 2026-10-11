@@ -1,17 +1,24 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { feedAPI, type Feed } from "@/lib/api";
 import { useUIStore } from "@/store";
 import { EditFeedDialog } from "./edit-feed-dialog";
+
+const urlState = vi.hoisted(() => ({
+  selectedFeedId: null as number | null,
+  selectTopLevelFilter: vi.fn(),
+}));
+vi.mock("@/hooks/use-url-state", () => ({ useUrlState: () => urlState }));
 
 vi.mock("@/lib/api", async (orig) => ({
   ...(await orig<typeof import("@/lib/api")>()),
   feedAPI: {
     list: vi.fn(async () => ({ data: [] })),
     update: vi.fn(),
+    delete: vi.fn(async () => ({})),
   },
   groupAPI: { list: vi.fn(async () => ({ data: [{ id: 1, name: "News" }] })) },
   appAPI: { getInfo: vi.fn(async () => ({ data: {} })) },
@@ -41,6 +48,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  urlState.selectedFeedId = null;
+  urlState.selectTopLevelFilter.mockClear();
   useUIStore.setState({ isEditFeedOpen: false, editingFeed: null });
 });
 
@@ -67,5 +76,32 @@ describe("EditFeedDialog proxy", () => {
     setup({ ...feed, proxy: undefined });
     await userEvent.click(await screen.findByRole("button", { name: "Save" }));
     expect(feedAPI.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("EditFeedDialog delete", () => {
+  async function deleteFeed() {
+    setup(feed);
+    await userEvent.click(await screen.findByRole("button", { name: "Unsubscribe" }));
+    // The confirm dialog repeats the label; its button is the last one.
+    const buttons = await screen.findAllByRole("button", { name: "Unsubscribe" });
+    await userEvent.click(buttons[buttons.length - 1]);
+    await waitFor(() => expect(feedAPI.delete).toHaveBeenCalledWith(5));
+  }
+
+  // Deleting the feed shown in the URL must leave its dead URL.
+  it("navigates to /unread when the viewed feed is deleted", async () => {
+    urlState.selectedFeedId = 5;
+    await deleteFeed();
+    await waitFor(() =>
+      expect(urlState.selectTopLevelFilter).toHaveBeenCalledWith("unread"),
+    );
+  });
+
+  // Deleting a feed while on another page must not move the user.
+  it("stays put when another page is open", async () => {
+    urlState.selectedFeedId = 9;
+    await deleteFeed();
+    expect(urlState.selectTopLevelFilter).not.toHaveBeenCalled();
   });
 });
