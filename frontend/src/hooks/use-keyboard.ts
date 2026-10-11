@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStartPull } from "@/queries/pull";
-import { useUIStore } from "@/store";
+import { useSidebarNavStore, useUIStore } from "@/store";
 import { usePullStore } from "@/store/pull";
 import { useUrlState } from "./use-url-state";
 
-function isTypingTarget(target: EventTarget | null): boolean {
+export function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false;
   }
@@ -150,6 +150,8 @@ export function useKeyboardShortcuts() {
           return;
         }
 
+        // Clear the sidebar highlight when nothing else is open.
+        useSidebarNavStore.getState().setFocusedKey(null);
         resetPrefix();
         return;
       }
@@ -334,6 +336,11 @@ export function useArticleNavigation(
       }
 
       if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      // Shift chords are reserved for sidebar tree navigation.
+      if (event.shiftKey) {
         return;
       }
 

@@ -10,3 +10,8 @@ export {
   useArticlePinsStore,
   useReadStatePins,
 } from "./article-pins";
+export {
+  sidebarNodeKey,
+  useSidebarNavStore,
+  type SidebarNode,
+} from "./sidebar-nav";

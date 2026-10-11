@@ -49,6 +49,17 @@ export function ShortcutsDialog() {
       ],
     },
     {
+      title: t("shortcuts.section.sidebar"),
+      items: [
+        { keys: "Shift+N", action: t("shortcuts.action.focusNextItem") },
+        { keys: "Shift+P", action: t("shortcuts.action.focusPreviousItem") },
+        { keys: "Shift+J", action: t("shortcuts.action.openNextItem") },
+        { keys: "Shift+K", action: t("shortcuts.action.openPreviousItem") },
+        { keys: "Shift+O", action: t("shortcuts.action.openFocusedItem") },
+        { keys: "Shift+X", action: t("shortcuts.action.toggleGroup") },
+      ],
+    },
+    {
       title: t("shortcuts.section.navigation"),
       items: [
         { keys: "g u", action: t("shortcuts.action.goUnread") },
