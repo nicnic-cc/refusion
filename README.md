@@ -95,6 +95,16 @@ Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks
 
 Upstream changes are merged in.
 
+## Ideas from yarr
+
+A few things here work the way [yarr](https://github.com/nkanaev/yarr) does them, because I liked them there:
+
+- **Article rows:** feed, date and the read, star and open buttons on top, the title below, no summary.
+- **Previous and next** sit beside the close button in the article view's top bar on desktop.
+- **Infinite scroll** loads the next page only once scrolling stops near the bottom, so the list doesn't jump mid-fling.
+- **Check progress:** a count of feeds checked so far, and a warning on each feed whose check failed.
+- **Search** matches only the visible text of an article, never its HTML tags.
+
 ## Getting started
 
 ### Installation
@@ -117,6 +127,7 @@ Design notes and API conventions are in [`docs/`](./docs/README.md).
 ## Credits
 
 - [Fusion](https://github.com/0x2E/fusion) by Rook1e, which refusion is forked from
+- [yarr](https://github.com/nkanaev/yarr) by nkanaev, for the [ideas above](#ideas-from-yarr)
 - Feed parsing by [gofeed](https://github.com/mmcdole/gofeed)
 
 > [!NOTE]
