@@ -30,5 +30,7 @@
   and read-state undo design
 - `fetch-progress.md` (fork): pull to refresh, check progress, the new
   articles pill and per-feed check state
+- `feed-filter.md` (fork): the per-feed article filter, why items carry a
+  stored `filtered` flag, and what "hidden" covers
 - `old-database-schema.md`: legacy pre-migrations schema snapshot, kept
   for migration work only
