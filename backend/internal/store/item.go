@@ -15,7 +15,8 @@ import (
 // BeforePubDate/BeforeID form an optional cursor: when both are non-nil, only items
 // ordered before that (pub_date, id) position are returned (nil = first page).
 // OrderBy accepts "pub_date" (default) or "created_at".
-// Limit = 0 means no limit.
+// Limit = 0 means no limit. Items hidden by a feed filter are left out unless
+// IncludeFiltered is set.
 type ListItemsParams struct {
 	FeedID        *int64
 	GroupID       *int64
@@ -24,11 +25,13 @@ type ListItemsParams struct {
 	BeforePubDate *int64
 	BeforeID      *int64
 	OrderBy       string // "pub_date" or "created_at"
+
+	IncludeFiltered bool
 }
 
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
-		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at
+		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.filtered, items.created_at
 		FROM items
 	`
 	args := []any{}
@@ -39,6 +42,9 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	}
 
 	query += ` WHERE 1=1`
+	if !params.IncludeFiltered {
+		query += ` AND items.filtered = 0`
+	}
 
 	if params.FeedID != nil {
 		query += ` AND items.feed_id = :feed_id`
@@ -81,11 +87,12 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	items := []*model.Item{}
 	for rows.Next() {
 		i := &model.Item{}
-		var unread int
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
+		var unread, filtered int
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		i.Unread = intToBool(unread)
+		i.Filtered = intToBool(filtered)
 		items = append(items, i)
 	}
 	return items, rows.Err()
@@ -93,12 +100,12 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 
 func (s *Store) GetItem(id int64) (*model.Item, error) {
 	i := &model.Item{}
-	var unread int
+	var unread, filtered int
 	err := s.db.QueryRow(`
-		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+		SELECT id, feed_id, guid, title, link, content, pub_date, unread, filtered, created_at
 		FROM items
 		WHERE id = :id
-	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt)
+	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: item", ErrNotFound)
@@ -107,6 +114,7 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 	}
 
 	i.Unread = intToBool(unread)
+	i.Filtered = intToBool(filtered)
 	return i, nil
 }
 
@@ -134,10 +142,12 @@ type BatchCreateItemInput struct {
 	Link    string
 	Content string
 	PubDate int64
+
+	Filtered bool
 }
 
 // BatchCreateItemsIgnore inserts items in one transaction and ignores duplicates by (feed_id, guid).
-// Returns the number of newly inserted rows.
+// Returns the number of newly inserted rows that are not hidden by the feed's filter.
 func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInput) (int, error) {
 	if len(inputs) == 0 {
 		return 0, nil
@@ -150,8 +160,8 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO items (feed_id, guid, title, link, content, pub_date)
-		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date)
+		INSERT INTO items (feed_id, guid, title, link, content, pub_date, filtered)
+		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date, :filtered)
 		ON CONFLICT(feed_id, guid) DO NOTHING
 	`)
 	if err != nil {
@@ -168,6 +178,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 			sql.Named("link", input.Link),
 			sql.Named("content", input.Content),
 			sql.Named("pub_date", input.PubDate),
+			sql.Named("filtered", boolToInt(input.Filtered)),
 		)
 		if err != nil {
 			return 0, err
@@ -177,7 +188,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 		if err != nil {
 			return 0, err
 		}
-		if affected > 0 {
+		if affected > 0 && !input.Filtered {
 			created++
 		}
 	}
@@ -247,10 +258,10 @@ func (s *Store) batchUpdateItemsUnreadChunk(ids []int64, unread bool) error {
 // If feedID is non-nil, only marks items from that specific feed.
 func (s *Store) MarkAllAsRead(feedID *int64) error {
 	if feedID != nil {
-		_, err := s.db.Exec(`UPDATE items SET unread = 0 WHERE feed_id = :feed_id`, sql.Named("feed_id", *feedID))
+		_, err := s.db.Exec(`UPDATE items SET unread = 0 WHERE feed_id = :feed_id AND filtered = 0`, sql.Named("feed_id", *feedID))
 		return err
 	}
-	_, err := s.db.Exec(`UPDATE items SET unread = 0`)
+	_, err := s.db.Exec(`UPDATE items SET unread = 0 WHERE filtered = 0`)
 	return err
 }
 
@@ -258,7 +269,7 @@ func (s *Store) MarkGroupAsRead(groupID int64) error {
 	_, err := s.db.Exec(`
 		UPDATE items
 		SET unread = 0
-		WHERE feed_id IN (
+		WHERE filtered = 0 AND feed_id IN (
 			SELECT id
 			FROM feeds
 			WHERE group_id = :group_id
@@ -271,7 +282,7 @@ func (s *Store) MarkFeedAsReadBefore(feedID, before int64) error {
 	_, err := s.db.Exec(`
 		UPDATE items
 		SET unread = 0
-		WHERE feed_id = :feed_id
+		WHERE feed_id = :feed_id AND filtered = 0
 		  AND (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
 	`, sql.Named("feed_id", feedID), sql.Named("before", before))
 	return err
@@ -281,7 +292,7 @@ func (s *Store) MarkGroupAsReadBefore(groupID, before int64) error {
 	_, err := s.db.Exec(`
 		UPDATE items
 		SET unread = 0
-		WHERE feed_id IN (
+		WHERE filtered = 0 AND feed_id IN (
 			SELECT id
 			FROM feeds
 			WHERE group_id = :group_id
@@ -295,7 +306,7 @@ func (s *Store) MarkAllAsReadBefore(before int64) error {
 	_, err := s.db.Exec(`
 		UPDATE items
 		SET unread = 0
-		WHERE (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
+		WHERE filtered = 0 AND (CASE WHEN pub_date > 0 THEN pub_date ELSE created_at END) <= :before
 	`, sql.Named("before", before))
 	return err
 }
@@ -304,7 +315,7 @@ func (s *Store) ListUnreadItemIDs() ([]int64, error) {
 	rows, err := s.db.Query(`
 		SELECT id
 		FROM items
-		WHERE unread = 1
+		WHERE unread = 1 AND filtered = 0
 		ORDER BY id
 	`)
 	if err != nil {
@@ -336,7 +347,7 @@ func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, erro
 	query := `
 		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
 		FROM items
-		WHERE 1=1
+		WHERE filtered = 0
 	`
 	args := []any{}
 
@@ -418,7 +429,7 @@ func (s *Store) SearchItems(query string, limit int) ([]*SearchItemResult, error
 		SELECT i.id, i.feed_id, i.title, i.pub_date, COALESCE(i.content, '')
 		FROM items_fts
 		INNER JOIN items i ON i.id = items_fts.rowid
-		WHERE items_fts MATCH :query
+		WHERE items_fts MATCH :query AND i.filtered = 0
 		ORDER BY i.pub_date DESC, i.id DESC
 		LIMIT :limit
 	`, sql.Named("query", ftsQuery), sql.Named("limit", limit))
@@ -463,7 +474,7 @@ func (s *Store) searchItemsLike(query string, limit int) ([]*SearchItemResult, e
 	rows, err := s.db.Query(`
 		SELECT id, feed_id, title, pub_date, COALESCE(content, '')
 		FROM items
-		WHERE title LIKE :query OR content LIKE :query
+		WHERE (title LIKE :query OR content LIKE :query) AND filtered = 0
 		ORDER BY pub_date DESC, id DESC
 		LIMIT :limit
 	`, sql.Named("query", "%"+query+"%"), sql.Named("limit", limit))
@@ -495,6 +506,9 @@ func (s *Store) CountItems(params ListItemsParams) (int, error) {
 	}
 
 	query += ` WHERE 1=1`
+	if !params.IncludeFiltered {
+		query += ` AND items.filtered = 0`
+	}
 
 	if params.FeedID != nil {
 		query += ` AND items.feed_id = :feed_id`

@@ -47,6 +47,15 @@ func (h *Handler) listItems(c *gin.Context) {
 		params.Unread = &val
 	}
 
+	if raw := c.Query("include_filtered"); raw != "" {
+		val, err := strconv.ParseBool(raw)
+		if err != nil || (val && params.FeedID == nil) {
+			badRequestError(c, "include_filtered needs feed_id")
+			return
+		}
+		params.IncludeFiltered = val
+	}
+
 	if limit := c.Query("limit"); limit != "" {
 		val, err := strconv.Atoi(limit)
 		if err != nil || val <= 0 {

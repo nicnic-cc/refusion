@@ -237,6 +237,10 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		})
 	}
 
+	if err := p.store.MarkFilteredInputs(feed.ID, inputs); err != nil {
+		p.logger.Error("failed to apply feed filter", "feed_id", feed.ID, "error", err)
+	}
+
 	newCount, err := p.store.BatchCreateItemsIgnore(feed.ID, inputs)
 	if err != nil {
 		p.logger.Error("failed to batch create items", "feed_id", feed.ID, "error", err)

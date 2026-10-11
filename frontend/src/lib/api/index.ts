@@ -21,6 +21,10 @@ import type {
   MarkItemsReadRequest,
   MarkScopeReadRequest,
   ListItemsParams,
+  FeedFilter,
+  FilterRule,
+  FilterPreview,
+  SaveFeedFilterRequest,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
@@ -96,6 +100,26 @@ export const feedAPI = {
     api.post<APIResponse<BatchCreateFeedsResponse>>("/feeds/batch", data),
 };
 
+// Feed filter APIs
+export const feedFilterAPI = {
+  list: () => api.get<ListResponse<FeedFilter>>("/feed-filters"),
+
+  save: (feedId: number, data: SaveFeedFilterRequest) =>
+    api.put<APIResponse<FeedFilter>>(`/feeds/${feedId}/filter`, data),
+
+  setEnabled: (feedId: number, enabled: boolean) =>
+    api.patch<APIResponse<FeedFilter>>(`/feeds/${feedId}/filter`, { enabled }),
+
+  delete: (feedId: number) => api.delete<void>(`/feeds/${feedId}/filter`),
+
+  preview: (feedId: number, rule: FilterRule, signal?: AbortSignal) =>
+    api.post<APIResponse<FilterPreview>>(
+      `/feeds/${feedId}/filter/preview`,
+      rule,
+      signal,
+    ),
+};
+
 // Item APIs
 export const itemAPI = {
   list: (params?: ListItemsParams) => {
@@ -107,6 +131,7 @@ export const itemAPI = {
     if (params?.limit) query.set("limit", params.limit.toString());
     if (params?.before) query.set("before", params.before);
     if (params?.order_by) query.set("order_by", params.order_by);
+    if (params?.include_filtered) query.set("include_filtered", "true");
 
     const queryString = query.toString();
     return api.get<PaginatedListResponse<Item>>(

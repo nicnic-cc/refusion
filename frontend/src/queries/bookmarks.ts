@@ -132,6 +132,7 @@ export function useStarredItems(
         content: bookmark.content,
         pub_date: bookmark.pub_date,
         unread: bookmark.unread,
+        filtered: false,
         created_at: bookmark.created_at,
       })),
     [bookmarks],

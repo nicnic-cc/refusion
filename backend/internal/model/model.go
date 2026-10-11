@@ -67,6 +67,7 @@ type Item struct {
 	Content   string `json:"content"`
 	PubDate   int64  `json:"pub_date"`
 	Unread    bool   `json:"unread"`
+	Filtered  bool   `json:"filtered"`
 	CreatedAt int64  `json:"created_at"`
 }
 

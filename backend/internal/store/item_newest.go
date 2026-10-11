@@ -17,7 +17,7 @@ func (s *Store) CountItemsAfter(afterID int64, feedID, groupID *int64) (int, err
 	if groupID != nil {
 		query += ` INNER JOIN feeds ON items.feed_id = feeds.id`
 	}
-	query += ` WHERE items.id > :after_id`
+	query += ` WHERE items.filtered = 0 AND items.id > :after_id`
 
 	if feedID != nil {
 		query += ` AND items.feed_id = :feed_id`
