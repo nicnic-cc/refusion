@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { useUIStore } from "@/store";
+import { useUrlState } from "@/hooks/use-url-state";
+import { defaultArticleFilter } from "@/lib/article-filter";
 import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed, useFeedLookup } from "@/queries/feeds";
 import { FeedCheckStatus } from "@/components/feed/feed-check-status";
@@ -46,6 +48,7 @@ export function EditFeedDialog() {
   const updateFeedMutation = useUpdateFeed();
   const deleteFeedMutation = useDeleteFeed();
   const { getFeedById } = useFeedLookup();
+  const { selectedFeedId, selectTopLevelFilter } = useUrlState();
   // The snapshot taken on open goes stale after a check; the list stays fresh.
   const liveFeed = editingFeed ? getFeedById(editingFeed.id) : undefined;
 
@@ -190,6 +193,10 @@ export function EditFeedDialog() {
       toast.success(t("feed.toast.unsubscribed", { name: editingFeed.name }));
       setIsDeleteOpen(false);
       handleClose();
+      // Leaving the deleted feed's URL; replace keeps Back off the dead page.
+      if (selectedFeedId === editingFeed.id) {
+        selectTopLevelFilter(defaultArticleFilter);
+      }
     } catch {
       toast.error(t("feed.toast.unsubscribeFailed"));
     } finally {

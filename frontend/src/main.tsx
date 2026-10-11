@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { routeTree } from "./routeTree.gen";
+import { NotFoundRedirect } from "@/components/not-found-redirect";
 import { Toaster } from "@/components/ui/sonner";
 import { setUnauthorizedCallback } from "@/lib/api";
 import { preloadLocaleMessages } from "@/lib/i18n";
@@ -14,7 +15,10 @@ import "./index.css";
 import "./focus-tab-only";
 
 // Create a new router instance
-const router = createRouter({ routeTree });
+const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: NotFoundRedirect,
+});
 
 registerPWA();
 
