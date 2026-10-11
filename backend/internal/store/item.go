@@ -372,7 +372,7 @@ func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, erro
 	}
 
 	if params.MaxID != nil {
-		query += ` AND id <= :max_id`
+		query += ` AND id < :max_id`
 		args = append(args, sql.Named("max_id", *params.MaxID))
 	}
 
