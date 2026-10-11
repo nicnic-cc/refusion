@@ -267,21 +267,27 @@ function FeedsPage() {
               />
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger
+              <WithTooltip
+                label={statusFilterLabels[statusFilter]}
                 render={
-                  <Button
-                    variant="outline"
-                    className="shrink-0 gap-1.5"
-                    disabled={isReordering}
-                  >
-                    <ListFilter className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">
-                      {statusFilterLabels[statusFilter]}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        className="shrink-0 gap-1.5"
+                        disabled={isReordering}
+                        aria-label={statusFilterLabels[statusFilter]}
+                      />
+                    }
+                  />
                 }
-              />
+              >
+                <ListFilter className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">
+                  {statusFilterLabels[statusFilter]}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </WithTooltip>
               <DropdownMenuContent align="start">
                 {(Object.keys(statusFilterLabels) as StatusFilter[]).map(
                   (key) => (
@@ -344,10 +350,16 @@ function FeedsPage() {
                 {isReordering ? t("feeds.reorder.done") : t("feeds.reorder.start")}
               </span>
             </WithTooltip>
-            <Button
-              variant="outline"
-              onClick={() => setRefreshConfirmOpen(true)}
-              disabled={refreshFeedsMutation.isPending || isReordering}
+            <WithTooltip
+              label={t("feeds.refreshAll")}
+              render={
+                <Button
+                  variant="outline"
+                  onClick={() => setRefreshConfirmOpen(true)}
+                  disabled={refreshFeedsMutation.isPending || isReordering}
+                  aria-label={t("feeds.refreshAll")}
+                />
+              }
             >
               <RefreshCw
                 className={cn(
@@ -356,25 +368,39 @@ function FeedsPage() {
                 )}
               />
               <span className="hidden sm:inline">{t("feeds.refreshAll")}</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setImportOpmlOpen(true)}
-              disabled={isReordering}
+            </WithTooltip>
+            <WithTooltip
+              label={t("common.import")}
+              render={
+                <Button
+                  variant="outline"
+                  onClick={() => setImportOpmlOpen(true)}
+                  disabled={isReordering}
+                  aria-label={t("common.import")}
+                />
+              }
             >
               <Upload className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">{t("common.import")}</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExport}
-              disabled={isExporting || isReordering}
+            </WithTooltip>
+            <WithTooltip
+              label={isExporting ? t("common.exporting") : t("feeds.exportButton")}
+              render={
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  disabled={isExporting || isReordering}
+                  aria-label={
+                    isExporting ? t("common.exporting") : t("feeds.exportButton")
+                  }
+                />
+              }
             >
               <Download className="h-3.5 w-3.5 sm:mr-1.5" />
               <span className="hidden sm:inline">
                 {isExporting ? t("common.exporting") : t("feeds.exportButton")}
               </span>
-            </Button>
+            </WithTooltip>
           </div>
         </div>
 
