@@ -24,6 +24,7 @@ import type {
   FeedFilter,
   FilterRule,
   FilterPreview,
+  HiddenCounts,
   GlobalFilter,
   GlobalFilterSaved,
   GlobalPreview,
@@ -121,6 +122,11 @@ export const feedFilterAPI = {
       rule,
       signal,
     ),
+};
+
+export const hiddenCountsAPI = {
+  get: () =>
+    api.get<APIResponse<Record<string, HiddenCounts>>>("/filters/hidden-counts"),
 };
 
 // Global filter APIs; get() answers data: null when none is set.

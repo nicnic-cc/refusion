@@ -223,7 +223,8 @@ export const enMessages = {
   "article.list.loading": "Loading...",
   "article.list.markAllRead": "Mark all as read",
   "article.list.showFiltered": "Also show filtered articles",
-  "article.filteredTag": "Filtered",
+  "article.filteredTag.feed": "Feed filter",
+  "article.filteredTag.global": "Global filter",
   "article.list.noArticles": "No articles found",
   "article.list.noFeeds": "No feeds yet. Go to Feed Management to add your first feed.",
   "article.list.openFeedManagement": "Open Feed Management",
@@ -264,8 +265,10 @@ export const enMessages = {
   "feedFilter.deleteConfirm.title": "Delete filter",
   "feedFilter.enabled": "Filter on",
   "feedFilter.button.add": "Filter",
-  "feedFilter.button.remove": "Remove · {count} hidden",
-  "feedFilter.button.keep": "Keep · {count} hidden",
+  "feedFilter.button.remove": "Remove",
+  "feedFilter.button.keep": "Keep",
+  "feedFilter.button.hidden": "{count} hidden",
+  "feedFilter.button.hiddenByGlobal": "{count} by global",
   "feedFilter.trigger.title": "Title",
   "feedFilter.trigger.content": "Content",
   "feedFilter.trigger.titleOrContent": "Title or content",
@@ -292,6 +295,15 @@ export const enMessages = {
   "feedFilter.toast.deleted": "Filter deleted",
   "feedFilter.toast.deleteFailed": "Failed to delete filter",
   "feedFilter.toast.toggleFailed": "Failed to switch filter",
+  "globalFilter.title": "Global filter",
+  "globalFilter.description": "Hides matching articles in every feed.",
+  "globalFilter.applying": "Applying...",
+  "globalFilter.toast.saved": "Global filter saved · {count} articles hidden in total",
+  "globalFilter.deleteConfirm.description":
+    "Delete the global filter? Articles it hides come back, with their read/unread state, unless a feed's own filter hides them.",
+  "globalFilter.preview.summary": "Would remove {hidden} of the latest {checked} articles",
+  "feedFilter.preview.globalHidden": "{count} more hidden by the global filter",
+  "feedFilter.preview.globalHiddenTag": "Hidden by global filter",
 } as const;
 
 export type TranslationKey = keyof typeof enMessages;

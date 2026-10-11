@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/0x2E/fusion/internal/filter"
+	"github.com/0x2E/fusion/internal/model"
 )
 
 func removeSponsored() filter.Rule {
@@ -130,12 +131,11 @@ func TestMarkAllReadSkipsFilteredItems(t *testing.T) {
 func TestFilterRecomputeHidesAndUnhides(t *testing.T) {
 	s, feedID, adID := setupFilterFeed(t)
 
-	saved, err := s.UpsertFeedFilter(feedID, removeSponsored(), true)
-	if err != nil {
+	if _, err := s.UpsertFeedFilter(feedID, removeSponsored(), true); err != nil {
 		t.Fatal(err)
 	}
-	if saved.HiddenCount != 1 {
-		t.Errorf("HiddenCount = %d, want 1", saved.HiddenCount)
+	if counts, err := s.HiddenCounts(); err != nil || counts[feedID] != (model.HiddenCounts{Feed: 1}) {
+		t.Errorf("HiddenCounts() = %v, %v; want the feed hiding 1", counts, err)
 	}
 
 	if _, err := s.SetFeedFilterEnabled(feedID, false); err != nil {
@@ -165,8 +165,8 @@ func TestFilterRecomputeHidesAndUnhides(t *testing.T) {
 	}
 
 	filters, err := s.ListFeedFilters()
-	if err != nil || len(filters) != 1 || filters[0].HiddenCount != 1 {
-		t.Errorf("ListFeedFilters() = %+v, %v; want one filter hiding 1", filters, err)
+	if err != nil || len(filters) != 1 {
+		t.Errorf("ListFeedFilters() = %+v, %v; want one filter", filters, err)
 	}
 }
 

@@ -137,6 +137,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.POST("/feeds/:id/refresh", h.refreshFeed)
 
 			auth.GET("/feed-filters", h.listFeedFilters)
+			auth.GET("/filters/hidden-counts", h.getHiddenCounts)
 			auth.PUT("/feeds/:id/filter", h.putFeedFilter)
 			auth.PATCH("/feeds/:id/filter", h.patchFeedFilter)
 			auth.DELETE("/feeds/:id/filter", h.deleteFeedFilter)

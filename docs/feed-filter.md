@@ -47,9 +47,14 @@ One extra filter hides articles in every feed. Code:
   is the primary key, so changing it means rebuilding the table and
   touching every query.
 - **Same `filtered` flag:** an article is hidden if the global filter or
-  its feed's filter hides it, so reads don't change. Neither filter's
-  switch tells you which one hid an article; turning one off re-checks
-  every article against what is left.
+  its feed's filter hides it, so reads don't change. Turning one filter
+  off re-checks every article against what is left.
+- **`filtered_global` tells them apart:** 1 only when the global filter
+  hides the article and the feed's own filter does not (the feed filter
+  wins), so a feed's two counts add up to everything hidden in it. Every
+  write of `filtered` sets both columns in one statement. It is filled
+  into the item JSON by `store/filter_counts.go`, apart from the upstream
+  item queries.
 - **Saving re-checks every article, one feed per short transaction.** One
   long transaction could make a pull fail after `busy_timeout` (5 s).
   The save answers with `hidden_total` (everything hidden by any filter).
@@ -58,6 +63,9 @@ One extra filter hides articles in every feed. Code:
   save.
 - **The per-feed preview applies the global filter too** and reports what
   it already hides (`global_hidden`), apart from the draft's own count.
-- **No "N hidden" on the global row** (it would need re-running the
-  matcher); a feed row's count includes articles hidden by either filter.
+- **A feed row shows two counts** from `GET /filters/hidden-counts` (one
+  `GROUP BY`): "N hidden" by its own filter and "N by global" by the
+  global filter alone, each only when above 0. The global row has no
+  count. With "show filtered" on, an article's tag reads "Feed filter" or
+  "Global filter".
 - **A feed can't opt out yet** (deferred).

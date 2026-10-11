@@ -25,8 +25,7 @@ func NewFilterItem(m *filter.Matcher, title, link, content string) filter.Item {
 }
 
 const filterSelect = `
-	SELECT f.feed_id, f.action, f."join", f.whole_words, f.enabled, f.conditions, f.updated_at,
-	       (SELECT COUNT(*) FROM items i WHERE i.feed_id = f.feed_id AND i.filtered = 1)
+	SELECT f.feed_id, f.action, f."join", f.whole_words, f.enabled, f.conditions, f.updated_at
 	FROM feed_filters f
 `
 
@@ -34,7 +33,7 @@ func scanFeedFilter(row rowScanner) (*model.FeedFilter, error) {
 	f := &model.FeedFilter{}
 	var wholeWords, enabled int
 	var conditions string
-	if err := row.Scan(&f.FeedID, &f.Action, &f.Join, &wholeWords, &enabled, &conditions, &f.UpdatedAt, &f.HiddenCount); err != nil {
+	if err := row.Scan(&f.FeedID, &f.Action, &f.Join, &wholeWords, &enabled, &conditions, &f.UpdatedAt); err != nil {
 		return nil, err
 	}
 	f.WholeWords = intToBool(wholeWords)
@@ -152,8 +151,8 @@ func (s *Store) DeleteFeedFilter(feedID int64) error {
 	})
 }
 
-// RecomputeFilter sets items.filtered on every item of the feed (all 0 when
-// the feed has no filter or it is off).
+// RecomputeFilter sets items.filtered and filtered_global on every item of the
+// feed (all 0 when no filter applies).
 func (s *Store) RecomputeFilter(feedID int64) error {
 	return s.inTx(func(tx *sql.Tx) error { return recomputeFilterTx(tx, feedID) })
 }
@@ -230,9 +229,13 @@ func (ms matchers) item(title, link, content string) filter.Item {
 	return filter.Item{Title: title, Link: link, HTML: content}
 }
 
-func (ms matchers) hidden(title, link, content string) bool {
+// verdict says whether the article is hidden, and whether only the global
+// filter hides it (the feed's own filter wins when both do).
+func (ms matchers) verdict(title, link, content string) (hidden, globalOnly bool) {
 	it := ms.item(title, link, content)
-	return (ms.global != nil && ms.global.Hidden(it)) || (ms.feed != nil && ms.feed.Hidden(it))
+	feedHides := ms.feed != nil && ms.feed.Hidden(it)
+	globalHides := ms.global != nil && ms.global.Hidden(it)
+	return feedHides || globalHides, globalHides && !feedHides
 }
 
 func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
@@ -246,30 +249,33 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 		return err
 	}
 	if ms.none() {
-		_, err := tx.Exec(`UPDATE items SET filtered = 0 WHERE feed_id = :feed_id AND filtered != 0`, sql.Named("feed_id", feedID))
+		_, err := tx.Exec(`
+			UPDATE items SET filtered = 0, filtered_global = 0
+			WHERE feed_id = :feed_id AND (filtered != 0 OR filtered_global != 0)
+		`, sql.Named("feed_id", feedID))
 		return err
 	}
 
-	rows, err := tx.Query(`SELECT id, title, link, content, filtered FROM items WHERE feed_id = :feed_id`, sql.Named("feed_id", feedID))
+	rows, err := tx.Query(`SELECT id, title, link, content, filtered, filtered_global FROM items WHERE feed_id = :feed_id`, sql.Named("feed_id", feedID))
 	if err != nil {
 		return err
 	}
 	type change struct {
-		id     int64
-		hidden int
+		id             int64
+		hidden, global int
 	}
 	var changes []change
 	for rows.Next() {
 		var id int64
 		var title, link, content string
-		var current int
-		if err := rows.Scan(&id, &title, &link, &content, &current); err != nil {
+		var current, currentGlobal int
+		if err := rows.Scan(&id, &title, &link, &content, &current, &currentGlobal); err != nil {
 			rows.Close()
 			return err
 		}
-		want := boolToInt(ms.hidden(title, link, content))
-		if want != current {
-			changes = append(changes, change{id, want})
+		hidden, globalOnly := ms.verdict(title, link, content)
+		if want, wantGlobal := boolToInt(hidden), boolToInt(globalOnly); want != current || wantGlobal != currentGlobal {
+			changes = append(changes, change{id, want, wantGlobal})
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -278,20 +284,20 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 	}
 	rows.Close()
 
-	stmt, err := tx.Prepare(`UPDATE items SET filtered = :filtered WHERE id = :id`)
+	stmt, err := tx.Prepare(`UPDATE items SET filtered = :filtered, filtered_global = :filtered_global WHERE id = :id`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, c := range changes {
-		if _, err := stmt.Exec(sql.Named("filtered", c.hidden), sql.Named("id", c.id)); err != nil {
+		if _, err := stmt.Exec(sql.Named("filtered", c.hidden), sql.Named("filtered_global", c.global), sql.Named("id", c.id)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// MarkFilteredInputs sets Filtered on new articles about to be saved, using
+// MarkFilteredInputs sets Filtered and FilteredGlobal on new articles about to be saved, using
 // the global and the feed's current filter. Without a filter it changes nothing.
 func (s *Store) MarkFilteredInputs(feedID int64, inputs []BatchCreateItemInput) error {
 	ms, err := activeMatchers(s.db, feedID)
@@ -299,7 +305,7 @@ func (s *Store) MarkFilteredInputs(feedID int64, inputs []BatchCreateItemInput) 
 		return err
 	}
 	for i, in := range inputs {
-		inputs[i].Filtered = ms.hidden(in.Title, in.Link, in.Content)
+		inputs[i].Filtered, inputs[i].FilteredGlobal = ms.verdict(in.Title, in.Link, in.Content)
 	}
 	return nil
 }

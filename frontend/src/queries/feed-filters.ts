@@ -5,7 +5,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { feedFilterAPI, type SaveFeedFilterRequest } from "@/lib/api";
+import { feedFilterAPI, hiddenCountsAPI, type SaveFeedFilterRequest } from "@/lib/api";
 import { queryKeys } from "./keys";
 
 const feedFiltersKey = ["feed-filters"] as const;
@@ -22,10 +22,21 @@ export function useFeedFilters() {
   return { byFeedId, isLoading: query.isLoading };
 }
 
+const hiddenCountsKey = ["hidden-counts"] as const;
+
+export function useHiddenCounts() {
+  const query = useQuery({
+    queryKey: hiddenCountsKey,
+    queryFn: async () => (await hiddenCountsAPI.get()).data,
+  });
+  return query.data;
+}
+
 // A filter change flips stored flags, so counts and lists must reload too.
-function invalidateFilterViews(qc: QueryClient) {
+export function invalidateFilterViews(qc: QueryClient) {
   return Promise.all([
     qc.invalidateQueries({ queryKey: feedFiltersKey }),
+    qc.invalidateQueries({ queryKey: hiddenCountsKey }),
     qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
     qc.invalidateQueries({ queryKey: queryKeys.items.all }),
   ]);
