@@ -18,7 +18,11 @@ import { FeedErrorLine } from "./feed-error-line";
 import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { usePreferencesStore } from "@/store/preferences";
-import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
+import {
+  useMarkItemsRead,
+  useMarkItemsUnread,
+  useMarkScopeRead,
+} from "@/queries/items";
 import { useFeedLookup } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
@@ -62,6 +66,7 @@ export function ArticleList() {
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
+  const markScopeRead = useMarkScopeRead();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
@@ -171,7 +176,7 @@ export function ArticleList() {
     name: selectedFeedId || selectedGroupId ? title : undefined,
   });
 
-  const { newCount, showNew, freshAfter } = useNewArticles({
+  const { newCount, showNew, freshAfter, snapshotId } = useNewArticles({
     feedId: selectedFeedId,
     groupId: selectedGroupId,
     articleFilter,
@@ -180,6 +185,19 @@ export function ArticleList() {
   });
 
   const unreadCount = articles.filter((a) => a.unread).length;
+  // Unread rows not loaded yet still count, so the button stays usable.
+  const scopeUnreadCount =
+    articleFilter === "starred"
+      ? 0
+      : feeds
+          .filter((f) =>
+            selectedFeedId
+              ? f.id === selectedFeedId
+              : selectedGroupId
+                ? f.group_id === selectedGroupId
+                : true,
+          )
+          .reduce((sum, f) => sum + f.unread_count, 0);
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
 
   const handleToggleRead = useStableCallback(
@@ -227,10 +245,21 @@ export function ArticleList() {
       .filter((a) => a.unread && a.id > 0)
       .map((a) => a.id);
 
-    if (unreadIds.length === 0) return;
-
     try {
-      await markItemsRead.mutateAsync(unreadIds);
+      // Starred lists bookmarks, not a feed scope: only loaded rows apply.
+      if (articleFilter === "starred" || snapshotId === null) {
+        if (unreadIds.length === 0) return;
+        await markItemsRead.mutateAsync(unreadIds);
+      } else {
+        await markScopeRead.mutateAsync({
+          request: {
+            max_id: snapshotId,
+            ...(selectedFeedId ? { feed_id: selectedFeedId } : {}),
+            ...(selectedGroupId ? { group_id: selectedGroupId } : {}),
+          },
+          loadedIds: unreadIds,
+        });
+      }
       pinRead(unreadIds);
     } catch (error) {
       console.error("Failed to mark all as read:", error);
@@ -247,7 +276,7 @@ export function ArticleList() {
         <TooltipButton
           label={t("article.list.markAllRead")}
           onClick={handleMarkAllAsRead}
-          disabled={unreadCount === 0}
+          disabled={unreadCount === 0 && scopeUnreadCount === 0}
         >
           <CheckCheck className="h-4 w-4" />
         </TooltipButton>

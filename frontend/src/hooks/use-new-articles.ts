@@ -144,5 +144,6 @@ export function useNewArticles({
     newCount: articleCount > 0 ? newCount : 0,
     showNew,
     freshAfter: snapshot?.key === viewKey ? snapshot.freshAfter : null,
+    snapshotId,
   };
 }
