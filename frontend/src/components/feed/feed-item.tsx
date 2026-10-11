@@ -17,7 +17,9 @@ export function FeedItem({ feed }: FeedItemProps) {
   const { setEditFeedOpen } = useUIStore();
 
   const feedKey = sidebarNodeKey.feed(feed.id);
-  const isFocused = useSidebarNavStore((s) => s.focusedKey === feedKey);
+  const isFocused = useSidebarNavStore(
+    (s) => s.ringVisible && s.focusedKey === feedKey,
+  );
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
 
   const isSelected = selectedFeedId === feed.id;

@@ -19,7 +19,9 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
   );
   const setGroupOpen = useCollapsedGroupsStore((s) => s.setGroupOpen);
   const groupKey = sidebarNodeKey.group(groupId);
-  const isFocused = useSidebarNavStore((s) => s.focusedKey === groupKey);
+  const isFocused = useSidebarNavStore(
+    (s) => s.ringVisible && s.focusedKey === groupKey,
+  );
   const isFocusInsideGroup = useSidebarNavStore(
     (s) =>
       s.focusedKey !== null &&
