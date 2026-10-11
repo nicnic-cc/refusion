@@ -62,7 +62,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Folders:** group feeds and collapse folders in the sidebar.
 - **Reorder mode:** move folders and feeds up and down on the feeds page. The sidebar follows.
-- **Mark all as read:** covers a whole feed or folder, including articles not loaded yet.
+- **Mark all as read:** covers a whole feed or folder, including articles not loaded yet. Press `shift+a` or the checkmark.
 - **OPML:** import and export your subscriptions.
 
 ### Search and shortcuts
