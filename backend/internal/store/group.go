@@ -51,6 +51,9 @@ func (s *Store) CreateGroup(name string) (*model.Group, error) {
 		INSERT INTO groups (name) VALUES (:name)
 	`, sql.Named("name", name))
 	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, fmt.Errorf("%w: group name already exists", ErrConflict)
+		}
 		return nil, err
 	}
 
@@ -69,6 +72,9 @@ func (s *Store) UpdateGroup(id int64, name string) error {
 		WHERE id = :id
 	`, sql.Named("name", name), sql.Named("id", id))
 	if err != nil {
+		if isUniqueViolation(err) {
+			return fmt.Errorf("%w: group name already exists", ErrConflict)
+		}
 		return err
 	}
 	rows, err := result.RowsAffected()

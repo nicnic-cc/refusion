@@ -162,6 +162,17 @@ func (s *Store) NextWakeTime() (next int64, ok bool, err error) {
 	return null.Int64, true, nil
 }
 
+// classifyFeedWriteError maps feed constraint failures to client-facing errors.
+func classifyFeedWriteError(err error) error {
+	switch {
+	case isUniqueViolation(err):
+		return fmt.Errorf("%w: feed link already exists", ErrConflict)
+	case isForeignKeyViolation(err):
+		return fmt.Errorf("%w: group not found", ErrInvalid)
+	}
+	return err
+}
+
 func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, refreshIntervalSeconds *int64, fullContent bool) (*model.Feed, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -176,7 +187,7 @@ func (s *Store) CreateFeed(groupID int64, name, link, siteURL, proxy string, ref
 		sql.Named("site_url", siteURL), sql.Named("proxy", proxy), sql.Named("refresh_interval_seconds", refreshIntervalSeconds),
 		sql.Named("full_content", boolToInt(fullContent)))
 	if err != nil {
-		return nil, err
+		return nil, classifyFeedWriteError(err)
 	}
 
 	id, err := result.LastInsertId()
@@ -300,7 +311,7 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	query := fmt.Sprintf("UPDATE feeds SET %s WHERE id = :id", strings.Join(setClauses, ", "))
 	result, err := tx.Exec(query, args...)
 	if err != nil {
-		return err
+		return classifyFeedWriteError(err)
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {

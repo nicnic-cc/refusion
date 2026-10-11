@@ -1,8 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"strconv"
+	"strings"
+
+	"github.com/0x2E/fusion/internal/store"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +30,20 @@ func notFoundError(c *gin.Context, resource string) {
 // badRequestError returns 400 with the given message.
 func badRequestError(c *gin.Context, message string) {
 	c.JSON(400, gin.H{"error": message})
+}
+
+// storeClientError answers 409 for store.ErrConflict and 400 for store.ErrInvalid
+// with the readable part of the message; it reports whether it handled err.
+func storeClientError(c *gin.Context, err error) bool {
+	switch {
+	case errors.Is(err, store.ErrConflict):
+		c.JSON(409, gin.H{"error": strings.TrimPrefix(err.Error(), store.ErrConflict.Error()+": ")})
+	case errors.Is(err, store.ErrInvalid):
+		badRequestError(c, strings.TrimPrefix(err.Error(), store.ErrInvalid.Error()+": "))
+	default:
+		return false
+	}
+	return true
 }
 
 // unauthorizedError returns 401.
