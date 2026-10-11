@@ -1,6 +1,7 @@
 import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { FeedFilterControl } from "@/components/feed/feed-filter-control";
 import { ReorderControls } from "@/components/feed/reorder-controls";
 import { Input } from "@/components/ui/input";
 import {
@@ -283,6 +284,10 @@ export function FeedGroupCard({
                     ? formatDate(feed.fetch_state.last_checked_at)
                     : t("common.unknown")}
                 </span>
+                <FeedFilterControl
+                  feed={feed}
+                  className={reorder && "max-sm:hidden"}
+                />
                 <button
                   type="button"
                   onClick={() => onOpenEditFeed(feed)}
