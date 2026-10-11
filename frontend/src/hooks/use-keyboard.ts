@@ -168,6 +168,11 @@ export function useKeyboardShortcuts() {
         return;
       }
 
+      // Shifted keys after "g" are their own chords (Shift+A marks all read).
+      if (pendingPrefixRef.current === "g" && event.shiftKey) {
+        resetPrefix();
+      }
+
       if (pendingPrefixRef.current === "g") {
         if (key === "u") {
           event.preventDefault();

@@ -13,6 +13,7 @@ import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
+import { useMarkAllReadShortcut } from "@/hooks/use-mark-all-read-shortcut";
 import { useNewArticles } from "@/hooks/use-new-articles";
 import { NewArticlesPill } from "./new-articles-pill";
 import { FeedErrorLine } from "./feed-error-line";
@@ -267,6 +268,9 @@ export function ArticleList() {
     }
   };
 
+  const markAllReadDisabled = unreadCount === 0 && scopeUnreadCount === 0;
+  useMarkAllReadShortcut(handleMarkAllAsRead, markAllReadDisabled);
+
   return (
     <div className="flex h-full flex-col">
       <ContentHeader className="pl-4 pr-2 sm:pl-6 sm:pr-2">
@@ -281,8 +285,9 @@ export function ArticleList() {
           />
           <TooltipButton
             label={t("article.list.markAllRead")}
+            shortcut="Shift+A"
             onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0 && scopeUnreadCount === 0}
+            disabled={markAllReadDisabled}
           >
             <CheckCheck className="h-4 w-4" />
           </TooltipButton>
