@@ -17,6 +17,7 @@ import type {
   ValidateFeedResponse,
   CreateBookmarkRequest,
   MarkItemsReadRequest,
+  MarkScopeReadRequest,
   ListItemsParams,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
@@ -112,6 +113,9 @@ export const itemAPI = {
 
   markUnread: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/unread", data),
+
+  markScopeRead: (data: MarkScopeReadRequest) =>
+    api.patch<void>("/items/-/read-all", data),
 };
 
 // Bookmark APIs

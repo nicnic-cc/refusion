@@ -8,7 +8,13 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
-import { itemAPI, type Feed, type Item, type ListItemsParams } from "@/lib/api";
+import {
+  itemAPI,
+  type Feed,
+  type Item,
+  type ListItemsParams,
+  type MarkScopeReadRequest,
+} from "@/lib/api";
 import {
   normalizeItemFilters,
   queryKeys,
@@ -254,4 +260,48 @@ export function useMarkItemsRead() {
 
 export function useMarkItemsUnread() {
   return useSetItemsReadState(true);
+}
+
+/**
+ * Marks a whole feed, group or everything read on the server. Only the loaded
+ * rows flip optimistically; caches holding the rest are marked stale.
+ */
+export function useMarkScopeRead() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (vars: {
+      request: MarkScopeReadRequest;
+      loadedIds: number[];
+    }) => {
+      await itemAPI.markScopeRead(vars.request);
+    },
+    onMutate: async ({ loadedIds }) => {
+      await Promise.all([
+        qc.cancelQueries({ queryKey: queryKeys.items.all }),
+        qc.cancelQueries({ queryKey: queryKeys.feeds.all }),
+      ]);
+
+      const context = snapshotItemsMutationState(qc, loadedIds);
+      applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds);
+      return context;
+    },
+    onError: (_error, _vars, context) => {
+      rollbackItemsMutation(qc, context);
+    },
+    onSettled: async () => {
+      // No refetch of the open list: it would drop the rows pinned for undo.
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: queryKeys.items.all,
+          refetchType: "none",
+        }),
+        qc.invalidateQueries({
+          queryKey: queryKeys.bookmarks.all,
+          refetchType: "none",
+        }),
+        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+      ]);
+    },
+  });
 }

@@ -171,6 +171,12 @@ export interface MarkItemsReadRequest {
   ids: number[];
 }
 
+export interface MarkScopeReadRequest {
+  max_id: number;
+  feed_id?: number;
+  group_id?: number;
+}
+
 export interface ListItemsParams {
   feed_id?: number;
   group_id?: number;
