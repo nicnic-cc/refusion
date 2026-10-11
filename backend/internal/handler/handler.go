@@ -123,6 +123,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.GET("/groups/:id", h.getGroup)
 			auth.PATCH("/groups/:id", h.updateGroup)
 			auth.DELETE("/groups/:id", h.deleteGroup)
+			auth.PUT("/groups/order", h.reorderGroups)
 
 			auth.GET("/feeds", h.listFeeds)
 			auth.POST("/feeds", h.createFeed)
@@ -131,6 +132,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.GET("/feeds/:id", h.getFeed)
 			auth.PATCH("/feeds/:id", h.updateFeed)
 			auth.DELETE("/feeds/:id", h.deleteFeed)
+			auth.PUT("/feeds/order", h.reorderFeeds)
 			auth.POST("/feeds/validate", h.validateFeed)
 			auth.POST("/feeds/:id/refresh", h.refreshFeed)
 
