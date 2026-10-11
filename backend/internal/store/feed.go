@@ -687,7 +687,7 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			sql.Named("site_url", input.SiteURL),
 		)
 		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("failed to create %s: %v", input.Link, err))
+			result.Errors = append(result.Errors, fmt.Sprintf("failed to create %s: %v", input.Link, classifyFeedWriteError(err)))
 			continue
 		}
 
