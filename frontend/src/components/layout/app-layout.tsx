@@ -12,6 +12,7 @@ import { ImportOpmlDialog } from "@/components/feed/import-opml-dialog";
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { usePullRun } from "@/hooks/use-pull-run";
+import { useMissingScopeRedirect } from "@/hooks/use-missing-scope-redirect";
 import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUIStore } from "@/store/ui";
@@ -31,6 +32,7 @@ export function AppLayout({ children, readingPane = false }: AppLayoutProps) {
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
   usePullRun();
+  useMissingScopeRedirect();
 
   // Close mobile sidebar on navigation
   const location = useLocation();
