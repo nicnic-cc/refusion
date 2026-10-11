@@ -304,6 +304,17 @@ export const enMessages = {
   "globalFilter.preview.summary": "Would remove {hidden} of the latest {checked} articles",
   "feedFilter.preview.globalHidden": "{count} more hidden by the global filter",
   "feedFilter.preview.globalHiddenTag": "Hidden by global filter",
+  "feeds.tooltip.addFeed": "Add feed",
+  "feeds.tooltip.collapse": "Collapse",
+  "feeds.tooltip.expand": "Expand",
+  "feeds.tooltip.editFeed": "Edit feed",
+  "feedFilter.tooltip.edit": "Edit filter",
+  "feedFilter.tooltip.add": "Add filter",
+  "feedFilter.tooltip.hiddenByGlobal": "Hidden by the global filter",
+  "feedFilter.tooltip.turnOff": "Turn filter off",
+  "feedFilter.tooltip.turnOn": "Turn filter on",
+  "globalFilter.tooltip.edit": "Edit global filter",
+  "globalFilter.tooltip.add": "Add global filter",
 } as const;
 
 export type TranslationKey = keyof typeof enMessages;

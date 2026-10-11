@@ -1,5 +1,6 @@
 import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
+import { WithTooltip } from "@/components/common/with-tooltip";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { FeedFilterControl } from "@/components/feed/feed-filter-control";
 import { ReorderControls } from "@/components/feed/reorder-controls";
@@ -119,12 +120,19 @@ export function FeedGroupCard({
             </span>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => onToggleGroup(group.id)}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-            aria-expanded={!isCollapsed}
-            aria-label={`Toggle group ${group.name}`}
+          <WithTooltip
+            label={t(
+              isCollapsed ? "feeds.tooltip.expand" : "feeds.tooltip.collapse",
+            )}
+            render={
+              <button
+                type="button"
+                onClick={() => onToggleGroup(group.id)}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                aria-expanded={!isCollapsed}
+                aria-label={`Toggle group ${group.name}`}
+              />
+            }
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -155,7 +163,7 @@ export function FeedGroupCard({
             >
               {groupFeeds.length}
             </span>
-          </button>
+          </WithTooltip>
         )}
         {reorder && (
           <ReorderControls
@@ -171,40 +179,55 @@ export function FeedGroupCard({
             reorder && "max-sm:hidden",
           )}
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenAddFeed();
-            }}
-            className="rounded p-1 hover:bg-accent"
-            aria-label={t("feed.add.button")}
+          <WithTooltip
+            label={t("feeds.tooltip.addFeed")}
+            render={
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenAddFeed();
+                }}
+                className="rounded p-1 hover:bg-accent"
+                aria-label={t("feed.add.button")}
+              />
+            }
           >
             <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartEditingGroup(group);
-            }}
-            className="rounded p-1 hover:bg-accent"
-            aria-label={t("feeds.renameGroup")}
+          </WithTooltip>
+          <WithTooltip
+            label={t("feeds.renameGroup")}
+            render={
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditingGroup(group);
+                }}
+                className="rounded p-1 hover:bg-accent"
+                aria-label={t("feeds.renameGroup")}
+              />
+            }
           >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          </WithTooltip>
           {group.id !== 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenDeleteGroup(group);
-              }}
-              className="rounded p-1 hover:bg-accent"
-              aria-label={t("feeds.deleteGroup.title")}
+            <WithTooltip
+              label={t("feeds.deleteGroup.title")}
+              render={
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDeleteGroup(group);
+                  }}
+                  className="rounded p-1 hover:bg-accent"
+                  aria-label={t("feeds.deleteGroup.title")}
+                />
+              }
             >
               <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            </WithTooltip>
           )}
         </div>
       </div>
@@ -290,17 +313,22 @@ export function FeedGroupCard({
                   feed={feed}
                   className={reorder && "max-sm:hidden"}
                 />
-                <button
-                  type="button"
-                  onClick={() => onOpenEditFeed(feed)}
-                  className={cn(
-                    "rounded p-1 hover:bg-accent",
-                    reorder && "max-sm:hidden",
-                  )}
-                  aria-label={t("feed.edit.title")}
+                <WithTooltip
+                  label={t("feeds.tooltip.editFeed")}
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => onOpenEditFeed(feed)}
+                      className={cn(
+                        "rounded p-1 hover:bg-accent",
+                        reorder && "max-sm:hidden",
+                      )}
+                      aria-label={t("feed.edit.title")}
+                    />
+                  }
                 >
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
+                </WithTooltip>
                 {reorder && (
                   <ReorderControls
                     index={index}
