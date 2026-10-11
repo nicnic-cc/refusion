@@ -81,7 +81,7 @@ func (s *Store) ListFeeds() ([]*model.Feed, error) {
 		         fs.etag, fs.last_modified, fs.cache_control, fs.expires_at, fs.last_checked_at,
 		         fs.next_check_at, fs.last_http_status, fs.retry_after_until, fs.last_success_at,
 		         fs.last_error_at, fs.last_error, fs.consecutive_failures
-		ORDER BY f.id
+		ORDER BY f.position, f.id
 	`)
 	if err != nil {
 		return nil, err
