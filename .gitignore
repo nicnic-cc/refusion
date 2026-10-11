@@ -20,3 +20,5 @@ backend/fusion
 
 # One-off research scripts
 .research/
+# Script for VM deployment - testing
+deploy-local.sh
