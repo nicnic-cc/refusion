@@ -1,11 +1,13 @@
 package pull
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,6 +18,10 @@ import (
 	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/mmcdole/gofeed"
 )
+
+// maxFeedBytes bounds memory per feed fetch (after gzip decoding); larger
+// feeds are rejected rather than truncated, since a cut-off parse is misleading.
+const maxFeedBytes = 20 << 20
 
 // ParsedItem represents a feed item after parsing and field mapping.
 type ParsedItem struct {
@@ -83,8 +89,16 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 		return result, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxFeedBytes+1))
+	if err != nil {
+		return result, fmt.Errorf("read feed: %w", err)
+	}
+	if len(body) > maxFeedBytes {
+		return result, fmt.Errorf("feed too large (over %d bytes)", maxFeedBytes)
+	}
+
 	fp := gofeed.NewParser()
-	parsedFeed, err := fp.Parse(resp.Body)
+	parsedFeed, err := fp.Parse(bytes.NewReader(body))
 	if err != nil {
 		return result, fmt.Errorf("parse feed: %w", err)
 	}
