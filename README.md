@@ -15,12 +15,14 @@
 
 ## What refusion adds
 
-- **Two reading layouts:** Drawer opens articles over the list. Panes shows them in a third column beside it, on wider screens.
+- **Two reading layouts:** Drawer opens articles over the list. Panes shows them in a third column beside it on wide screens, and falls back to Drawer on narrower ones.
 - **Full article text:** fetch the whole article from the site on demand (`w`), or turn on "Always load full article" for a feed.
 - **YouTube embeds:** YouTube items play inside the article view. Items with only `media:description` show it as the content, with links made clickable.
 - **Search with excerpts:** results show an excerpt with the matched words in bold.
 - **Checking for new articles:** pull to refresh in the sidebar or the list, with progress per feed. `r` checks the current view, `shift+r` checks all feeds. A pill shows how many new articles arrived, and feed rows show a spinner while checking and a warning with the error when a check fails.
-- **Article list:** infinite scroll, with a load-more button as a per-device option. Rows are compact: meta line on top, title below.
+- **Your own order:** a reorder mode on the feeds page moves folders and feeds up and down with arrows. The sidebar follows it.
+- **Article list:** infinite scroll, with a load-more button as a per-device option. Rows are compact: meta line on top, title below. An icon switch under the header picks all, unread or starred.
+- **Mark all as read** covers the whole feed or folder, including articles not loaded yet.
 - **Reading comfort:** a font and text size popover in the article view. Dates can be relative ("3 hours ago") or absolute.
 - **Small things:** keyboard hints in tooltips, collapsed sidebar folders stay collapsed, settings and shortcut dialogs with a fixed header.
 
