@@ -98,11 +98,12 @@ func buildMigratedDatabase(legacyPath, targetPath string) error {
 	if err := createCurrentSchema(tx); err != nil {
 		return err
 	}
-	groupMap, err := copyLegacyGroups(tx)
-	if err != nil {
+	// Restore id 1 first so a legacy group named like the seeded "Default" doesn't collide with it.
+	if err := restoreDefaultGroupFromLegacy(tx); err != nil {
 		return err
 	}
-	if err := restoreDefaultGroupFromLegacy(tx); err != nil {
+	groupMap, err := copyLegacyGroups(tx)
+	if err != nil {
 		return err
 	}
 	feedMap, err := copyLegacyFeeds(tx, groupMap)

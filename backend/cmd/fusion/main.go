@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -95,18 +96,18 @@ func run() error {
 }
 
 func setupLogger(cfg *config.Config) {
-	var level slog.Level
-	switch cfg.LogLevel {
+	level := slog.LevelInfo
+	badLevel := ""
+	switch strings.ToUpper(strings.TrimSpace(cfg.LogLevel)) {
 	case "DEBUG":
 		level = slog.LevelDebug
-	case "INFO":
-		level = slog.LevelInfo
+	case "INFO", "":
 	case "WARN":
 		level = slog.LevelWarn
 	case "ERROR":
 		level = slog.LevelError
 	default:
-		level = slog.LevelInfo
+		badLevel = cfg.LogLevel
 	}
 
 	opts := &slog.HandlerOptions{
@@ -135,4 +136,8 @@ func setupLogger(cfg *config.Config) {
 
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
+
+	if badLevel != "" {
+		slog.Warn("unknown FUSION_LOG_LEVEL, using INFO", "value", badLevel)
+	}
 }
