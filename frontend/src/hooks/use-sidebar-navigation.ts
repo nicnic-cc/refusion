@@ -10,6 +10,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { isTypingTarget } from "./use-keyboard";
 import { useUrlState } from "./use-url-state";
 
+const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
+
 /**
  * Inoreader-style sidebar tree navigation:
  * Shift+N / Shift+P move the highlight, Shift+J / Shift+K move and open the
@@ -23,6 +25,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
   const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
   const focusedKey = useSidebarNavStore((s) => s.focusedKey);
+  const ringVisible = useSidebarNavStore((s) => s.ringVisible);
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
   const setGroupOpen = useCollapsedGroupsStore((s) => s.setGroupOpen);
   const isSearchOpen = useUIStore((s) => s.isSearchOpen);
@@ -93,18 +96,27 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
     isShortcutsOpen,
   ]);
 
-  // Keep the highlighted item visible within the sidebar scroll area.
+  // Keep the highlighted item visible; a mouse click must not scroll the list.
   useEffect(() => {
-    if (focusedKey === null) {
+    if (focusedKey === null || !ringVisible) {
       return;
     }
     document
       .querySelector(`[data-sidebar-key="${focusedKey}"]`)
       ?.scrollIntoView({ block: "nearest" });
-  }, [focusedKey]);
+  }, [focusedKey, ringVisible]);
 
   useEffect(() => {
+    const { setRingVisible } = useSidebarNavStore.getState();
+
     function handleKeyDown(event: KeyboardEvent) {
+      // Pressing Shift before N must not hide the ring, so modifiers are skipped.
+      if (modifierKeys.has(event.key)) {
+        return;
+      }
+      // Any other key hides the ring; the branches below that act show it again.
+      setRingVisible(false);
+
       if (
         !event.shiftKey ||
         event.metaKey ||
@@ -154,6 +166,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
           return;
         }
         event.preventDefault();
+        setRingVisible(true);
 
         const currentIndex = state.nodes.findIndex(
           (node) => node.key === state.focusedKey,
@@ -186,12 +199,14 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
 
       if (key === "o") {
         event.preventDefault();
+        setRingVisible(true);
         activate(node);
         return;
       }
 
       if (key === "x") {
         event.preventDefault();
+        setRingVisible(true);
         const groupId =
           node.kind === "group"
             ? node.groupId
@@ -212,7 +227,15 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
       }
     }
 
+    function handlePointerDown() {
+      setRingVisible(false);
+    }
+
     document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+    };
   }, []);
 }

@@ -15,9 +15,16 @@ export const sidebarNodeKey = {
 interface SidebarNavState {
   focusedKey: string | null;
   setFocusedKey: (key: string | null) => void;
+  // The ring shows only while the sidebar keys are in use; focusedKey outlives it.
+  ringVisible: boolean;
+  setRingVisible: (visible: boolean) => void;
 }
 
 export const useSidebarNavStore = create<SidebarNavState>((set) => ({
   focusedKey: null,
   setFocusedKey: (key) => set({ focusedKey: key }),
+  ringVisible: false,
+  // Returning the same state skips listener notification on repeated keydowns.
+  setRingVisible: (visible) =>
+    set((s) => (s.ringVisible === visible ? s : { ringVisible: visible })),
 }));

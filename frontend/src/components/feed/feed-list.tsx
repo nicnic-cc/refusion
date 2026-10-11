@@ -32,7 +32,9 @@ export function FeedList() {
   } = useUrlState();
   const { pathname } = useLocation();
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
-  const focusedKey = useSidebarNavStore((s) => s.focusedKey);
+  const ringKey = useSidebarNavStore((s) =>
+    s.ringVisible ? s.focusedKey : null,
+  );
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
   const firstPathSegment = pathname.split("/").filter(Boolean)[0];
   const isOnHomePage =
@@ -141,7 +143,7 @@ export function FeedList() {
                   isTopLevelSelected && articleFilter === value
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50",
-                  focusedKey === nodeKey && "ring-2 ring-inset ring-ring",
+                  ringKey === nodeKey && "ring-2 ring-inset ring-ring",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
