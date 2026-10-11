@@ -11,6 +11,7 @@ import { queryClient } from "@/lib/query-client";
 import { registerPWA } from "@/lib/pwa";
 import { usePreferencesStore } from "@/store";
 import "./index.css";
+import "./focus-tab-only";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
