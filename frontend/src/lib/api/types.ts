@@ -109,6 +109,11 @@ export interface PaginatedListResponse<T> {
   next_cursor: string | null;
 }
 
+// Item list: also carries the server's max item id read before the list
+export interface ItemListResponse extends PaginatedListResponse<Item> {
+  snapshot_id: number;
+}
+
 // Request types
 export interface LoginRequest {
   password: string;

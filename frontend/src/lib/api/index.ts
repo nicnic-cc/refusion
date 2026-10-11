@@ -3,6 +3,7 @@ import type {
   APIResponse,
   ListResponse,
   PaginatedListResponse,
+  ItemListResponse,
   LoginRequest,
   Group,
   Feed,
@@ -163,7 +164,7 @@ export const itemAPI = {
     if (params?.include_filtered) query.set("include_filtered", "true");
 
     const queryString = query.toString();
-    return api.get<PaginatedListResponse<Item>>(
+    return api.get<ItemListResponse>(
       `/items${queryString ? `?${queryString}` : ""}`,
     );
   },

@@ -33,6 +33,9 @@ disagree, the code wins — fix the page.
 - Item and bookmark lists (cursor-paginated):
   `{"data": [...], "total": n, "next_cursor": <string|null>}`;
   `next_cursor` is `null` when there are no more pages.
+- `GET /api/items` adds `snapshot_id`: the server's max item id, read before
+  the list query. "Mark all read" sends it as `max_id`, so items saved after
+  the list was read are not marked.
 
 ## Cursor pagination
 

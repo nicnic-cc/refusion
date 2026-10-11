@@ -250,6 +250,9 @@ export function ArticleList() {
       .map((a) => a.id);
 
     try {
+      // Pin before the request, as handleToggleRead does: the optimistic
+      // flip would otherwise empty the unread view and trigger a refill.
+      pinRead(unreadIds);
       // Starred lists bookmarks, not a feed scope: only loaded rows apply.
       if (articleFilter === "starred" || snapshotId === null) {
         if (unreadIds.length === 0) return;
@@ -264,7 +267,6 @@ export function ArticleList() {
           loadedIds: unreadIds,
         });
       }
-      pinRead(unreadIds);
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }

@@ -92,6 +92,14 @@ func (h *Handler) listItems(c *gin.Context) {
 		return
 	}
 
+	// Read the max id before the list: every in-scope item at or below it
+	// existed when the list was read, so mark-all-read up to it hides nothing.
+	snapshotID, err := h.store.MaxItemID()
+	if err != nil {
+		internalError(c, err, "max item id")
+		return
+	}
+
 	items, err := h.store.ListItems(params)
 	if err != nil {
 		internalError(c, err, "list items")
@@ -111,7 +119,12 @@ func (h *Handler) listItems(c *gin.Context) {
 		nc := fmt.Sprintf("%d_%d", last.PubDate, last.ID)
 		nextCursor = &nc
 	}
-	paginatedListResponse(c, items, total, nextCursor)
+	c.JSON(http.StatusOK, gin.H{
+		"data":        items,
+		"total":       total,
+		"next_cursor": nextCursor,
+		"snapshot_id": snapshotID,
+	})
 }
 
 func (h *Handler) getItem(c *gin.Context) {
