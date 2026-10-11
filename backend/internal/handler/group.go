@@ -52,6 +52,9 @@ func (h *Handler) createGroup(c *gin.Context) {
 
 	group, err := h.store.CreateGroup(req.Name)
 	if err != nil {
+		if storeClientError(c, err) {
+			return
+		}
 		internalError(c, err, "create group")
 		return
 	}
@@ -75,6 +78,9 @@ func (h *Handler) updateGroup(c *gin.Context) {
 	if err := h.store.UpdateGroup(id, req.Name); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			notFoundError(c, "group")
+			return
+		}
+		if storeClientError(c, err) {
 			return
 		}
 		internalError(c, err, "update group")

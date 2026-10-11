@@ -110,6 +110,9 @@ func (s *Store) CreateBookmark(itemID *int64, feedID *int64, link, title, conten
 	`, sql.Named("item_id", itemID), sql.Named("feed_id", feedID), sql.Named("link", link), sql.Named("title", title),
 		sql.Named("content", content), sql.Named("pub_date", pubDate), sql.Named("feed_name", feedName))
 	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, fmt.Errorf("%w: bookmark already exists", ErrConflict)
+		}
 		return nil, err
 	}
 

@@ -155,6 +155,9 @@ func (h *Handler) createBookmark(c *gin.Context) {
 
 	bookmark, err := h.store.CreateBookmark(req.ItemID, feedID, link, title, content, pubDate, feedName)
 	if err != nil {
+		if storeClientError(c, err) {
+			return
+		}
 		internalError(c, err, "create bookmark")
 		return
 	}

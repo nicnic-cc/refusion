@@ -157,6 +157,9 @@ func (h *Handler) createFeed(c *gin.Context) {
 
 	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, refreshInterval, req.FullContent)
 	if err != nil {
+		if storeClientError(c, err) {
+			return
+		}
 		internalError(c, err, "create feed")
 		return
 	}
@@ -227,6 +230,9 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	if err := h.store.UpdateFeed(id, params); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			notFoundError(c, "feed")
+			return
+		}
+		if storeClientError(c, err) {
 			return
 		}
 		internalError(c, err, "update feed")
