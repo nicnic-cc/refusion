@@ -2,12 +2,15 @@ export interface ItemFilters {
   feedId?: number | null;
   groupId?: number | null;
   unread?: boolean;
+  // Single-feed lists only; part of the cache key so both lists stay apart.
+  includeFiltered?: boolean;
 }
 
 export interface NormalizedItemFilters {
   feedId: number | null;
   groupId: number | null;
   unread: boolean;
+  includeFiltered: boolean;
 }
 
 export function normalizeItemFilters(
@@ -17,6 +20,7 @@ export function normalizeItemFilters(
     feedId: filters.feedId ?? null,
     groupId: filters.groupId ?? null,
     unread: filters.unread ?? false,
+    includeFiltered: !!filters.feedId && (filters.includeFiltered ?? false),
   };
 }
 

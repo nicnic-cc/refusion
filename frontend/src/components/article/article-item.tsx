@@ -6,6 +6,7 @@ import { cn, formatDate } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { FilteredTag } from "./filtered-tag";
 
 // Actions sit in the meta row: read stays visible but dimmed, the others appear
 // on hover/focus and keep their space so the date doesn't shift.
@@ -84,6 +85,7 @@ export const ArticleItem = memo(function ArticleItem({
         "group flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 sm:px-6 text-left transition-colors hover:bg-accent/50",
         isSelected && "bg-accent",
         isFresh && "fresh-row",
+        article.filtered && "opacity-50",
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -92,6 +94,7 @@ export const ArticleItem = memo(function ArticleItem({
           <span className="min-w-0 flex-1 truncate font-medium text-muted-foreground">
             {feedName}
           </span>
+          {article.filtered && <FilteredTag />}
           <span className="shrink-0 text-muted-foreground">
             {formatDate(article.pub_date)}
           </span>

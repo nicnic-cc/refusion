@@ -223,6 +223,8 @@ export const ruMessages: PartialMessages = {
   "article.list.loadMore": "Загрузить еще",
   "article.list.loading": "Загрузка...",
   "article.list.markAllRead": "Отметить все как прочитанные",
+  "article.list.showFiltered": "Показывать и отфильтрованные статьи",
+  "article.filteredTag": "Отфильтровано",
   "article.list.noArticles": "Статьи не найдены",
   "article.list.noFeeds": "Лент пока нет. Перейдите в управление лентами, чтобы добавить первую.",
   "article.list.openFeedManagement": "Открыть управление лентами",

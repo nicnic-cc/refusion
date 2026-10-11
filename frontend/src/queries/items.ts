@@ -48,6 +48,7 @@ function buildListItemsParams(
   if (filters.feedId) params.feed_id = filters.feedId;
   if (filters.groupId) params.group_id = filters.groupId;
   if (filters.unread) params.unread = true;
+  if (filters.includeFiltered) params.include_filtered = true;
   if (cursor) params.before = cursor;
 
   return params;
@@ -130,11 +131,14 @@ function applyOptimisticItemReadState(
               return item;
             }
 
-            const delta = targetUnread ? 1 : -1;
-            feedDeltaMap.set(
-              item.feed_id,
-              (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
-            );
+            // Filtered rows are not in the counts.
+            if (!item.filtered) {
+              const delta = targetUnread ? 1 : -1;
+              feedDeltaMap.set(
+                item.feed_id,
+                (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
+              );
+            }
 
             const updatedItem = { ...item, unread: targetUnread };
             updatedItemsById.set(item.id, updatedItem);

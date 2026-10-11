@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleFilter } from "@/lib/article-filter";
 import { queryKeys } from "@/queries/keys";
 import { useItems } from "@/queries/items";
+import { useIncludeFiltered } from "@/hooks/use-show-filtered";
 import { newCountQueries, pullQueries, usePullStatus } from "@/queries/pull";
 import { usePullStore } from "@/store/pull";
 
@@ -40,9 +41,11 @@ export function useNewArticles({
   const unread = articleFilter === "unread";
   const viewKey = `${feedId ?? ""}|${groupId ?? ""}|${unread}`;
 
+  const includeFiltered = useIncludeFiltered(feedId);
+
   // Same query as the list's own observer; only its fetch state is read here.
   const items = useItems(
-    { feedId, groupId, unread: unread ? true : undefined },
+    { feedId, groupId, unread: unread ? true : undefined, includeFiltered },
     enabled,
   );
   const fetching = items.isFetching && !items.isFetchingNextPage;
