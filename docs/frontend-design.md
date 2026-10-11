@@ -57,6 +57,11 @@ management (`/feeds`) hosts grouped feed/group CRUD, refresh-all, and
 OPML import/export. Component names map to these areas directly — browse
 `frontend/src/components/` for the implementation.
 
+Icon controls get the styled tooltip (`components/common/tooltip-button.tsx`,
+or `with-tooltip.tsx` to keep a control's own markup), never a native
+`title=`, which looks out of place and shows late. Done on `/feeds` and the
+sidebar so far.
+
 ## 5. Data flow
 
 - API layer lives in `frontend/src/lib/api/`
