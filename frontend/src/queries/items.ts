@@ -115,6 +115,7 @@ function applyOptimisticItemReadState(
 ) {
   const idSet = new Set(ids);
   const feedDeltaMap = new Map<number, number>();
+  const countedIds = new Set<number>();
   const updatedItemsById = new Map<number, Item>();
 
   qc.setQueriesData<ItemsInfiniteData>(
@@ -131,8 +132,10 @@ function applyOptimisticItemReadState(
               return item;
             }
 
-            // Filtered rows are not in the counts.
-            if (!item.filtered) {
+            // Count each item once even when several cached lists hold it;
+            // filtered rows are not in the counts.
+            if (!item.filtered && !countedIds.has(item.id)) {
+              countedIds.add(item.id);
               const delta = targetUnread ? 1 : -1;
               feedDeltaMap.set(
                 item.feed_id,

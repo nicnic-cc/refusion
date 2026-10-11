@@ -4,6 +4,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from "@tanstack/react-query";
 import { feedAPI, type Feed } from "@/lib/api";
 import { queryKeys } from "./keys";
@@ -66,6 +67,21 @@ export function useUnreadCounts() {
   return { getUnreadCount, getGroupUnreadCount, getTotalUnreadCount };
 }
 
+// Feed/group-filtered starred lists never go stale on their own (staleTime
+// Infinity), so a feed changing group must invalidate them. The unfiltered
+// lookup pages through every bookmark and doesn't depend on group membership.
+function invalidateFilteredBookmarkLists(qc: QueryClient) {
+  return qc.invalidateQueries({
+    queryKey: queryKeys.bookmarks.lists(),
+    predicate: (query) => {
+      const filters = query.queryKey[2] as
+        | { feedId?: number | null; groupId?: number | null }
+        | undefined;
+      return !!filters && (filters.feedId != null || filters.groupId != null);
+    },
+  });
+}
+
 export function useCreateFeed() {
   const qc = useQueryClient();
   return useMutation({
@@ -102,6 +118,7 @@ export function useUpdateFeed() {
       // The backend appends a moved feed to the end of its new group.
       if (previous && previous.group_id !== updated.group_id) {
         qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+        void invalidateFilteredBookmarkLists(qc);
       }
     },
   });
@@ -119,6 +136,8 @@ export function useDeleteFeed() {
         old?.filter((f) => f.id !== id),
       );
       qc.invalidateQueries({ queryKey: queryKeys.items.all });
+      // The server nulls the feed's bookmarks' feed_id and item_id, so every list changes.
+      qc.invalidateQueries({ queryKey: queryKeys.bookmarks.all });
     },
   });
 }
@@ -150,7 +169,11 @@ export function useMoveFeedsToGroup() {
           f.group_id === fromGroupId ? { ...f, group_id: toGroupId } : f,
         ),
       );
-      qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+    },
+    // Also on failure: some updates may have landed, so the cache is stale.
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+      void invalidateFilteredBookmarkLists(qc);
     },
   });
 }
