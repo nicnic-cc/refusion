@@ -223,6 +223,8 @@ export const zhMessages: PartialMessages = {
   "article.list.loadMore": "加载更多",
   "article.list.loading": "加载中...",
   "article.list.markAllRead": "全部标为已读",
+  "article.list.showFiltered": "同时显示已过滤的文章",
+  "article.filteredTag": "已过滤",
   "article.list.noArticles": "未找到文章",
   "article.list.noFeeds": "暂无订阅。前往订阅管理添加你的第一个订阅。",
   "article.list.openFeedManagement": "打开订阅管理",

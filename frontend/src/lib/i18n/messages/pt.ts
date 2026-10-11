@@ -223,6 +223,8 @@ export const ptMessages: PartialMessages = {
   "article.list.loadMore": "Carregar mais",
   "article.list.loading": "Carregando...",
   "article.list.markAllRead": "Marcar todos como lidos",
+  "article.list.showFiltered": "Mostrar também os artigos filtrados",
+  "article.filteredTag": "Filtrado",
   "article.list.noArticles": "Nenhum artigo encontrado",
   "article.list.noFeeds": "Ainda não há feeds. Vá para Gerenciamento de feeds para adicionar o primeiro.",
   "article.list.openFeedManagement": "Abrir gerenciamento de feeds",

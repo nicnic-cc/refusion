@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { ArticleFilterSwitch } from "./article-filter-switch";
 import { ArticleItem } from "./article-item";
+import { ShowFilteredToggle } from "./show-filtered-toggle";
 import { ArticleListFooter } from "./article-list-footer";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
@@ -273,13 +274,19 @@ export function ArticleList() {
           <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        <TooltipButton
-          label={t("article.list.markAllRead")}
-          onClick={handleMarkAllAsRead}
-          disabled={unreadCount === 0 && scopeUnreadCount === 0}
-        >
-          <CheckCheck className="h-4 w-4" />
-        </TooltipButton>
+        <div className="flex shrink-0 items-center gap-1">
+          <ShowFilteredToggle
+            feedId={selectedFeedId}
+            disabled={articleFilter === "starred"}
+          />
+          <TooltipButton
+            label={t("article.list.markAllRead")}
+            onClick={handleMarkAllAsRead}
+            disabled={unreadCount === 0 && scopeUnreadCount === 0}
+          >
+            <CheckCheck className="h-4 w-4" />
+          </TooltipButton>
+        </div>
       </ContentHeader>
 
       {!hasNoFeeds && (

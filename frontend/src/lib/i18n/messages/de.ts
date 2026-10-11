@@ -223,6 +223,8 @@ export const deMessages: PartialMessages = {
   "article.list.loadMore": "Mehr laden",
   "article.list.loading": "Lädt...",
   "article.list.markAllRead": "Alle als gelesen markieren",
+  "article.list.showFiltered": "Gefilterte Artikel auch anzeigen",
+  "article.filteredTag": "Gefiltert",
   "article.list.noArticles": "Keine Artikel gefunden",
   "article.list.noFeeds": "Noch keine Feeds. Gehe zur Feed-Verwaltung und füge den ersten Feed hinzu.",
   "article.list.openFeedManagement": "Feed-Verwaltung öffnen",

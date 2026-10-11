@@ -223,6 +223,8 @@ export const svMessages: PartialMessages = {
   "article.list.loadMore": "Ladda mer",
   "article.list.loading": "Laddar...",
   "article.list.markAllRead": "Markera alla som lästa",
+  "article.list.showFiltered": "Visa även filtrerade artiklar",
+  "article.filteredTag": "Filtrerad",
   "article.list.noArticles": "Inga artiklar hittades",
   "article.list.noFeeds": "Inga flöden än. Gå till flödeshantering för att lägga till ditt första flöde.",
   "article.list.openFeedManagement": "Öppna flödeshantering",

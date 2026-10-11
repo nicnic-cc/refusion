@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useItems } from "@/queries/items";
+import { useIncludeFiltered } from "@/hooks/use-show-filtered";
 import {
   resolveBookmarkItemId,
   useBookmarkLookup,
@@ -19,6 +20,8 @@ export function useArticleList(filters: ArticleListFilters) {
   const isStarredMode = filters.articleFilter === "starred";
   const isUnreadMode = filters.articleFilter === "unread";
 
+  const includeFiltered = useIncludeFiltered(filters.feedId);
+
   // Items are unused in starred mode (bookmarks ARE the articles there), so
   // skip the request entirely.
   const itemsQuery = useItems(
@@ -26,6 +29,7 @@ export function useArticleList(filters: ArticleListFilters) {
       feedId: filters.feedId,
       groupId: filters.groupId,
       unread: isUnreadMode ? true : undefined,
+      includeFiltered,
     },
     !isStarredMode,
   );
