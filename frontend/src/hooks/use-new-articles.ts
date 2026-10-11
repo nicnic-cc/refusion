@@ -4,14 +4,14 @@ import type { ArticleFilter } from "@/lib/article-filter";
 import { queryKeys } from "@/queries/keys";
 import { useItems } from "@/queries/items";
 import { useIncludeFiltered } from "@/hooks/use-show-filtered";
-import { newCountQueries, pullQueries, usePullStatus } from "@/queries/pull";
+import { newCountQueries, usePullStatus } from "@/queries/pull";
 import { usePullStore } from "@/store/pull";
 
 const TINT_MS = 2200;
 
 interface Snapshot {
   key: string;
-  // Highest item id the server had right after this view's list was fetched.
+  // Highest item id the server had when this view's list was read.
   id: number;
   // Rows above this id get the fade-out tint; null on the first load of a view.
   freshAfter: number | null;
@@ -43,50 +43,30 @@ export function useNewArticles({
 
   const includeFiltered = useIncludeFiltered(feedId);
 
-  // Same query as the list's own observer; only its fetch state is read here.
+  // Same query as the list's own observer; only its data is read here.
   const items = useItems(
     { feedId, groupId, unread: unread ? true : undefined, includeFiltered },
     enabled,
   );
-  const fetching = items.isFetching && !items.isFetchingNextPage;
-  const hasData = items.data !== undefined;
+  // Highest item id the server had when the list's first page was read.
+  const listSnapshotId = items.data?.pages[0]?.snapshot_id;
 
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const snapshotKey = snapshot?.key;
-  const wasFetching = useRef(false);
   const [dismissedUpTo, setDismissedUpTo] = useState(0);
 
-  // A finished fetch (or the first sight of a view) takes a fresh snapshot.
-  useEffect(() => {
-    if (!enabled) {
-      wasFetching.current = false;
-      return;
-    }
-    if (fetching) {
-      wasFetching.current = true;
-      return;
-    }
-    if (!hasData) return;
-    const sameView = snapshotKey === viewKey;
-    if (!wasFetching.current && sameView) return;
-    wasFetching.current = false;
-
-    let stale = false;
-    void qc
-      .fetchQuery({ ...pullQueries.status(), staleTime: 0 })
-      .then((status) => {
-        if (stale) return;
-        setSnapshot((cur) => ({
-          key: viewKey,
-          id: status.last_item_id,
-          freshAfter: cur?.key === viewKey ? cur.id : null,
-        }));
-      })
-      .catch(() => {});
-    return () => {
-      stale = true;
-    };
-  }, [enabled, fetching, hasData, viewKey, snapshotKey, qc]);
+  // A refetched list reports a new id: rows above the old one get the tint.
+  // Adjusted during render so no frame shows the new list with the old id.
+  if (
+    enabled &&
+    listSnapshotId !== undefined &&
+    (snapshot?.key !== viewKey || snapshot.id !== listSnapshotId)
+  ) {
+    setSnapshot({
+      key: viewKey,
+      id: listSnapshotId,
+      freshAfter: snapshot?.key === viewKey ? snapshot.id : null,
+    });
+  }
 
   useEffect(() => {
     if (snapshot?.freshAfter == null) return;

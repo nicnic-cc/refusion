@@ -148,3 +148,44 @@ func TestListItemsCursorWithOrderByCreatedAt(t *testing.T) {
 		t.Fatalf("expected status 400 for before cursor with order_by=created_at, got %d", w.Code)
 	}
 }
+
+func TestListItemsSnapshotID(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+
+	group, err := st.CreateGroup("G")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/feed", "https://example.com", "", nil, false)
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	var maxID int64
+	for i, guid := range []string{"g1", "g2", "g3"} {
+		item, err := st.CreateItem(feed.ID, guid, "Item", "https://example.com/"+guid, "c", int64(100+i))
+		if err != nil {
+			t.Fatalf("CreateItem %s: %v", guid, err)
+		}
+		if item.ID > maxID {
+			maxID = item.ID
+		}
+	}
+
+	r := newTestRouter()
+	r.GET("/api/items", h.listItems)
+
+	// A short page still reports the max id of the whole store.
+	w := performRequest(r, http.MethodGet, "/api/items?limit=1", nil, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d (body=%s)", w.Code, w.Body.String())
+	}
+	var page struct {
+		SnapshotID *int64 `json:"snapshot_id"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &page); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if page.SnapshotID == nil || *page.SnapshotID != maxID {
+		t.Errorf("expected snapshot_id %d, got %v", maxID, page.SnapshotID)
+	}
+}

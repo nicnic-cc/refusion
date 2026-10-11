@@ -112,6 +112,8 @@ function applyOptimisticItemReadState(
   ids: number[],
   targetUnread: boolean,
   prevFeeds: Feed[] | undefined,
+  // The server's scope mark skips filtered rows; per-id marks do not.
+  skipFiltered = false,
 ) {
   const idSet = new Set(ids);
   const feedDeltaMap = new Map<number, number>();
@@ -131,6 +133,7 @@ function applyOptimisticItemReadState(
             if (!idSet.has(item.id) || item.unread === targetUnread) {
               return item;
             }
+            if (skipFiltered && item.filtered) return item;
 
             // Count each item once even when several cached lists hold it;
             // filtered rows are not in the counts.
@@ -156,7 +159,9 @@ function applyOptimisticItemReadState(
     const optimisticItem = updatedItemsById.get(id);
     qc.setQueryData<Item>(queryKeys.items.detail(id), (old) =>
       old
-        ? old.unread !== targetUnread
+        ? skipFiltered && old.filtered
+          ? old
+          : old.unread !== targetUnread
           ? { ...old, unread: targetUnread }
           : old
         : optimisticItem,
@@ -290,7 +295,7 @@ export function useMarkScopeRead() {
       ]);
 
       const context = snapshotItemsMutationState(qc, loadedIds);
-      applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds);
+      applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds, true);
       return context;
     },
     onError: (_error, _vars, context) => {
