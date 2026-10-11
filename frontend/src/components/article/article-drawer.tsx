@@ -17,6 +17,7 @@ export function ArticleDrawer() {
         side="right"
         className="data-[side=right]:w-full data-[side=right]:sm:max-w-[max(840px,60vw)] p-0"
         showCloseButton={false}
+        data-hotkey-surface
       >
         <ArticleView state={state} variant="drawer" />
       </SheetContent>

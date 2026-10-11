@@ -64,7 +64,9 @@ export function AddGroupDialog() {
             placeholder={t("group.add.placeholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && !e.nativeEvent.isComposing && handleCreate()
+            }
             className="pl-10"
             autoComplete="off"
             aria-label={t("group.add.placeholder")}

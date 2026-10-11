@@ -22,6 +22,33 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return target.closest("[contenteditable='true'], [data-hotkey-ignore='true']") !== null;
 }
 
+// Open Base UI popups (dialog, alert dialog, popover, menu, select list). Exit
+// animation sets data-closed/data-ending-style instead of data-open; tooltips have no role.
+// The article drawer is a Sheet but is the reading surface, so it opts out.
+const OPEN_LAYER_SELECTOR = [
+  '[role="dialog"]',
+  '[role="alertdialog"]',
+  '[role="menu"]',
+  '[role="listbox"]',
+]
+  .map(
+    (role) =>
+      `${role}[data-open]:not([data-ending-style]):not([data-hotkey-surface])`,
+  )
+  .join(",");
+
+// Search, settings and shortcuts are handled by the callers themselves.
+export function isLayerOpen(): boolean {
+  const ui = useUIStore.getState();
+  return (
+    ui.isAddGroupOpen ||
+    ui.isAddFeedOpen ||
+    ui.isEditFeedOpen ||
+    ui.isImportOpmlOpen ||
+    document.querySelector(OPEN_LAYER_SELECTOR) !== null
+  );
+}
+
 interface ArticleNavigationOptions {
   enabled?: boolean;
   onToggleRead?: () => void | Promise<void>;
@@ -144,6 +171,10 @@ export function useKeyboardShortcuts() {
           state.setShortcutsOpen(false);
           return;
         }
+        // Another layer is open: let it close itself.
+        if (isLayerOpen()) {
+          return;
+        }
         if (state.selectedArticleId !== null) {
           resetPrefix();
           state.setSelectedArticle(null);
@@ -164,7 +195,12 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      if (state.isSearchOpen || state.isSettingsOpen || state.isShortcutsOpen) {
+      if (
+        state.isSearchOpen ||
+        state.isSettingsOpen ||
+        state.isShortcutsOpen ||
+        isLayerOpen()
+      ) {
         return;
       }
 
@@ -257,10 +293,6 @@ export function useArticleNavigation(
   const { selectedArticleId, setSelectedArticle } = useUrlState();
   const isSearchOpen = useUIStore((s) => s.isSearchOpen);
   const isSettingsOpen = useUIStore((s) => s.isSettingsOpen);
-  const isAddGroupOpen = useUIStore((s) => s.isAddGroupOpen);
-  const isAddFeedOpen = useUIStore((s) => s.isAddFeedOpen);
-  const isEditFeedOpen = useUIStore((s) => s.isEditFeedOpen);
-  const isImportOpmlOpen = useUIStore((s) => s.isImportOpmlOpen);
   const isShortcutsOpen = useUIStore((s) => s.isShortcutsOpen);
   const {
     enabled = true,
@@ -275,10 +307,6 @@ export function useArticleNavigation(
     selectedArticleId,
     isSearchOpen,
     isSettingsOpen,
-    isAddGroupOpen,
-    isAddFeedOpen,
-    isEditFeedOpen,
-    isImportOpmlOpen,
     isShortcutsOpen,
     onToggleRead,
     onToggleStar,
@@ -294,10 +322,6 @@ export function useArticleNavigation(
       selectedArticleId,
       isSearchOpen,
       isSettingsOpen,
-      isAddGroupOpen,
-      isAddFeedOpen,
-      isEditFeedOpen,
-      isImportOpmlOpen,
       isShortcutsOpen,
       onToggleRead,
       onToggleStar,
@@ -311,10 +335,6 @@ export function useArticleNavigation(
     selectedArticleId,
     isSearchOpen,
     isSettingsOpen,
-    isAddGroupOpen,
-    isAddFeedOpen,
-    isEditFeedOpen,
-    isImportOpmlOpen,
     isShortcutsOpen,
     onToggleRead,
     onToggleStar,
@@ -352,11 +372,8 @@ export function useArticleNavigation(
       if (
         state.isSearchOpen ||
         state.isSettingsOpen ||
-        state.isAddGroupOpen ||
-        state.isAddFeedOpen ||
-        state.isEditFeedOpen ||
-        state.isImportOpmlOpen ||
-        state.isShortcutsOpen
+        state.isShortcutsOpen ||
+        isLayerOpen()
       ) {
         return;
       }
