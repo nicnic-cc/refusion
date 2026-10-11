@@ -39,7 +39,10 @@ const ALLOWED_TAGS = [
   "summary",
 ];
 
-const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel", "open"];
+// width/height are allowed only so isTrackingPixel can see them; they are
+// stripped again in stripSizeAttrs. "class" is excluded so feeds cannot use
+// the app's own utility classes to restyle or overlay the UI.
+const ALLOWED_ATTR = ["href", "src", "alt", "title", "target", "rel", "open", "width", "height"];
 
 // Tags that are meaningful even when empty
 const SELF_CLOSING_TAGS = new Set(["br", "hr", "img", "td", "th", "li"]);
@@ -49,8 +52,10 @@ const TRACKER_PATTERNS = [
   /doubleclick/i,
   /\/pixel[./]/i,
   /\/beacon[./]/i,
-  /\/track[./]/i,
-  /\/open[./]/i,
+  // Match open-tracking endpoints (/track/open..., /open.php), not content
+  // paths like /open/cover.jpg or /track/2024/map.png.
+  /\/track\/open\b/i,
+  /\/open\.(php|aspx?|cgi|jsp)\b/i,
   /mail\.google\.com\/.*\/pixel/i,
   /emailtracking/i,
 ];
@@ -106,6 +111,13 @@ function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void
   }
 }
 
+function stripSizeAttrs(root: DocumentFragment): void {
+  for (const node of root.querySelectorAll("[width], [height]")) {
+    node.removeAttribute("width");
+    node.removeAttribute("height");
+  }
+}
+
 function removeEmptyWrappers(root: DocumentFragment): void {
   const elements = Array.from(root.querySelectorAll("*")).reverse();
   for (const element of elements) {
@@ -132,6 +144,7 @@ export function processArticleContent(
 
   sanitizeAnchors(fragment, safeArticleUrl);
   sanitizeImages(fragment, safeArticleUrl);
+  stripSizeAttrs(fragment);
   removeEmptyWrappers(fragment);
 
   const container = document.createElement("div");
