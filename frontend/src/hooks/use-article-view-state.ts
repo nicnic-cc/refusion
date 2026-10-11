@@ -131,6 +131,7 @@ export function useArticleViewState() {
       }
     } catch (error) {
       console.error("Failed to toggle star:", error);
+      toast.error(t("article.toast.starFailed"));
     }
   };
 

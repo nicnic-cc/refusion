@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { ArticleFilterSwitch } from "./article-filter-switch";
@@ -236,6 +237,7 @@ export function ArticleList() {
         await createBookmark.mutateAsync(article);
       } catch (error) {
         console.error("Failed to toggle star:", error);
+        toast.error(t("article.toast.starFailed"));
       }
     },
   );

@@ -239,6 +239,7 @@ export const frMessages: PartialMessages = {
   "article.list.retry": "Réessayer",
   "article.pane.empty": "Sélectionnez un article à lire",
   "article.toast.fullTextFailed": "Échec du chargement de l'article complet",
+  "article.toast.starFailed": "Échec de la mise à jour du favori",
   "pull.checking": "Vérification...",
   "pull.hint": "Tirez pour chercher de nouveaux articles",
   "pull.newArticles.one": "{count} nouvel article",

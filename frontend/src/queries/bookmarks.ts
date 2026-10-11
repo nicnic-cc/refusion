@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -19,9 +19,8 @@ import {
 } from "./keys";
 import { usePreferencesStore } from "@/store";
 
-// The lookup query (star icons + sidebar count) fetches a large first page so
-// most users' bookmarks are covered in a single request. 100 is also the
-// backend per-request cap, so it is the natural chunk size.
+// The lookup query (star icons + sidebar count) pages through every bookmark;
+// 100 is the backend per-request cap, so it is the natural chunk size.
 const BOOKMARK_LOOKUP_PAGE_SIZE = 100;
 
 type BookmarkListResponse = PaginatedListResponse<Bookmark>;
@@ -66,12 +65,22 @@ function useBookmarks(
   });
 }
 
-// useBookmarkLookup powers star indicators and the sidebar starred count.
-// It is intentionally unfiltered so star state is consistent across views;
-// the first page (up to BOOKMARK_LOOKUP_PAGE_SIZE) covers the common case and
-// `total` always reflects the true global count.
+// useBookmarkLookup powers star icons and the sidebar starred count. Unfiltered
+// so star state matches across views; it loads every page, or an older bookmark
+// would look unstarred and starring it again would hit the UNIQUE link constraint.
 export function useBookmarkLookup() {
   const query = useBookmarks({}, BOOKMARK_LOOKUP_PAGE_SIZE);
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } =
+    query;
+
+  // Stop after a failed page fetch so a persistent error can't loop. Two
+  // components mount this hook; cancelRefetch: false keeps them from restarting
+  // each other's in-flight page.
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+      void fetchNextPage({ cancelRefetch: false });
+    }
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
   const bookmarks = useMemo(
     () => query.data?.pages.flatMap((p) => p.data) ?? [],

@@ -239,6 +239,7 @@ export const deMessages: PartialMessages = {
   "article.list.retry": "Erneut versuchen",
   "article.pane.empty": "Artikel zum Lesen auswählen",
   "article.toast.fullTextFailed": "Vollständiger Artikel konnte nicht geladen werden",
+  "article.toast.starFailed": "Markierung konnte nicht geändert werden",
   "pull.checking": "Prüfe...",
   "pull.hint": "Zum Prüfen auf neue Artikel nach unten ziehen",
   "pull.newArticles.one": "{count} neuer Artikel",

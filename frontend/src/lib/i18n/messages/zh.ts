@@ -239,6 +239,7 @@ export const zhMessages: PartialMessages = {
   "article.list.retry": "重试",
   "article.pane.empty": "选择一篇文章阅读",
   "article.toast.fullTextFailed": "加载全文失败",
+  "article.toast.starFailed": "更新星标失败",
   "pull.checking": "正在检查...",
   "pull.hint": "下拉以检查新文章",
   "pull.newArticles.one": "{count} 篇新文章",

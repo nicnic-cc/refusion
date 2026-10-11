@@ -239,6 +239,7 @@ export const ptMessages: PartialMessages = {
   "article.list.retry": "Tentar novamente",
   "article.pane.empty": "Selecione um artigo para ler",
   "article.toast.fullTextFailed": "Falha ao carregar o artigo completo",
+  "article.toast.starFailed": "Falha ao atualizar o favorito",
   "pull.checking": "Verificando...",
   "pull.hint": "Puxe para procurar novos artigos",
   "pull.newArticles.one": "{count} novo artigo",

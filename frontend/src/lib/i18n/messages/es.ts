@@ -239,6 +239,7 @@ export const esMessages: PartialMessages = {
   "article.list.retry": "Reintentar",
   "article.pane.empty": "Selecciona un artículo para leer",
   "article.toast.fullTextFailed": "No se pudo cargar el artículo completo",
+  "article.toast.starFailed": "No se pudo actualizar el destacado",
   "pull.checking": "Comprobando...",
   "pull.hint": "Tira para buscar artículos nuevos",
   "pull.newArticles.one": "{count} artículo nuevo",
