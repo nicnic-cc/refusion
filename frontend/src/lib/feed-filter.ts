@@ -95,23 +95,6 @@ export function isConditionComplete(c: DraftCondition): boolean {
   return isMediaTrigger(c.trigger) || c.value.trim() !== "";
 }
 
-// Mirrors the server's compile step so a typo costs no request.
-export function regexError(c: DraftCondition): string | null {
-  if (
-    isMediaTrigger(c.trigger) ||
-    !isRegexOperator(c.operator) ||
-    c.value.trim() === ""
-  ) {
-    return null;
-  }
-  try {
-    new RegExp(c.value, "i");
-    return null;
-  } catch (err) {
-    return err instanceof Error ? err.message : String(err);
-  }
-}
-
 export function buildRule(draft: DraftRule): FilterRule {
   return {
     action: draft.action,

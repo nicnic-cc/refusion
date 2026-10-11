@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildRule,
   parseConditionError,
-  regexError,
   wholeWordsApplies,
   type DraftCondition,
 } from "./feed-filter";
@@ -30,16 +29,6 @@ describe("buildRule", () => {
       { trigger: "has_video" },
       { trigger: "title", operator: "contains", value: "deal" },
     ]);
-  });
-});
-
-describe("regexError", () => {
-  it("flags a bad pattern only for regex operators on text triggers", () => {
-    expect(regexError(cond({ operator: "regex", value: "(" }))).not.toBeNull();
-    expect(regexError(cond({ operator: "contains", value: "(" }))).toBeNull();
-    expect(
-      regexError(cond({ trigger: "no_video", operator: "regex", value: "(" })),
-    ).toBeNull();
   });
 });
 

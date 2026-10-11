@@ -41,7 +41,6 @@ import {
   isConditionComplete,
   isMediaTrigger,
   parseConditionError,
-  regexError,
   wholeWordsApplies,
   type DraftCondition,
   type DraftRule,
@@ -182,10 +181,7 @@ function FilterForm({
       ),
     }));
 
-  const localErrors = draft.conditions.map(regexError);
-  const ready =
-    draft.conditions.every(isConditionComplete) &&
-    localErrors.every((e) => e === null);
+  const ready = draft.conditions.every(isConditionComplete);
   const rule = useMemo(() => buildRule(draft), [draft]);
   const ruleKey = JSON.stringify(rule);
 
@@ -221,7 +217,6 @@ function FilterForm({
   const previewError = ready && previewCurrent ? preview.error : null;
 
   const rowError = (index: number): string | null =>
-    localErrors[index] ??
     (saveError?.index === index ? saveError.message : null) ??
     (previewError?.index === index ? previewError.message : null);
   const formErrors = [saveError, previewError]
