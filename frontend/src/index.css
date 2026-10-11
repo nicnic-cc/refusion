@@ -6,6 +6,7 @@
 @import "@fontsource-variable/geist-mono";
 @import "./typeset.css";
 @import "./no-default-outline.css";
+@import "./fork-colors.css";
 
 @custom-variant dark (&:is(.dark *));
 
