@@ -170,17 +170,41 @@ func (s *Store) inTx(fn func(tx *sql.Tx) error) error {
 	return tx.Commit()
 }
 
-// activeMatcher returns the compiled filter, or nil when the feed has no
-// filter or it is off.
-func activeMatcher(q interface {
+type rowQuerier interface {
 	QueryRow(query string, args ...any) *sql.Row
-}, feedID int64) (*filter.Matcher, error) {
-	var action, join, conditions string
-	var wholeWords int
-	err := q.QueryRow(`
+}
+
+// matchers holds the compiled global and feed filters; either may be nil.
+// An article is hidden when any of them hides it.
+type matchers struct {
+	global, feed *filter.Matcher
+}
+
+// activeMatchers returns the enabled global filter and the feed's enabled filter.
+func activeMatchers(q rowQuerier, feedID int64) (matchers, error) {
+	g, err := activeGlobalMatcher(q)
+	if err != nil {
+		return matchers{}, err
+	}
+	f, err := compileStored(q, `
 		SELECT action, "join", whole_words, conditions FROM feed_filters
 		WHERE feed_id = :feed_id AND enabled = 1
-	`, sql.Named("feed_id", feedID)).Scan(&action, &join, &wholeWords, &conditions)
+	`, sql.Named("feed_id", feedID))
+	if err != nil {
+		return matchers{}, err
+	}
+	return matchers{global: g, feed: f}, nil
+}
+
+func activeGlobalMatcher(q rowQuerier) (*filter.Matcher, error) {
+	return compileStored(q, `SELECT action, "join", whole_words, conditions FROM global_filter WHERE enabled = 1`)
+}
+
+// compileStored runs a query selecting one rule row; no row gives a nil matcher.
+func compileStored(q rowQuerier, query string, args ...any) (*filter.Matcher, error) {
+	var action, join, conditions string
+	var wholeWords int
+	err := q.QueryRow(query, args...).Scan(&action, &join, &wholeWords, &conditions)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -194,17 +218,34 @@ func activeMatcher(q interface {
 	return filter.Compile(rule)
 }
 
+func (ms matchers) none() bool { return ms.global == nil && ms.feed == nil }
+
+// item builds the article once for both matchers, stripping HTML only if one needs it.
+func (ms matchers) item(title, link, content string) filter.Item {
+	for _, m := range []*filter.Matcher{ms.global, ms.feed} {
+		if m != nil && m.NeedsText() {
+			return NewFilterItem(m, title, link, content)
+		}
+	}
+	return filter.Item{Title: title, Link: link, HTML: content}
+}
+
+func (ms matchers) hidden(title, link, content string) bool {
+	it := ms.item(title, link, content)
+	return (ms.global != nil && ms.global.Hidden(it)) || (ms.feed != nil && ms.feed.Hidden(it))
+}
+
 func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 	// Take the write lock before reading, so a pull that inserts items meanwhile
 	// cannot make the later UPDATEs fail on a stale snapshot.
 	if _, err := tx.Exec(`UPDATE feed_filters SET updated_at = updated_at WHERE feed_id = :feed_id`, sql.Named("feed_id", feedID)); err != nil {
 		return err
 	}
-	m, err := activeMatcher(tx, feedID)
+	ms, err := activeMatchers(tx, feedID)
 	if err != nil {
 		return err
 	}
-	if m == nil {
+	if ms.none() {
 		_, err := tx.Exec(`UPDATE items SET filtered = 0 WHERE feed_id = :feed_id AND filtered != 0`, sql.Named("feed_id", feedID))
 		return err
 	}
@@ -226,7 +267,7 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 			rows.Close()
 			return err
 		}
-		want := boolToInt(m.Hidden(NewFilterItem(m, title, link, content)))
+		want := boolToInt(ms.hidden(title, link, content))
 		if want != current {
 			changes = append(changes, change{id, want})
 		}
@@ -251,20 +292,21 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 }
 
 // MarkFilteredInputs sets Filtered on new articles about to be saved, using
-// the feed's current filter. Without a filter it changes nothing.
+// the global and the feed's current filter. Without a filter it changes nothing.
 func (s *Store) MarkFilteredInputs(feedID int64, inputs []BatchCreateItemInput) error {
-	m, err := activeMatcher(s.db, feedID)
-	if err != nil || m == nil {
+	ms, err := activeMatchers(s.db, feedID)
+	if err != nil || ms.none() {
 		return err
 	}
 	for i, in := range inputs {
-		inputs[i].Filtered = m.Hidden(NewFilterItem(m, in.Title, in.Link, in.Content))
+		inputs[i].Filtered = ms.hidden(in.Title, in.Link, in.Content)
 	}
 	return nil
 }
 
 // PreviewFilter runs a draft rule over every stored article of the feed
 // without saving anything, and lists the latest ones with their verdict.
+// The saved global filter is applied too, reported apart as global_hidden.
 func (s *Store) PreviewFilter(feedID int64, rule filter.Rule) (*model.FilterPreview, error) {
 	m, err := filter.Compile(rule)
 	if err != nil {
@@ -273,6 +315,12 @@ func (s *Store) PreviewFilter(feedID int64, rule filter.Rule) (*model.FilterPrev
 	if _, err := s.GetFeed(feedID); err != nil {
 		return nil, err
 	}
+
+	g, err := activeGlobalMatcher(s.db)
+	if err != nil {
+		return nil, err
+	}
+	both := matchers{global: g, feed: m}
 
 	started := time.Now()
 	rows, err := s.db.Query(`
@@ -292,13 +340,18 @@ func (s *Store) PreviewFilter(feedID int64, rule filter.Rule) (*model.FilterPrev
 		if err := rows.Scan(&id, &title, &link, &content, &pubDate); err != nil {
 			return nil, err
 		}
-		hidden := m.Hidden(NewFilterItem(m, title, link, content))
+		it := both.item(title, link, content)
+		hidden := m.Hidden(it)
+		globalHidden := g != nil && g.Hidden(it)
 		preview.Checked++
 		if hidden {
 			preview.Hidden++
 		}
+		if globalHidden {
+			preview.GlobalHidden++
+		}
 		if len(preview.Items) < previewItemLimit {
-			preview.Items = append(preview.Items, model.FilterPreviewItem{ID: id, Title: title, PubDate: pubDate, Hidden: hidden})
+			preview.Items = append(preview.Items, model.FilterPreviewItem{ID: id, Title: title, PubDate: pubDate, Hidden: hidden, GlobalHidden: globalHidden})
 		}
 	}
 	if err := rows.Err(); err != nil {

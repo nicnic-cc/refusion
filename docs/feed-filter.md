@@ -35,3 +35,29 @@ operators it supports), `backend/internal/store/filter.go`, and in
   request. Measured 3–8 ms per run on the largest feed (118 articles,
   2026-10-11); the plan was to switch to a Preview button above about
   200 ms.
+
+## Global filter
+
+One extra filter hides articles in every feed. Code:
+`backend/internal/store/global_filter.go`, `migrations/904_global_filter.sql`,
+`activeMatchers` in `store/filter.go`. Decided 2026-10-11.
+
+- **Remove only.** A global Keep would hide almost everything.
+- **Own one-row table, not a nullable `feed_id`** in `feed_filters`: that
+  is the primary key, so changing it means rebuilding the table and
+  touching every query.
+- **Same `filtered` flag:** an article is hidden if the global filter or
+  its feed's filter hides it, so reads don't change. Neither filter's
+  switch tells you which one hid an article; turning one off re-checks
+  every article against what is left.
+- **Saving re-checks every article, one feed per short transaction.** One
+  long transaction could make a pull fail after `busy_timeout` (5 s).
+  The save answers with `hidden_total` (everything hidden by any filter).
+- **The live preview only sees the latest 300 articles** across all feeds
+  (a full run takes about 0.5-2.5 s) and says so; the exact total comes on
+  save.
+- **The per-feed preview applies the global filter too** and reports what
+  it already hides (`global_hidden`), apart from the draft's own count.
+- **No "N hidden" on the global row** (it would need re-running the
+  matcher); a feed row's count includes articles hidden by either filter.
+- **A feed can't opt out yet** (deferred).

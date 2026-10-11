@@ -24,6 +24,9 @@ import type {
   FeedFilter,
   FilterRule,
   FilterPreview,
+  GlobalFilter,
+  GlobalFilterSaved,
+  GlobalPreview,
   SaveFeedFilterRequest,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
@@ -115,6 +118,26 @@ export const feedFilterAPI = {
   preview: (feedId: number, rule: FilterRule, signal?: AbortSignal) =>
     api.post<APIResponse<FilterPreview>>(
       `/feeds/${feedId}/filter/preview`,
+      rule,
+      signal,
+    ),
+};
+
+// Global filter APIs; get() answers data: null when none is set.
+export const globalFilterAPI = {
+  get: () => api.get<APIResponse<GlobalFilter | null>>("/global-filter"),
+
+  save: (data: SaveFeedFilterRequest) =>
+    api.put<APIResponse<GlobalFilterSaved>>("/global-filter", data),
+
+  setEnabled: (enabled: boolean) =>
+    api.patch<APIResponse<GlobalFilterSaved>>("/global-filter", { enabled }),
+
+  delete: () => api.delete<void>("/global-filter"),
+
+  preview: (rule: FilterRule, signal?: AbortSignal) =>
+    api.post<APIResponse<GlobalPreview>>(
+      "/global-filter/preview",
       rule,
       signal,
     ),
