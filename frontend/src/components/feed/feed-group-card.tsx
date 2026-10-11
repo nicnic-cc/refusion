@@ -99,7 +99,8 @@ export function FeedGroupCard({
               onChange={(e) => onChangeEditingGroupName(e.target.value)}
               onBlur={() => onSaveGroupName(group)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") onSaveGroupName(group);
+                if (e.key === "Enter" && !e.nativeEvent.isComposing)
+                  onSaveGroupName(group);
                 if (e.key === "Escape") onCancelEditingGroup();
               }}
               className="h-7 w-40 px-2 text-sm"

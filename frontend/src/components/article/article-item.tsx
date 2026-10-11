@@ -76,6 +76,7 @@ export const ArticleItem = memo(function ArticleItem({
       tabIndex={0}
       onClick={() => onSelectArticle(article.id)}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelectArticle(article.id);
