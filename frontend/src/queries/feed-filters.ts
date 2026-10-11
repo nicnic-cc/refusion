@@ -22,7 +22,9 @@ export function useFeedFilters() {
   return { byFeedId, isLoading: query.isLoading };
 }
 
-const hiddenCountsKey = ["hidden-counts"] as const;
+// Nested under feeds so any feeds invalidation (end of a pull, import) also
+// refreshes the counts; src/queries/feed-filters.test.ts guards the link.
+export const hiddenCountsKey = [...queryKeys.feeds.all, "hidden-counts"] as const;
 
 export function useHiddenCounts() {
   const query = useQuery({
@@ -36,7 +38,6 @@ export function useHiddenCounts() {
 export function invalidateFilterViews(qc: QueryClient) {
   return Promise.all([
     qc.invalidateQueries({ queryKey: feedFiltersKey }),
-    qc.invalidateQueries({ queryKey: hiddenCountsKey }),
     qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
     qc.invalidateQueries({ queryKey: queryKeys.items.all }),
   ]);
