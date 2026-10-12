@@ -101,7 +101,7 @@ Star/bookmark changes are deliberately the opposite pattern: un-starring removes
 
 Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
 
-## 7. Search and bookmarks
+## 6. Search and bookmarks
 
 - Unified search (`GET /api/search`) returns feeds and items in one
   request; results open the feed context or article drawer. Article
@@ -111,11 +111,11 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
   snapshots — starred items survive deletion of the source feed/item
   (see the bookmarks rationale in `backend-design.md` §5).
 
-## 8. Keyboard interactions
+## 7. Keyboard interactions
 
 The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
-## 9. Authentication UX
+## 8. Authentication UX
 
 - Password login is available when password auth is enabled
 - If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
