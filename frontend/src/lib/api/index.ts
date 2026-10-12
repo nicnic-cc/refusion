@@ -205,7 +205,9 @@ export const bookmarkAPI = {
 
 // Settings APIs
 export const settingsAPI = {
-  get: () => api.get<APIResponse<Settings>>("/settings"),
+  // Runs next to the session probe at startup, so a logged-out 401 must not
+  // trigger the global redirect; the route guard redirects instead.
+  get: () => api.get<APIResponse<Settings>>("/settings", true),
 
   update: (data: UpdateSettingsRequest) =>
     api.patch<APIResponse<Settings>>("/settings", data),

@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 import { NotFoundRedirect } from "@/components/not-found-redirect";
 import { Toaster } from "@/components/ui/sonner";
 import { setUnauthorizedCallback } from "@/lib/api";
+import { defaultArticleFilter } from "@/lib/article-filter";
 import { preloadLocaleMessages } from "@/lib/i18n";
 import { queryClient } from "@/lib/query-client";
 import { registerPWA } from "@/lib/pwa";
@@ -19,6 +20,18 @@ const router = createRouter({
   routeTree,
   defaultNotFoundComponent: NotFoundRedirect,
 });
+
+// Lazy route chunks otherwise start loading only after the root guard's
+// session and settings requests finish; start them now. The bare "/" redirects
+// to the default filter page, so warm that one.
+const startupPath =
+  router.latestLocation.pathname === "/"
+    ? `/${defaultArticleFilter}`
+    : router.latestLocation.pathname;
+for (const route of router.getMatchedRoutes(startupPath).matchedRoutes) {
+  // A failed load is reported again when the router itself loads the route.
+  router.loadRouteChunk(route)?.catch(() => undefined);
+}
 
 registerPWA();
 

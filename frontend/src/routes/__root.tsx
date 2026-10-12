@@ -8,6 +8,7 @@ import { SharedTooltipRoot } from "@/components/common/shared-tooltip";
 import { AppLayout } from "@/components/layout/app-layout";
 import { APIError, sessionAPI } from "@/lib/api";
 import {
+  prefetchRemoteSettings,
   pullRemoteSettings,
   resetSettingsPull,
   useRemoteThemeSync,
@@ -50,7 +51,10 @@ export const Route = createRootRoute({
       return;
     }
 
+    // The settings GET overlaps the session probe to save a round trip.
+    void prefetchRemoteSettings();
     if (!(await hasValidSession())) {
+      resetSettingsPull();
       throw redirect({ to: "/login" });
     }
 

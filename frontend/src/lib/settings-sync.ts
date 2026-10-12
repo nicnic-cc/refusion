@@ -11,17 +11,32 @@ import {
 
 const THEMES = ["light", "dark", "system"] as const;
 
-// The remote settings pull runs once per document, after the session probe.
+// The remote settings pull runs once per document. Its GET starts alongside
+// the session probe; applying the result waits for a confirmed session.
 // Server values win over the localStorage cache (which stays the first-paint /
 // offline fallback), so preferences follow the user across devices and
 // browsers (#167). A null server value means "never chosen": keep local. A
 // failed pull keeps local values and is not retried until the next page load.
 let settingsPulled = false;
+let settingsFetch: Promise<Settings | undefined> | null = null;
 
-// Sign-out does a full page navigation, which discards module state anyway;
-// resetting here keeps the pull honest even if that ever changes.
+// Starts the GET without applying anything; a failed GET resolves to undefined.
+export function prefetchRemoteSettings(): Promise<Settings | undefined> {
+  if (settingsFetch === null) {
+    settingsFetch = settingsAPI
+      .get()
+      .then((response) => response.data)
+      .catch(() => undefined);
+  }
+  return settingsFetch;
+}
+
+// Also drops a prefetch made while logged out (it holds a 401), so the pull
+// after the next login fetches for real. Sign-out does a full page navigation,
+// which discards module state anyway.
 export function resetSettingsPull() {
   settingsPulled = false;
+  settingsFetch = null;
 }
 
 // The persisted preferences blob is written by both user choices and this
@@ -107,12 +122,7 @@ export async function pullRemoteSettings(): Promise<void> {
     // Storage failure: classification retries on the next page load.
   }
 
-  let settings: Settings | undefined;
-  try {
-    settings = (await settingsAPI.get()).data;
-  } catch {
-    return;
-  }
+  const settings = await prefetchRemoteSettings();
   if (!settings) {
     return;
   }
