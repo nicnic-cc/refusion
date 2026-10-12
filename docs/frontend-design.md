@@ -56,8 +56,8 @@ This keeps list context stable while opening/closing article detail. `g u` /
 - Main content remains single-column
 - Modals/drawers share the same UI flow as desktop
 
-The reading view is an infinite list with an all/unread/starred switch and
-per-card read/star quick actions; the article drawer shows sanitized full
+The reading view is an infinite list with per-card read/star quick actions
+(its all/unread/starred switch sits in the sidebar header, see section 3); the article drawer shows sanitized full
 content (`lib/content.ts`) with source link and prev/next navigation; feed
 management (`/feeds`) hosts grouped feed/group CRUD, refresh-all, reorder
 mode, the per-feed and global filters, and OPML import/export. Component names map to these areas directly — browse
