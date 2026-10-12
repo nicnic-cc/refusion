@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useUIStore } from "@/store";
-import { isTypingTarget } from "./use-keyboard";
+import { isLayerOpen, isTypingTarget } from "./use-keyboard";
 
 // Shift+A: same as the mark-all-read button in the article list header.
 export function useMarkAllReadShortcut(
@@ -43,7 +43,8 @@ export function useMarkAllReadShortcut(
         ui.isAddFeedOpen ||
         ui.isEditFeedOpen ||
         ui.isImportOpmlOpen ||
-        ui.isShortcutsOpen
+        ui.isShortcutsOpen ||
+        isLayerOpen()
       ) {
         return;
       }
