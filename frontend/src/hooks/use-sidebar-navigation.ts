@@ -8,6 +8,7 @@ import {
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isTypingTarget } from "./use-keyboard";
+import { usePrefetchList } from "./use-prefetch-list";
 import { useUrlActions } from "./use-url-state";
 
 const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
@@ -21,6 +22,7 @@ const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
 export function useSidebarNavigation(nodes: SidebarNode[]) {
   const { selectTopLevelFilter, setSelectedGroup, setSelectedFeed } =
     useUrlActions();
+  const prefetchList = usePrefetchList();
   const isMobile = useIsMobile();
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
@@ -33,6 +35,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
     selectTopLevelFilter,
     setSelectedGroup,
     setSelectedFeed,
+    prefetchList,
     setFocusedKey,
     setGroupOpen,
   });
@@ -45,6 +48,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
       selectTopLevelFilter,
       setSelectedGroup,
       setSelectedFeed,
+      prefetchList,
       setFocusedKey,
       setGroupOpen,
     };
@@ -55,6 +59,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
     selectTopLevelFilter,
     setSelectedGroup,
     setSelectedFeed,
+    prefetchList,
     setFocusedKey,
     setGroupOpen,
   ]);
@@ -133,8 +138,10 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
         if (node.kind === "filter") {
           state.selectTopLevelFilter(node.filter);
         } else if (node.kind === "group") {
+          state.prefetchList({ feedId: null, groupId: node.groupId });
           state.setSelectedGroup(node.groupId);
         } else {
+          state.prefetchList({ feedId: node.feedId, groupId: null });
           state.setSelectedFeed(node.feedId);
         }
       };
