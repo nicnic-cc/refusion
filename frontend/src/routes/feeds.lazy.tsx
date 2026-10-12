@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { WithTooltip } from "@/components/common/with-tooltip";
-import { AppLayout } from "@/components/layout/app-layout";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { Button } from "@/components/ui/button";
@@ -260,7 +259,7 @@ function FeedsPage() {
   }, [deletingGroup, feeds, groups, t]);
 
   return (
-    <AppLayout>
+    <>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <ContentHeader>
           <div className="flex items-center gap-1">
@@ -568,6 +567,6 @@ function FeedsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </>
   );
 }
