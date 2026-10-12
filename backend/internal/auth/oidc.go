@@ -2,11 +2,14 @@ package auth
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"sync"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -20,19 +23,11 @@ type OIDCAuthenticator struct {
 	oauth2Config oauth2.Config
 	allowedUser  string
 
-	mu     sync.Mutex
-	states map[string]stateEntry // state -> PKCE code_verifier
-}
-
-type stateEntry struct {
-	codeVerifier string
-	createdAt    time.Time
+	// Random per process: a login pending across a restart simply fails.
+	pendingKey []byte
 }
 
 const stateMaxAge = 10 * time.Minute
-
-// maxPendingStates bounds memory against unauthenticated /login floods.
-const maxPendingStates = 1000
 
 func NewOIDC(ctx context.Context, issuer, clientID, clientSecret, redirectURI string) (*OIDCAuthenticator, error) {
 	provider, err := oidc.NewProvider(ctx, issuer)
@@ -50,11 +45,16 @@ func NewOIDC(ctx context.Context, issuer, clientID, clientSecret, redirectURI st
 
 	verifier := provider.Verifier(&oidc.Config{ClientID: clientID})
 
+	pendingKey := make([]byte, 32)
+	if _, err := rand.Read(pendingKey); err != nil {
+		return nil, fmt.Errorf("generate pending key: %w", err)
+	}
+
 	return &OIDCAuthenticator{
 		provider:     provider,
 		verifier:     verifier,
 		oauth2Config: oauth2Config,
-		states:       make(map[string]stateEntry),
+		pendingKey:   pendingKey,
 	}, nil
 }
 
@@ -64,45 +64,39 @@ func (a *OIDCAuthenticator) SetAllowedUser(user string) {
 }
 
 // AuthURL generates an authorization URL with state and PKCE S256 challenge.
-func (a *OIDCAuthenticator) AuthURL() (authURL string, err error) {
+// The caller must store pending (state and verifier, signed) in a cookie and
+// pass it back to Callback; the server keeps no per-login state.
+func (a *OIDCAuthenticator) AuthURL() (authURL, pending string, err error) {
 	state, err := randomString(32)
 	if err != nil {
-		return "", fmt.Errorf("generate state: %w", err)
+		return "", "", fmt.Errorf("generate state: %w", err)
 	}
 	codeVerifier, err := randomString(64)
 	if err != nil {
-		return "", fmt.Errorf("generate code verifier: %w", err)
+		return "", "", fmt.Errorf("generate code verifier: %w", err)
 	}
-
-	a.addState(state, codeVerifier)
 
 	challenge := s256Challenge(codeVerifier)
 	url := a.oauth2Config.AuthCodeURL(state,
 		oauth2.SetAuthURLParam("code_challenge", challenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 	)
-	return url, nil
+	return url, a.sealPending(state, codeVerifier, time.Now().Add(stateMaxAge)), nil
 }
 
-// Callback exchanges the authorization code for tokens and verifies the ID token.
-// Returns a user identifier (email or subject claim).
-func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code string) (string, error) {
-	a.mu.Lock()
-	entry, ok := a.states[state]
-	if ok {
-		delete(a.states, state)
-	}
-	a.mu.Unlock()
+// PendingMaxAge is how long the pending cookie stays valid.
+const PendingMaxAge = stateMaxAge
 
-	if !ok {
-		return "", fmt.Errorf("invalid or expired state")
-	}
-	if time.Since(entry.createdAt) > stateMaxAge {
-		return "", fmt.Errorf("state expired")
+// Callback exchanges the authorization code for tokens and verifies the ID token.
+// pending is the cookie value from AuthURL. Returns a user identifier (email or subject claim).
+func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code, pending string) (string, error) {
+	codeVerifier, err := a.openPending(pending, state)
+	if err != nil {
+		return "", err
 	}
 
 	token, err := a.oauth2Config.Exchange(ctx, code,
-		oauth2.SetAuthURLParam("code_verifier", entry.codeVerifier),
+		oauth2.SetAuthURLParam("code_verifier", codeVerifier),
 	)
 	if err != nil {
 		return "", fmt.Errorf("token exchange: %w", err)
@@ -138,33 +132,35 @@ func (a *OIDCAuthenticator) Callback(ctx context.Context, state, code string) (s
 	return userID, nil
 }
 
-// addState stores a pending login, evicting the oldest entries beyond the cap.
-func (a *OIDCAuthenticator) addState(state, codeVerifier string) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	a.cleanExpiredStates()
-	for len(a.states) >= maxPendingStates {
-		var oldestKey string
-		var oldest time.Time
-		first := true
-		for k, v := range a.states {
-			if first || v.createdAt.Before(oldest) {
-				oldestKey, oldest, first = k, v.createdAt, false
-			}
-		}
-		delete(a.states, oldestKey)
-	}
-	a.states[state] = stateEntry{codeVerifier: codeVerifier, createdAt: time.Now()}
+// sealPending encodes "state.verifier.expiry" and appends an HMAC over it.
+func (a *OIDCAuthenticator) sealPending(state, codeVerifier string, expires time.Time) string {
+	payload := state + "." + codeVerifier + "." + strconv.FormatInt(expires.Unix(), 10)
+	return payload + "." + a.mac(payload)
 }
 
-func (a *OIDCAuthenticator) cleanExpiredStates() {
-	now := time.Now()
-	for k, v := range a.states {
-		if now.Sub(v.createdAt) > stateMaxAge {
-			delete(a.states, k)
-		}
+func (a *OIDCAuthenticator) openPending(pending, state string) (codeVerifier string, err error) {
+	i := strings.LastIndexByte(pending, '.')
+	if i < 0 || !hmac.Equal([]byte(a.mac(pending[:i])), []byte(pending[i+1:])) {
+		return "", fmt.Errorf("invalid or missing pending login")
 	}
+	parts := strings.Split(pending[:i], ".")
+	if len(parts) != 3 {
+		return "", fmt.Errorf("invalid or missing pending login")
+	}
+	if subtle.ConstantTimeCompare([]byte(parts[0]), []byte(state)) != 1 {
+		return "", fmt.Errorf("state mismatch")
+	}
+	expires, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil || time.Now().Unix() > expires {
+		return "", fmt.Errorf("state expired")
+	}
+	return parts[1], nil
+}
+
+func (a *OIDCAuthenticator) mac(payload string) string {
+	m := hmac.New(sha256.New, a.pendingKey)
+	m.Write([]byte(payload))
+	return base64.RawURLEncoding.EncodeToString(m.Sum(nil))
 }
 
 func randomString(n int) (string, error) {
