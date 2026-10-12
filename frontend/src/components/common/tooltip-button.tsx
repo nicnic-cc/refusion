@@ -1,11 +1,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import type { VariantProps } from "class-variance-authority";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import { cn } from "@/lib/utils";
 
 type TooltipButtonProps = VariantProps<typeof buttonVariants> & {
@@ -59,32 +55,35 @@ export function TooltipButton({
     />
   );
 
-  return (
-    <Tooltip>
-      {disabled ? (
-        // Disabled buttons get no pointer events, so a wrapper opens the tooltip.
-        <TooltipTrigger render={<span className="inline-flex" />}>
-          <Button
-            variant={variant}
-            size={size}
-            disabled
-            aria-label={label}
-            className={className}
-          >
-            {children}
-          </Button>
-        </TooltipTrigger>
-      ) : (
-        <TooltipTrigger render={control}>{children}</TooltipTrigger>
+  const tip = (
+    <>
+      {label}
+      {shortcut && (
+        <kbd className="ml-2 font-mono text-[11px] opacity-70">{shortcut}</kbd>
       )}
-      <TooltipContent side={side}>
-        {label}
-        {shortcut && (
-          <kbd className="ml-2 font-mono text-[11px] opacity-70">
-            {shortcut}
-          </kbd>
-        )}
-      </TooltipContent>
-    </Tooltip>
+    </>
+  );
+
+  return disabled ? (
+    // Disabled buttons get no pointer events, so a wrapper opens the tooltip.
+    <SharedTooltipTrigger
+      tip={tip}
+      side={side}
+      render={<span className="inline-flex" />}
+    >
+      <Button
+        variant={variant}
+        size={size}
+        disabled
+        aria-label={label}
+        className={className}
+      >
+        {children}
+      </Button>
+    </SharedTooltipTrigger>
+  ) : (
+    <SharedTooltipTrigger tip={tip} side={side} render={control}>
+      {children}
+    </SharedTooltipTrigger>
   );
 }

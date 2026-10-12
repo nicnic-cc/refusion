@@ -5,11 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import { articleFontFamilies } from "@/hooks/use-article-appearance-styles";
 import { useI18n } from "@/lib/i18n";
 import type { TranslationKey } from "@/lib/i18n/messages/en";
@@ -39,18 +35,16 @@ export function ArticleAppearance() {
 
   return (
     <Popover>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <PopoverTrigger
-              render={<Button variant="outline" size="icon-sm" aria-label={label} />}
-            />
-          }
-        >
-          <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-        </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
-      </Tooltip>
+      <SharedTooltipTrigger
+        tip={label}
+        render={
+          <PopoverTrigger
+            render={<Button variant="outline" size="icon-sm" aria-label={label} />}
+          />
+        }
+      >
+        <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+      </SharedTooltipTrigger>
       <PopoverContent align="start" className="w-56 gap-3 p-2">
         <div className="flex flex-col gap-0.5">
           {articleFontOptions.map((option) => (

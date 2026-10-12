@@ -4,6 +4,7 @@ import {
   redirect,
   useMatches,
 } from "@tanstack/react-router";
+import { SharedTooltipRoot } from "@/components/common/shared-tooltip";
 import { AppLayout } from "@/components/layout/app-layout";
 import { APIError, sessionAPI } from "@/lib/api";
 import {
@@ -65,11 +66,16 @@ function RootLayout() {
   useRemoteThemeSync();
   const isLogin = useMatches().some((m) => m.routeId === "/login");
   // One layout above the pages keeps the sidebar mounted across navigation.
-  return isLogin ? (
-    <Outlet />
-  ) : (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
+  return (
+    <>
+      <SharedTooltipRoot />
+      {isLogin ? (
+        <Outlet />
+      ) : (
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
+      )}
+    </>
   );
 }

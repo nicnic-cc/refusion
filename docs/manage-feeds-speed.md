@@ -38,5 +38,15 @@ Base runs drift ~20 ms between sessions, so compare within one run.
   the layout no longer belongs to a page. Second visit 582 → 446 ms,
   first visit 559 → 395 ms; the user accepted the 136 ms gain against
   the 150 ms target.
-- **Tooltips that build on first hover: not done.** Kept for if the page
-  is still too slow; tooltips cost ~215 ms of the original open.
+- **One shared tooltip popup per app, partly done** (2026-10-12,
+  `components/common/shared-tooltip.tsx`): Base UI `createHandle`, one
+  Root, each icon a detached Trigger with its label as payload. Second
+  visit ~450 → ~375 ms (-60 to -80 ms over three runs). Short of the
+  -120 ms goal: each Trigger still runs its hover/focus hooks (disabling
+  it saves nothing). The two
+  tap-controlled error tooltips stay full per-icon tooltips.
+- **Tooltips that build on first hover: not possible with focus intact.**
+  A bare control that upgrades on first hover/focus reaches 273 ms (-170),
+  but the upgrade changes the React tree above the control, so React
+  replaces its DOM node and a Tab-focused icon loses focus. Only a hand-
+  written hover/focus layer over one moving anchor would do both; not built.
