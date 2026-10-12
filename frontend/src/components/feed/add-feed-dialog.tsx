@@ -432,7 +432,7 @@ export function AddFeedDialog() {
         }}
       >
         <DialogContent
-          className="w-full max-w-[560px] p-0"
+          className="w-full sm:max-w-[560px] p-0"
           showCloseButton={false}
         >
           <DialogHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
