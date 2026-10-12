@@ -1,13 +1,12 @@
 import { create } from "zustand";
-import type { ArticleFilter } from "@/lib/article-filter";
 
 export type SidebarNode =
-  | { key: string; kind: "filter"; filter: ArticleFilter }
+  | { key: string; kind: "all" }
   | { key: string; kind: "group"; groupId: number }
   | { key: string; kind: "feed"; feedId: number; groupId: number };
 
 export const sidebarNodeKey = {
-  filter: (filter: ArticleFilter) => `filter:${filter}`,
+  all: () => "all",
   group: (groupId: number) => `group:${groupId}`,
   feed: (feedId: number) => `feed:${feedId}`,
 };

@@ -20,7 +20,7 @@ const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
  * group.
  */
 export function useSidebarNavigation(nodes: SidebarNode[]) {
-  const { selectTopLevelFilter, setSelectedGroup, setSelectedFeed } =
+  const { selectAllFeeds, setSelectedGroup, setSelectedFeed } =
     useUrlActions();
   const prefetchList = usePrefetchList();
   const isMobile = useIsMobile();
@@ -32,7 +32,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
     nodes,
     collapsedIds,
     isMobile,
-    selectTopLevelFilter,
+    selectAllFeeds,
     setSelectedGroup,
     setSelectedFeed,
     prefetchList,
@@ -45,7 +45,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
       nodes,
       collapsedIds,
       isMobile,
-      selectTopLevelFilter,
+      selectAllFeeds,
       setSelectedGroup,
       setSelectedFeed,
       prefetchList,
@@ -56,7 +56,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
     nodes,
     collapsedIds,
     isMobile,
-    selectTopLevelFilter,
+    selectAllFeeds,
     setSelectedGroup,
     setSelectedFeed,
     prefetchList,
@@ -135,8 +135,8 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
       const key = event.key.toLowerCase();
 
       const activate = (node: SidebarNode) => {
-        if (node.kind === "filter") {
-          state.selectTopLevelFilter(node.filter);
+        if (node.kind === "all") {
+          state.selectAllFeeds();
         } else if (node.kind === "group") {
           state.prefetchList({ feedId: null, groupId: node.groupId });
           state.setSelectedGroup(node.groupId);

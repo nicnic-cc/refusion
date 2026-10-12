@@ -11,7 +11,6 @@ import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
-import { ArticleFilterSwitch } from "./article-filter-switch";
 import { ArticleRow } from "./article-item";
 import { ShowFilteredToggle } from "./show-filtered-toggle";
 import { ArticleListFooter } from "./article-list-footer";
@@ -44,6 +43,7 @@ import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
+import { allFeedsLabelKey } from "@/lib/all-feeds-label";
 import {
   articleListKey,
   useArticlePinsStore,
@@ -116,7 +116,6 @@ export function ArticleList() {
   const navigate = useNavigate();
   const {
     articleFilter,
-    setArticleFilter,
     selectedFeedId,
     selectedGroupId,
     selectedArticleId,
@@ -377,7 +376,7 @@ export function ArticleList() {
     articleLoading,
   ]);
 
-  let title = t("article.list.all");
+  let title = t(allFeedsLabelKey(articleFilter));
   if (selectedFeedId) {
     const feed = getFeedById(selectedFeedId);
     title = feed?.name ?? t("article.feedFallback");
@@ -533,15 +532,6 @@ export function ArticleList() {
           </TooltipButton>
         </div>
       </ContentHeader>
-
-      {!hasNoFeeds && (
-        <div className="flex h-11 shrink-0 items-center justify-center border-b">
-          <ArticleFilterSwitch
-            value={articleFilter}
-            onValueChange={setArticleFilter}
-          />
-        </div>
-      )}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <FeedErrorLine feedId={selectedFeedId} />
