@@ -20,6 +20,7 @@ import { NewArticlesPill } from "./new-articles-pill";
 import { FeedErrorLine } from "./feed-error-line";
 import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
+import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreferencesStore } from "@/store/preferences";
 import {
   useMarkItemsRead,
@@ -202,6 +203,8 @@ export function ArticleList() {
           )
           .reduce((sum, f) => sum + f.unread_count, 0);
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
+  const isListLoading = isLoading || (articles.length === 0 && hasMore);
+  const showSkeleton = useDelayedFlag(isListLoading, 300);
 
   const handleToggleRead = useStableCallback(
     async (article: Item) => {
@@ -318,15 +321,17 @@ export function ArticleList() {
           className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
         >
           <NewArticlesPill count={newCount} onClick={showNew} />
-          {isLoading || (articles.length === 0 && hasMore) ? (
-            <div className="space-y-2 px-4 py-2 sm:px-6">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="h-24 animate-pulse rounded-md bg-accent"
-                />
-              ))}
-            </div>
+          {isListLoading ? (
+            showSkeleton && (
+              <div className="space-y-2 px-4 py-2 sm:px-6">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="h-24 animate-pulse rounded-md bg-accent"
+                  />
+                ))}
+              </div>
+            )
           ) : articles.length === 0 ? (
             hasNoFeeds ? (
               <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center sm:px-6">
