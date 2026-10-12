@@ -47,17 +47,29 @@ export function SearchDialog() {
   const { setSelectedFeed, setSelectedArticle } = useUrlState();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  // Results are keyed by the query they answer, so a cleared or changed
-  // query never shows stale results and loading needs no effect-side state.
+  // Results are keyed by the query they answer and count as current only for
+  // the typed query, so neither a changed query nor the debounce window shows
+  // (or lets Enter open) stale results.
   const [result, setResult] = useState<{
     query: string;
     feeds: SearchFeed[];
     items: SearchItem[];
   } | null>(null);
-  const current = result?.query === debouncedQuery ? result : null;
+  // Closing by any path (selecting a result included) starts the next open
+  // empty; the layout stays mounted, so nothing else resets the state.
+  const [wasOpen, setWasOpen] = useState(isSearchOpen);
+  if (wasOpen !== isSearchOpen) {
+    setWasOpen(isSearchOpen);
+    if (!isSearchOpen) {
+      setQuery("");
+      setDebouncedQuery("");
+      setResult(null);
+    }
+  }
+  const current = result?.query === query ? result : null;
   const feeds = current?.feeds ?? [];
   const items = current?.items ?? [];
-  const loading = Boolean(debouncedQuery) && !current;
+  const loading = Boolean(query) && !current;
 
   // Debounce search query
   useEffect(() => {
@@ -112,22 +124,13 @@ export function SearchDialog() {
     setSearchOpen(false);
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setQuery("");
-      setDebouncedQuery("");
-      setResult(null);
-    }
-    setSearchOpen(open);
-  };
-
   const handleOpenShortcuts = () => {
     setSearchOpen(false);
     setShortcutsOpen(true);
   };
 
   return (
-    <Dialog open={isSearchOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isSearchOpen} onOpenChange={setSearchOpen}>
       <DialogContent className="overflow-hidden p-0" showCloseButton={false}>
         <DialogHeader className="sr-only">
           <DialogTitle>{t("search.title")}</DialogTitle>
@@ -145,14 +148,14 @@ export function SearchDialog() {
             data-1p-ignore
           />
           <CommandList>
-            {loading && debouncedQuery && (
+            {loading && (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             )}
 
             {!loading &&
-              debouncedQuery &&
+              query &&
               feeds.length === 0 &&
               items.length === 0 && (
                 <CommandEmpty>{t("search.noResults")}</CommandEmpty>
@@ -220,7 +223,7 @@ export function SearchDialog() {
               </CommandGroup>
             )}
 
-            {!debouncedQuery && !loading && (
+            {!query && !loading && (
               <CommandGroup heading={t("search.group.quickActions")}>
                 <CommandItem className="gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
