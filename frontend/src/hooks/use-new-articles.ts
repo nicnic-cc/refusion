@@ -68,6 +68,20 @@ export function useNewArticles({
     prevPageCount.current = pageCount;
   }, [pageCount, scrollRef]);
 
+  // A check ending reloads the list in place only while it sits at the top.
+  const setListAtTop = usePullStore((s) => s.setListAtTop);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const sync = () => setListAtTop(el.scrollTop < 1);
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", sync);
+      setListAtTop(true);
+    };
+  }, [scrollRef, setListAtTop]);
+
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [dismissedUpTo, setDismissedUpTo] = useState(0);
 
@@ -96,7 +110,8 @@ export function useNewArticles({
   }, [snapshot]);
 
   const lastItemId = usePullStatus().data?.last_item_id ?? 0;
-  // A run ends with a list reload, so the pill would only flash meanwhile.
+  // The pill waits for the run to end, and for an in-place reload to land.
+  const reloading = items.isFetching && !items.isFetchingNextPage;
   const pullBusy = usePullStore(
     (s) => s.phase === "starting" || s.phase === "running",
   );
@@ -104,6 +119,7 @@ export function useNewArticles({
   const hasNew =
     enabled &&
     !pullBusy &&
+    !reloading &&
     snapshotId !== null &&
     lastItemId > snapshotId &&
     lastItemId > dismissedUpTo;

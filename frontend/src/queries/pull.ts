@@ -3,6 +3,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
 import {
@@ -52,6 +53,24 @@ export function usePullStatus() {
   return useQuery(pullQueries.status());
 }
 
+// The open list stays as it is (the "N new" pill offers the reload); only a
+// one-page list scrolled to the top reloads in place. Other lists are marked
+// stale and load fresh when opened.
+function refreshItemLists(qc: QueryClient) {
+  void qc.invalidateQueries({
+    queryKey: queryKeys.items.all,
+    refetchType: "none",
+  });
+  if (!usePullStore.getState().listAtTop) return;
+  void qc.refetchQueries({
+    queryKey: queryKeys.items.lists(),
+    type: "active",
+    predicate: (query) =>
+      ((query.state.data as InfiniteData<unknown> | undefined)?.pages.length ??
+        0) <= 1,
+  });
+}
+
 /**
  * Moves the pull store forward for one status reading. `queued` is only known
  * right after a start request; there 0 means nothing was fetched.
@@ -78,7 +97,7 @@ export function applyPullStatus(
     return;
   }
   void qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
-  void qc.invalidateQueries({ queryKey: queryKeys.items.all });
+  refreshItemLists(qc);
   store.finish(Math.max(0, status.new_items - store.baseline));
 }
 

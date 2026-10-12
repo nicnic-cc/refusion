@@ -16,6 +16,9 @@ interface PullState {
   // What the mounted article list would check; null when none, or on Starred.
   listScope: StartPullRequest | null;
   setListScope: (scope: StartPullRequest | null) => void;
+  // Whether the mounted article list is scrolled to the top.
+  listAtTop: boolean;
+  setListAtTop: (atTop: boolean) => void;
   done: number;
   total: number;
   // Server-wide new_items count when the run began.
@@ -44,6 +47,11 @@ export const usePullStore = create<PullState>((set, get) => ({
   newItems: 0,
 
   setListScope: (listScope) => set({ listScope }),
+
+  listAtTop: true,
+  setListAtTop: (listAtTop) => {
+    if (get().listAtTop !== listAtTop) set({ listAtTop });
+  },
 
   starting: (baseline, pane) => {
     if (get().phase === "starting" || get().phase === "running") return;

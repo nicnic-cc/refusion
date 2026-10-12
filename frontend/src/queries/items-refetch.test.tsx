@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { itemAPI } from "@/lib/api";
 import { queryKeys } from "./keys";
@@ -48,5 +48,30 @@ describe("useItems", () => {
     expect(result.current.hasNextPage).toBe(true);
     act(() => void result.current.fetchNextPage());
     await waitFor(() => expect(result.current.data?.pages).toHaveLength(2));
+  });
+
+  // Coming back online (e.g. after the laptop wakes) must not move the list.
+  it("keeps its loaded pages when the network comes back", async () => {
+    const qc = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useItems({}), { wrapper });
+
+    await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
+    for (let i = 2; i <= 3; i++) {
+      act(() => void result.current.fetchNextPage());
+      await waitFor(() => expect(result.current.data?.pages).toHaveLength(i));
+    }
+
+    const list = vi.mocked(itemAPI.list);
+    list.mockClear();
+    await act(async () => {
+      onlineManager.setOnline(false);
+      onlineManager.setOnline(true);
+    });
+
+    expect(list).not.toHaveBeenCalled();
+    expect(result.current.data?.pages).toHaveLength(3);
   });
 });
