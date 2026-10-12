@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, API_BASE } from "./client";
 import type {
   APIResponse,
   ListResponse,
@@ -173,6 +173,9 @@ export const itemAPI = {
 
   getFullContent: (id: number) =>
     api.get<APIResponse<FullContent>>(`/items/${id}/full-content`),
+
+  // Iframe source, not a fetch: the browser sends the session cookie itself.
+  pageUrl: (id: number) => `${API_BASE}/items/${id}/page`,
 
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),

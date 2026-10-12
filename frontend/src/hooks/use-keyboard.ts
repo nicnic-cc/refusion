@@ -55,6 +55,7 @@ interface ArticleNavigationOptions {
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
   onToggleFullText?: () => void;
+  onToggleWebPage?: () => void;
 }
 
 export function useKeyboardShortcuts() {
@@ -337,6 +338,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onToggleFullText,
+    onToggleWebPage,
   } = options;
   const latestStateRef = useRef({
     articleIds,
@@ -349,6 +351,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onToggleFullText,
+    onToggleWebPage,
     setSelectedArticle,
   });
 
@@ -364,6 +367,7 @@ export function useArticleNavigation(
       onToggleStar,
       onOpenOriginal,
       onToggleFullText,
+      onToggleWebPage,
       setSelectedArticle,
     };
   }, [
@@ -377,6 +381,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onToggleFullText,
+    onToggleWebPage,
     setSelectedArticle,
   ]);
 
@@ -398,6 +403,26 @@ export function useArticleNavigation(
       }
 
       if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      // Shift+W: toggle the web page view
+      if (
+        event.shiftKey &&
+        event.key.toLowerCase() === "w" &&
+        state.selectedArticleId !== null &&
+        state.onToggleWebPage
+      ) {
+        if (
+          state.isSearchOpen ||
+          state.isSettingsOpen ||
+          state.isShortcutsOpen ||
+          isLayerOpen()
+        ) {
+          return;
+        }
+        event.preventDefault();
+        state.onToggleWebPage();
         return;
       }
 
