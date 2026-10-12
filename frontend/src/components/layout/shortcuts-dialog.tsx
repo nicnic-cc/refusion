@@ -46,6 +46,7 @@ export function ShortcutsDialog() {
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "o / v", action: t("shortcuts.action.openOriginal") },
         { keys: "w", action: t("shortcuts.action.toggleFullText") },
+        { keys: "Shift+W", action: t("shortcuts.action.toggleWebPage") },
         { keys: "Shift+A", action: t("article.list.markAllRead") },
       ],
     },

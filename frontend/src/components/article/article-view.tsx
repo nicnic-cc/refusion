@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ExternalLink,
   FileText,
+  Globe,
   LoaderCircle,
   Star,
   X,
@@ -57,6 +58,10 @@ export function ArticleView({
     loadingFullText,
     canLoadFullText,
     handleToggleFullText,
+    showingWebPage,
+    canShowWebPage,
+    handleToggleWebPage,
+    webPageUrl,
     goToNext,
     goToPrevious,
     hasNext,
@@ -153,7 +158,7 @@ export function ArticleView({
               label={fullTextLabel}
               shortcut="w"
               onClick={() => void handleToggleFullText()}
-              disabled={!canLoadFullText || loadingFullText}
+              disabled={!canLoadFullText || (loadingFullText && !showingWebPage)}
               pressed={showingFullText}
             >
               {loadingFullText ? (
@@ -163,6 +168,19 @@ export function ArticleView({
                   className={`h-4 w-4 ${showingFullText ? "text-primary" : "text-muted-foreground"}`}
                 />
               )}
+            </TooltipButton>
+          )}
+          {article.id > 0 && (
+            <TooltipButton
+              label={t("article.action.webPage")}
+              shortcut="Shift+W"
+              onClick={handleToggleWebPage}
+              disabled={!canShowWebPage}
+              pressed={showingWebPage}
+            >
+              <Globe
+                className={`h-4 w-4 ${showingWebPage ? "text-primary" : "text-muted-foreground"}`}
+              />
             </TooltipButton>
           )}
           <ArticleAppearance />
@@ -195,72 +213,83 @@ export function ArticleView({
       </div>
 
       {/* Content. Keyed so each article opens at the top; the subtree holds no state worth keeping. */}
-      <ScrollBox key={article.id} className="min-h-0 flex-1">
-        <article className="min-w-0 px-4 py-6 sm:px-6 sm:py-8">
-          <div className="space-y-3">
-            <h1
-              className="text-[28px] font-bold leading-[1.3]"
-              style={appearance.title}
-            >
-              {article.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-              {article.feed_id > 0 ? (
-                <button
-                  type="button"
-                  onClick={handleOpenFeed}
-                  className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                >
-                  {feed && (
-                    <FeedFavicon
-                      src={getFaviconUrl(feed.link, feed.site_url)}
-                      className="h-3.5 w-3.5 rounded-sm"
-                    />
-                  )}
-                  <span className="truncate hover:underline">
-                    {feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+      {showingWebPage && webPageUrl ? (
+        <iframe
+          key={article.id}
+          src={webPageUrl}
+          title={article.title}
+          className="min-h-0 w-full flex-1 border-0 bg-white"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <ScrollBox key={article.id} className="min-h-0 flex-1">
+          <article className="min-w-0 px-4 py-6 sm:px-6 sm:py-8">
+            <div className="space-y-3">
+              <h1
+                className="text-[28px] font-bold leading-[1.3]"
+                style={appearance.title}
+              >
+                {article.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                {article.feed_id > 0 ? (
+                  <button
+                    type="button"
+                    onClick={handleOpenFeed}
+                    className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  >
+                    {feed && (
+                      <FeedFavicon
+                        src={getFaviconUrl(feed.link, feed.site_url)}
+                        className="h-3.5 w-3.5 rounded-sm"
+                      />
+                    )}
+                    <span className="truncate hover:underline">
+                      {feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                    </span>
+                  </button>
+                ) : (
+                  <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="truncate">
+                      {bookmark?.feed_name ?? t("common.unknown")}
+                    </span>
                   </span>
-                </button>
-              ) : (
-                <span className="flex max-w-48 items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                  <span className="truncate">
-                    {bookmark?.feed_name ?? t("common.unknown")}
-                  </span>
+                )}
+                <span className="text-muted-foreground">
+                  {formatDate(article.pub_date)}
                 </span>
-              )}
-              <span className="text-muted-foreground">
-                {formatDate(article.pub_date)}
-              </span>
-              {safeArticleLink ? (
-                <a
-                  href={safeArticleLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="truncate text-primary hover:underline"
-                >
-                  {getLinkDomain(safeArticleLink)}
-                </a>
-              ) : null}
+                {safeArticleLink ? (
+                  <a
+                    href={safeArticleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate text-primary hover:underline"
+                  >
+                    {getLinkDomain(safeArticleLink)}
+                  </a>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          {video && (
-            <div className="mt-6">
-              <YoutubeEmbed
-                id={video.id}
-                vertical={video.vertical}
-                title={article.title}
-              />
-            </div>
-          )}
+            {video && (
+              <div className="mt-6">
+                <YoutubeEmbed
+                  id={video.id}
+                  vertical={video.vertical}
+                  title={article.title}
+                />
+              </div>
+            )}
 
-          <div
-            className="typeset typeset-article mt-6 min-w-0 max-w-none"
-            style={appearance.body}
-            dangerouslySetInnerHTML={{ __html: processedHtml }}
-          />
-        </article>
-      </ScrollBox>
+            <div
+              className="typeset typeset-article mt-6 min-w-0 max-w-none"
+              style={appearance.body}
+              dangerouslySetInnerHTML={{ __html: processedHtml }}
+            />
+          </article>
+        </ScrollBox>
+      )}
 
       {/* Footer - Navigation (mobile only: in thumb reach; desktop has it in the header) */}
       {isMobile && (

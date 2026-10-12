@@ -208,6 +208,12 @@ flowchart TD
 - URL validation + private-network blocking by default for feed fetches
 - CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
 - Trusted proxy list via `FUSION_TRUSTED_PROXIES`
+- Web page view (`getItemPage`): the iframe always loads our route. A page
+  that allows framing and is https gets a redirect (real site, full
+  fidelity). Anything else is served as a copy with a CSP `sandbox` header
+  (no `allow-same-origin`), so its scripts run in an opaque origin and
+  cannot call our API with the session cookie. Plain http is copied too,
+  since framing it would be mixed content.
 
 Logging is structured (`log/slog`) with level and format controlled by
 `FUSION_LOG_LEVEL` / `FUSION_LOG_FORMAT`; the full environment variable

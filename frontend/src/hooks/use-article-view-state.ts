@@ -158,10 +158,34 @@ export function useArticleViewState() {
   const canLoadFullText =
     article !== null && article.id > 0 && safeArticleLink !== null;
 
+  // Keyed by item id like the full text, so navigating away leaves the view.
+  const [webPageId, setWebPageId] = useState<number | null>(null);
+  const showingWebPage = article !== null && webPageId === article.id;
+  const canShowWebPage = canLoadFullText;
+  // Web page and full text are exclusive: switching to the web page drops the
+  // full text (and any in-flight request) so leaving it shows the feed text.
+  const handleToggleWebPage = () => {
+    if (!article || !canShowWebPage) return;
+    if (showingWebPage) {
+      setWebPageId(null);
+      return;
+    }
+    setWebPageId(article.id);
+    setFullText(null);
+    requestedIdRef.current = null;
+  };
+
   const handleToggleFullText = async () => {
-    if (!article || !canLoadFullText || loadingFullText) return;
-    if (showingFullText) {
+    if (!article || !canLoadFullText) return;
+    if (showingWebPage) {
+      setWebPageId(null);
+    } else if (showingFullText) {
       setFullText(null);
+      return;
+    }
+    if (loadingFullText) {
+      // Re-claim a request the web page view dropped, instead of firing another.
+      requestedIdRef.current = article.id;
       return;
     }
     const id = article.id;
@@ -216,6 +240,7 @@ export function useArticleViewState() {
       onToggleFullText: () => {
         void handleToggleFullText();
       },
+      onToggleWebPage: handleToggleWebPage,
     });
 
   return {
@@ -233,6 +258,10 @@ export function useArticleViewState() {
     loadingFullText,
     canLoadFullText,
     handleToggleFullText,
+    showingWebPage,
+    canShowWebPage,
+    handleToggleWebPage,
+    webPageUrl: showingWebPage ? itemAPI.pageUrl(article.id) : null,
     goToNext,
     goToPrevious,
     hasNext,
