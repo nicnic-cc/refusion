@@ -174,54 +174,53 @@ function applyOptimisticItemReadState(
   const countedIds = new Set<number>();
   const updatedItemsById = new Map<number, Item>();
 
-  qc.setQueriesData<ItemsInfiniteData>(
-    { queryKey: queryKeys.items.lists() },
-    (old) => {
-      if (!old) return old;
-      let changed = false;
-      const pages = old.pages.map((page) => {
-        let pageChanged = false;
-        const data = page.data.map((item) => {
-          if (!idSet.has(item.id) || item.unread === targetUnread) {
-            return item;
-          }
-          if (skipFiltered && item.filtered) return item;
+  // setQueryData marks a query fresh even for an unchanged result, which would
+  // undo invalidations; write only the lists that really change.
+  for (const [key, old] of qc.getQueriesData<ItemsInfiniteData>({
+    queryKey: queryKeys.items.lists(),
+  })) {
+    if (!old) continue;
+    let changed = false;
+    const pages = old.pages.map((page) => {
+      let pageChanged = false;
+      const data = page.data.map((item) => {
+        if (!idSet.has(item.id) || item.unread === targetUnread) {
+          return item;
+        }
+        if (skipFiltered && item.filtered) return item;
 
-          // Count each item once even when several cached lists hold it;
-          // filtered rows are not in the counts.
-          if (!item.filtered && !countedIds.has(item.id)) {
-            countedIds.add(item.id);
-            const delta = targetUnread ? 1 : -1;
-            feedDeltaMap.set(
-              item.feed_id,
-              (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
-            );
-          }
+        // Count each item once even when several cached lists hold it;
+        // filtered rows are not in the counts.
+        if (!item.filtered && !countedIds.has(item.id)) {
+          countedIds.add(item.id);
+          const delta = targetUnread ? 1 : -1;
+          feedDeltaMap.set(
+            item.feed_id,
+            (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
+          );
+        }
 
-          const updatedItem = { ...item, unread: targetUnread };
-          updatedItemsById.set(item.id, updatedItem);
-          pageChanged = true;
-          return updatedItem;
-        });
-        if (!pageChanged) return page;
-        changed = true;
-        return { ...page, data };
+        const updatedItem = { ...item, unread: targetUnread };
+        updatedItemsById.set(item.id, updatedItem);
+        pageChanged = true;
+        return updatedItem;
       });
-      return changed ? { ...old, pages } : old;
-    },
-  );
+      if (!pageChanged) return page;
+      changed = true;
+      return { ...page, data };
+    });
+    if (changed) qc.setQueryData<ItemsInfiniteData>(key, { ...old, pages });
+  }
 
   for (const id of ids) {
-    const optimisticItem = updatedItemsById.get(id);
-    qc.setQueryData<Item>(queryKeys.items.detail(id), (old) =>
-      old
-        ? skipFiltered && old.filtered
-          ? old
-          : old.unread !== targetUnread
-          ? { ...old, unread: targetUnread }
-          : old
-        : optimisticItem,
-    );
+    const detailKey = queryKeys.items.detail(id);
+    const old = qc.getQueryData<Item>(detailKey);
+    if (!old) {
+      const optimisticItem = updatedItemsById.get(id);
+      if (optimisticItem) qc.setQueryData<Item>(detailKey, optimisticItem);
+    } else if (old.unread !== targetUnread && !(skipFiltered && old.filtered)) {
+      qc.setQueryData<Item>(detailKey, { ...old, unread: targetUnread });
+    }
   }
 
   if (prevFeeds && feedDeltaMap.size > 0) {
@@ -240,31 +239,30 @@ function applyOptimisticItemReadState(
 
   // Mirror the read-state change into bookmark caches so the starred view (which
   // renders bookmarks as articles) reflects the toggle without a refetch.
-  qc.setQueriesData<BookmarksInfiniteData>(
-    { queryKey: queryKeys.bookmarks.lists() },
-    (old) => {
-      if (!old) return old;
-      let changed = false;
-      const pages = old.pages.map((page) => {
-        let pageChanged = false;
-        const newData = page.data.map((bookmark) => {
-          if (
-            bookmark.item_id != null &&
-            idSet.has(bookmark.item_id) &&
-            bookmark.unread !== targetUnread
-          ) {
-            pageChanged = true;
-            return { ...bookmark, unread: targetUnread };
-          }
-          return bookmark;
-        });
-        if (!pageChanged) return page;
-        changed = true;
-        return { ...page, data: newData };
+  for (const [key, old] of qc.getQueriesData<BookmarksInfiniteData>({
+    queryKey: queryKeys.bookmarks.lists(),
+  })) {
+    if (!old) continue;
+    let changed = false;
+    const pages = old.pages.map((page) => {
+      let pageChanged = false;
+      const newData = page.data.map((bookmark) => {
+        if (
+          bookmark.item_id != null &&
+          idSet.has(bookmark.item_id) &&
+          bookmark.unread !== targetUnread
+        ) {
+          pageChanged = true;
+          return { ...bookmark, unread: targetUnread };
+        }
+        return bookmark;
       });
-      return changed ? { ...old, pages } : old;
-    },
-  );
+      if (!pageChanged) return page;
+      changed = true;
+      return { ...page, data: newData };
+    });
+    if (changed) qc.setQueryData<BookmarksInfiniteData>(key, { ...old, pages });
+  }
 }
 
 // A next-page fetch builds its result from the pages it saw at start, so it
@@ -318,21 +316,60 @@ function rollbackItemsMutation(
 ) {
   if (!context) return;
 
+  // Restore only what the optimistic step replaced; setQueryData on an
+  // untouched query would clear its invalidated flag.
   for (const [key, data] of context.prevItemLists) {
-    qc.setQueryData(key, data);
+    if (qc.getQueryData(key) !== data) qc.setQueryData(key, data);
   }
 
   for (const [id, data] of context.prevItemDetails) {
-    qc.setQueryData(queryKeys.items.detail(id), data);
+    const key = queryKeys.items.detail(id);
+    if (data === undefined) {
+      // The optimistic step created this entry. Removing a watched entry does
+      // not re-render its view, so flip the flag back there instead.
+      const current = qc.getQueryData<Item>(key);
+      if (!current) continue;
+      const watched = qc
+        .getQueryCache()
+        .find({ queryKey: key, exact: true })
+        ?.getObserversCount();
+      if (watched) {
+        qc.setQueryData<Item>(key, { ...current, unread: !current.unread });
+      } else {
+        qc.removeQueries({ queryKey: key, exact: true });
+      }
+    } else if (qc.getQueryData(key) !== data) {
+      qc.setQueryData(key, data);
+    }
   }
 
-  if (context.prevFeeds) {
+  if (
+    context.prevFeeds &&
+    qc.getQueryData(queryKeys.feeds.list()) !== context.prevFeeds
+  ) {
     qc.setQueryData(queryKeys.feeds.list(), context.prevFeeds);
   }
 
   for (const [key, data] of context.prevBookmarkLists) {
-    qc.setQueryData(key, data);
+    if (qc.getQueryData(key) !== data) qc.setQueryData(key, data);
   }
+}
+
+// Mark-unread only flips rows a list already holds; an unread-only list
+// without the item must reload to show it. No refetch of the open list.
+function invalidateUnreadListsLackingItems(qc: QueryClient, ids: number[]) {
+  void qc.invalidateQueries({
+    queryKey: queryKeys.items.lists(),
+    refetchType: "none",
+    predicate: (query) => {
+      const filters = query.queryKey[2] as NormalizedItemFilters | undefined;
+      if (!filters?.unread) return false;
+      const data = query.state.data as ItemsInfiniteData | undefined;
+      return !ids.every((id) =>
+        data?.pages.some((page) => page.data.some((item) => item.id === id)),
+      );
+    },
+  });
 }
 
 function useSetItemsReadState(targetUnread: boolean) {
@@ -362,7 +399,8 @@ function useSetItemsReadState(targetUnread: boolean) {
     },
     // Not awaited: the mutation settles when the mark request does, and the
     // auto-mark-read hook retries while one is pending.
-    onSettled: () => {
+    onSettled: (_data, _error, ids) => {
+      if (targetUnread) invalidateUnreadListsLackingItems(qc, ids);
       void qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
     },
   });
