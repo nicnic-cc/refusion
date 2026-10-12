@@ -73,6 +73,15 @@ Every feed has a folder: "no folder" means the backend's fallback group
 empty. A nullable `group_id` with top-level feeds was rejected: the Fever
 API and OPML both assume a group per feed, and it would drift from upstream.
 
+Folder and feed order is a `position` column (`store/migrations/902_order.sql`);
+new and moved items go to the end. Reorder mode uses up/down arrows, each
+press saved on its own (debounced per list), with search and the status
+filter disabled while it is on. Rejected: drag and drop (touch drag fights
+scrolling and pull-to-refresh, and needs a library; arrows proved enough),
+an A-Z/unread sort setting (no exact placement), and renumbering positions
+after a delete or move (gaps are harmless: lists sort by position then id,
+and the next save renumbers that list).
+
 ## 5. Data flow
 
 - API layer lives in `frontend/src/lib/api/`
