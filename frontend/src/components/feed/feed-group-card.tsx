@@ -27,7 +27,7 @@ export interface FeedGroupReorder {
 
 interface FeedGroupCardProps {
   group: Group;
-  togglingFilterFeedId: number | null;
+  togglingFilterFeedIds: ReadonlySet<number>;
   onOpenFilter: (feedId: number) => void;
   onToggleFilter: (feedId: number, enabled: boolean) => void;
   reorder?: FeedGroupReorder;
@@ -59,7 +59,7 @@ function getDomain(url: string) {
 
 export function FeedGroupCard({
   group,
-  togglingFilterFeedId,
+  togglingFilterFeedIds,
   onOpenFilter,
   onToggleFilter,
   reorder,
@@ -318,7 +318,7 @@ export function FeedGroupCard({
                   <>
                     <FeedFilterControl
                       feedId={feed.id}
-                      toggling={togglingFilterFeedId === feed.id}
+                      toggling={togglingFilterFeedIds.has(feed.id)}
                       onOpen={onOpenFilter}
                       onToggle={onToggleFilter}
                     />

@@ -502,8 +502,9 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 
 	errs = append(errs, result.Errors...)
 	dataResponse(c, gin.H{
-		"created": result.Created,
-		"failed":  len(errs),
-		"errors":  errs,
+		"created":    result.Created,
+		"failed":     len(errs),
+		"duplicates": result.Duplicates,
+		"errors":     errs,
 	})
 }

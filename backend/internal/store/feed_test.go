@@ -596,8 +596,8 @@ func TestBatchCreateFeedsHandlesExistingAndInBatchDuplicates(t *testing.T) {
 	if len(result.CreatedIDs) != 2 {
 		t.Fatalf("expected 2 created IDs, got %d", len(result.CreatedIDs))
 	}
-	if len(result.Errors) != 2 {
-		t.Fatalf("expected 2 duplicate errors, got %d (%v)", len(result.Errors), result.Errors)
+	if result.Duplicates != 2 || len(result.Errors) != 0 {
+		t.Fatalf("expected 2 duplicates and no errors, got %d (%v)", result.Duplicates, result.Errors)
 	}
 
 	feeds, err := store.ListFeeds()

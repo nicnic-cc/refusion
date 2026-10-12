@@ -30,7 +30,7 @@ import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed, useFeedLookup } from "@/queries/feeds";
 import { FeedCheckStatus } from "@/components/feed/feed-check-status";
 import { useAppInfo } from "@/queries/app";
-import type { UpdateFeedRequest } from "@/lib/api";
+import { apiErrorMessage, type UpdateFeedRequest } from "@/lib/api";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -177,8 +177,8 @@ export function EditFeedDialog() {
       await updateFeedMutation.mutateAsync({ id: editingFeed.id, ...request });
       toast.success(t("feed.toast.updated"));
       handleClose();
-    } catch {
-      toast.error(t("feed.toast.updateFailed"));
+    } catch (error) {
+      toast.error(apiErrorMessage(error, t("feed.toast.updateFailed")));
     } finally {
       setIsSubmitting(false);
     }

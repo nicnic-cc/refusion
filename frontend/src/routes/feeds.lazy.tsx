@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollBox } from "@/components/scroll-box";
-import { feedAPI, groupAPI } from "@/lib/api";
+import { apiErrorMessage, feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
 import { generateOPML, downloadFile } from "@/lib/opml";
 import { DEFAULT_GROUP_ID } from "@/lib/groups";
@@ -101,9 +101,7 @@ function FeedsPage() {
   const [filterFeedId, setFilterFeedId] = useState<number | null>(null);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const filterFeed = feeds.find((f) => f.id === filterFeedId);
-  const togglingFilterFeedId = setFilterEnabled.isPending
-    ? setFilterEnabled.variables.feedId
-    : null;
+  const togglingFilterFeedIds = setFilterEnabled.pendingFeedIds;
   const openFilter = useCallback((feedId: number) => {
     setFilterFeedId(feedId);
     setFilterDialogOpen(true);
@@ -210,8 +208,8 @@ function FeedsPage() {
     try {
       await updateGroupMutation.mutateAsync({ id: group.id, name });
       toast.success(t("feeds.toast.renamed"));
-    } catch {
-      toast.error(t("feeds.toast.renameFailed"));
+    } catch (error) {
+      toast.error(apiErrorMessage(error, t("feeds.toast.renameFailed")));
     }
   };
 
@@ -444,7 +442,7 @@ function FeedsPage() {
                     <FeedGroupCard
                       key={group.id}
                       group={group}
-                      togglingFilterFeedId={togglingFilterFeedId}
+                      togglingFilterFeedIds={togglingFilterFeedIds}
                       onOpenFilter={openFilter}
                       onToggleFilter={toggleFilter}
                       reorder={

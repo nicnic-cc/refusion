@@ -633,6 +633,9 @@ type BatchCreateFeedsInput struct {
 type BatchCreateFeedsResult struct {
 	Created    int
 	CreatedIDs []int64
+	// Duplicates counts links that already exist or repeat within the batch;
+	// they are not in Errors.
+	Duplicates int
 	Errors     []string
 }
 
@@ -672,10 +675,11 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 	defer stateStmt.Close()
 
 	seenLinks := make(map[string]bool, len(inputs))
+	fail := func(msg string) { result.Errors = append(result.Errors, msg) }
 
 	for _, input := range inputs {
 		if seenLinks[input.Link] {
-			result.Errors = append(result.Errors, fmt.Sprintf("duplicate feed: %s", input.Link))
+			result.Duplicates++
 			continue
 		}
 		seenLinks[input.Link] = true
@@ -687,23 +691,23 @@ func (s *Store) BatchCreateFeeds(inputs []BatchCreateFeedsInput) (*BatchCreateFe
 			sql.Named("site_url", input.SiteURL),
 		)
 		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("failed to create %s: %v", input.Link, classifyFeedWriteError(err)))
+			fail(fmt.Sprintf("failed to create %s: %v", input.Link, classifyFeedWriteError(err)))
 			continue
 		}
 
 		affected, err := res.RowsAffected()
 		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("failed to inspect result for %s: %v", input.Link, err))
+			fail(fmt.Sprintf("failed to inspect result for %s: %v", input.Link, err))
 			continue
 		}
 		if affected == 0 {
-			result.Errors = append(result.Errors, fmt.Sprintf("duplicate feed: %s", input.Link))
+			result.Duplicates++
 			continue
 		}
 
 		id, err := res.LastInsertId()
 		if err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("failed to get id for %s: %v", input.Link, err))
+			fail(fmt.Sprintf("failed to get id for %s: %v", input.Link, err))
 			continue
 		}
 

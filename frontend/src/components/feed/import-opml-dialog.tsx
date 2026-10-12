@@ -18,6 +18,8 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { parseOPML } from "@/lib/opml";
 
+const MAX_LISTED_ERRORS = 3;
+
 export function ImportOpmlDialog() {
   const { t } = useI18n();
   const { isImportOpmlOpen, setImportOpmlOpen } = useUIStore();
@@ -134,7 +136,16 @@ export function ImportOpmlDialog() {
         }
 
         if (failed > 0) {
-          const errorMsg = errors?.join(", ") || t("opml.toast.failed");
+          const list = errors ?? [];
+          const shown = list.slice(0, MAX_LISTED_ERRORS);
+          if (list.length > shown.length) {
+            shown.push(
+              t("opml.toast.andMore", {
+                count: list.length - shown.length,
+              }),
+            );
+          }
+          const errorMsg = shown.join(", ") || t("opml.toast.failed");
           toast.warning(
             t("opml.toast.failedItems", { count: failed, errors: errorMsg }),
           );

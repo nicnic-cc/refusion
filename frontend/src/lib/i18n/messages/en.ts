@@ -164,6 +164,7 @@ export const enMessages = {
   "opml.dialog.dropHint": "Drop your OPML file here, or click to browse",
   "opml.dialog.supportHint": "Supports .opml and .xml files",
   "opml.dialog.title": "Import OPML",
+  "opml.toast.andMore": "and {count} more",
   "opml.toast.failed": "Failed to import OPML",
   "opml.toast.failedItems": "{count} feeds failed: {errors}",
   "opml.toast.imported": "Imported {count} feeds",

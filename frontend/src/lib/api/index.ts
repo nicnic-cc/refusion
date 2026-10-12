@@ -228,4 +228,4 @@ export const appAPI = {
 
 export * from "./types";
 export * from "./pull";
-export { APIError, setUnauthorizedCallback } from "./client";
+export { APIError, apiErrorMessage, setUnauthorizedCallback } from "./client";

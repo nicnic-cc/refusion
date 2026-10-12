@@ -166,6 +166,7 @@ export const esMessages: PartialMessages = {
   "opml.dialog.dropHint": "Suelta tu archivo OPML aquí o haz clic para explorar",
   "opml.dialog.supportHint": "Compatible con archivos .opml y .xml",
   "opml.dialog.title": "Importar OPML",
+  "opml.toast.andMore": "y {count} más",
   "opml.toast.failed": "No se pudo importar OPML",
   "opml.toast.failedItems": "{count} feeds fallaron: {errors}",
   "opml.toast.imported": "Se importaron {count} feeds",

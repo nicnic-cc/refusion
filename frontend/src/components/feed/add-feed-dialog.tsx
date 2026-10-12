@@ -28,6 +28,7 @@ import { useGroups } from "@/queries/groups";
 import { useCreateFeed } from "@/queries/feeds";
 import { useAppInfo } from "@/queries/app";
 import {
+  apiErrorMessage,
   feedAPI,
   type CreateFeedRequest,
   type DiscoveredFeed,
@@ -229,8 +230,8 @@ export function AddFeedDialog() {
       await createFeed.mutateAsync(request);
       toast.success(t("feed.toast.added"));
       handleClose();
-    } catch {
-      toast.error(t("feed.toast.addFailed"));
+    } catch (error) {
+      toast.error(apiErrorMessage(error, t("feed.toast.addFailed")));
     } finally {
       setIsSubmitting(false);
     }

@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
 import { useCreateGroup } from "@/queries/groups";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 export function AddGroupDialog() {
@@ -26,15 +27,15 @@ export function AddGroupDialog() {
 
   const handleCreate = async () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || createGroup.isPending) return;
 
     try {
       await createGroup.mutateAsync(trimmed);
       setName("");
       setAddGroupOpen(false);
       toast.success(t("group.toast.created"));
-    } catch {
-      toast.error(t("group.toast.createFailed"));
+    } catch (error) {
+      toast.error(apiErrorMessage(error, t("group.toast.createFailed")));
     }
   };
 

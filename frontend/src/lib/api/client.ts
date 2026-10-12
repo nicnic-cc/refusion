@@ -10,6 +10,14 @@ export class APIError extends Error {
   }
 }
 
+// Server messages for 4xx (e.g. "feed link already exists") are written for
+// users; anything else gets the caller's generic string.
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof APIError && error.status >= 400 && error.status < 500
+    ? error.message
+    : fallback;
+}
+
 // Callback for handling 401 errors
 let onUnauthorized: (() => void) | null = null;
 
