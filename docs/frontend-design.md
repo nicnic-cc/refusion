@@ -33,6 +33,10 @@ Examples:
 - `/feeds/6/unread`
 - `/groups/3/starred?article=289`
 
+Scope and filter each have one control: the sidebar sets only the scope, the
+switch in the sidebar header sets only the filter. Rows that set both drifted
+out of sync with the switch, which keeps the scope.
+
 This keeps list context stable while opening/closing article detail. `g u` /
 `g a` / `g s` switch the filter of the current view, `g h` / `g f` jump to all feeds / feed management; all are navigation sugar over the same URLs.
 
