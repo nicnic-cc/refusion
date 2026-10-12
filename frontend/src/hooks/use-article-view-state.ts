@@ -15,7 +15,7 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
-import { APIError, itemAPI } from "@/lib/api";
+import { apiErrorMessage, itemAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { useReadStatePins, usePreferencesStore } from "@/store";
@@ -138,11 +138,7 @@ export function useArticleViewState() {
       }
     } catch (error) {
       console.error("Failed to toggle star:", error);
-      toast.error(
-        error instanceof APIError
-          ? error.message
-          : t("article.toast.starFailed"),
-      );
+      toast.error(apiErrorMessage(error, t("article.toast.starFailed")));
     }
   };
 

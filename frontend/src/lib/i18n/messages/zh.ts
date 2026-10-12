@@ -166,6 +166,7 @@ export const zhMessages: PartialMessages = {
   "opml.dialog.dropHint": "将 OPML 文件拖到这里，或点击浏览",
   "opml.dialog.supportHint": "支持 .opml 和 .xml 文件",
   "opml.dialog.title": "导入 OPML",
+  "opml.toast.andMore": "以及另外 {count} 个",
   "opml.toast.failed": "导入 OPML 失败",
   "opml.toast.failedItems": "{count} 个订阅导入失败：{errors}",
   "opml.toast.imported": "已导入 {count} 个订阅",

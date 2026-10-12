@@ -49,7 +49,7 @@ import {
   useArticlePinsStore,
   useReadStatePins,
 } from "@/store";
-import { APIError, type Bookmark, type Item } from "@/lib/api";
+import { apiErrorMessage, type Bookmark, type Item } from "@/lib/api";
 
 const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
 const MAX_REOPEN_PAGES = 20;
@@ -473,11 +473,7 @@ export function ArticleList() {
         await createBookmark.mutateAsync(article);
       } catch (error) {
         console.error("Failed to toggle star:", error);
-        toast.error(
-          error instanceof APIError
-            ? error.message
-            : t("article.toast.starFailed"),
-        );
+        toast.error(apiErrorMessage(error, t("article.toast.starFailed")));
       }
     },
   );

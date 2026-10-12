@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useMutation,
   useQuery,
@@ -86,13 +86,41 @@ export function useSaveFeedFilter() {
   });
 }
 
+// Several switches can be in flight at once. TanStack drops the per-call
+// callbacks of a superseded mutate(), so each call settles through its own
+// mutateAsync promise and the pending feeds are counted here.
 export function useSetFeedFilterEnabled() {
   const qc = useQueryClient();
-  return useMutation({
+  const [pending, setPending] = useState<ReadonlyMap<number, number>>(
+    new Map(),
+  );
+  const { mutateAsync } = useMutation({
     mutationFn: ({ feedId, enabled }: { feedId: number; enabled: boolean }) =>
       feedFilterAPI.setEnabled(feedId, enabled),
     onSuccess: () => invalidateFilterViews(qc),
   });
+  const mutate = useCallback(
+    (
+      variables: { feedId: number; enabled: boolean },
+      options?: { onError?: (error: Error) => void },
+    ) => {
+      const track = (delta: 1 | -1) =>
+        setPending((prev) => {
+          const next = new Map(prev);
+          const count = (prev.get(variables.feedId) ?? 0) + delta;
+          if (count > 0) next.set(variables.feedId, count);
+          else next.delete(variables.feedId);
+          return next;
+        });
+      track(1);
+      mutateAsync(variables)
+        .catch((error: Error) => options?.onError?.(error))
+        .finally(() => track(-1));
+    },
+    [mutateAsync],
+  );
+  const pendingFeedIds = useMemo(() => new Set(pending.keys()), [pending]);
+  return { mutate, pendingFeedIds };
 }
 
 export function useDeleteFeedFilter() {

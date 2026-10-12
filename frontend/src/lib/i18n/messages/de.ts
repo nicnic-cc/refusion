@@ -166,6 +166,7 @@ export const deMessages: PartialMessages = {
   "opml.dialog.dropHint": "OPML-Datei hier ablegen oder zum Auswählen klicken",
   "opml.dialog.supportHint": "Unterstützt .opml- und .xml-Dateien",
   "opml.dialog.title": "OPML importieren",
+  "opml.toast.andMore": "und {count} weitere",
   "opml.toast.failed": "OPML-Import fehlgeschlagen",
   "opml.toast.failedItems": "{count} Feeds fehlgeschlagen: {errors}",
   "opml.toast.imported": "{count} Feeds importiert",
