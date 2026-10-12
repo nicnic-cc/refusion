@@ -70,6 +70,14 @@ export function useArticleList(filters: ArticleListFilters) {
 
   const articles: Item[] = isStarredMode ? starred.items : visibleItems;
 
+  // Shared by the list and the drawer so a selection change looks up one id
+  // instead of scanning (or re-mapping) every loaded row.
+  const articleIds = useMemo(() => articles.map((a) => a.id), [articles]);
+  const indexById = useMemo(
+    () => new Map(articleIds.map((id, index) => [id, index])),
+    [articleIds],
+  );
+
   // Bookmark resolution for star state + un-starring. In starred mode every
   // displayed article is itself a bookmark, so resolve from the starred data
   // (which may exceed the lookup's first page). Otherwise use the lookup.
@@ -95,6 +103,8 @@ export function useArticleList(filters: ArticleListFilters) {
 
   return {
     articles,
+    articleIds,
+    indexById,
     hasMore: isStarredMode ? starred.hasNextPage : itemsQuery.hasNextPage,
     isLoading: isStarredMode ? starred.isLoading : itemsQuery.isLoading,
     isLoadingMore: isStarredMode

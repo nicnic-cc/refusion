@@ -37,6 +37,8 @@ vi.mock("@/hooks/use-url-state", () => ({
 vi.mock("@/hooks/use-article-list", () => ({
   useArticleList: () => ({
     articles: state.articles,
+    articleIds: state.articles.map((a) => a.id),
+    indexById: new Map(state.articles.map((a, i) => [a.id, i])),
     hasMore: state.hasMore,
     isLoading: false,
     isLoadingMore: false,
@@ -83,7 +85,7 @@ vi.mock("./new-articles-pill", () => ({ NewArticlesPill: () => null }));
 vi.mock("@/components/layout/sidebar-trigger", () => ({ SidebarTrigger: () => null }));
 vi.mock("@/components/common/tooltip-button", () => ({ TooltipButton: () => null }));
 vi.mock("./article-item", () => ({
-  ArticleItem: ({ article }: { article: Item }) => <div>{article.title}</div>,
+  ArticleRow: ({ article }: { article: Item }) => <div>{article.title}</div>,
 }));
 
 // jsdom has no layout, scrollTo or scrollIntoView.

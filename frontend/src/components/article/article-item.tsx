@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { Circle, Star, ExternalLink } from "lucide-react";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { useI18n } from "@/lib/i18n";
@@ -6,6 +7,7 @@ import { cn, formatDate } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { parsePositiveIntegerParam } from "@/lib/route-params";
 import { FilteredTag } from "./filtered-tag";
 
 // Actions sit in the meta row: read stays visible but dimmed, the others appear
@@ -157,4 +159,18 @@ export const ArticleItem = memo(function ArticleItem({
       </div>
     </div>
   );
+});
+
+// Reads its own selection from the URL, so the list need not pass the selected
+// id down: a j press re-renders only the rows whose answer flips, not all of them.
+export const ArticleRow = memo(function ArticleRow(
+  props: Omit<ArticleItemProps, "isSelected">,
+) {
+  const id = props.article.id;
+  const isSelected = useSearch({
+    strict: false,
+    select: (s) =>
+      parsePositiveIntegerParam((s as Record<string, unknown>).article) === id,
+  });
+  return <ArticleItem {...props} isSelected={isSelected} />;
 });
