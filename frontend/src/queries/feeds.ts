@@ -82,6 +82,20 @@ function invalidateFilteredBookmarkLists(qc: QueryClient) {
   });
 }
 
+// A feed changing group changes what every group-scoped items list holds.
+// Unscoped and single-feed lists keep the same rows.
+export function invalidateGroupItemLists(qc: QueryClient) {
+  return qc.invalidateQueries({
+    queryKey: queryKeys.items.lists(),
+    predicate: (query) => {
+      const filters = query.queryKey[2] as
+        | { groupId?: number | null }
+        | undefined;
+      return filters?.groupId != null;
+    },
+  });
+}
+
 export function useCreateFeed() {
   const qc = useQueryClient();
   return useMutation({
@@ -113,12 +127,22 @@ export function useUpdateFeed() {
         .getQueryData<Feed[]>(queryKeys.feeds.list())
         ?.find((f) => f.id === updated.id);
       qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
-        old?.map((f) => (f.id === updated.id ? updated : f)),
+        // The PATCH response has no counts, so keep the cached ones.
+        old?.map((f) =>
+          f.id === updated.id
+            ? {
+                ...updated,
+                unread_count: f.unread_count,
+                item_count: f.item_count,
+              }
+            : f,
+        ),
       );
       // The backend appends a moved feed to the end of its new group.
       if (previous && previous.group_id !== updated.group_id) {
         qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
         void invalidateFilteredBookmarkLists(qc);
+        void invalidateGroupItemLists(qc);
       }
     },
   });
@@ -174,6 +198,7 @@ export function useMoveFeedsToGroup() {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
       void invalidateFilteredBookmarkLists(qc);
+      void invalidateGroupItemLists(qc);
     },
   });
 }
