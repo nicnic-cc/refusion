@@ -13,12 +13,14 @@ interface FeedGroupProps {
   groupId: number;
   name: string;
   feeds: Feed[];
+  unreadCount: number;
 }
 
 export const FeedGroup = memo(function FeedGroup({
   groupId,
   name,
   feeds,
+  unreadCount,
 }: FeedGroupProps) {
   const isOpen = useCollapsedGroupsStore(
     (s) => !s.collapsedIds.includes(groupId),
@@ -45,11 +47,6 @@ export const FeedGroup = memo(function FeedGroup({
   const isSelected = useIsGroupSelected(groupId);
   const { setSelectedGroup } = useUrlActions();
   const prefetchList = usePrefetchList();
-
-  const unreadCount = feeds.reduce(
-    (sum, feed) => sum + (feed.unread_count || 0),
-    0,
-  );
 
   return (
     <Collapsible

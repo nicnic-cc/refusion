@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { Layers } from "lucide-react";
 import { ScrollBox } from "@/components/scroll-box";
@@ -10,18 +10,21 @@ import { useBookmarkLookup } from "@/queries/bookmarks";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
 import { getSidebarGroups } from "@/lib/groups";
+import { getVisibleFeedIds } from "@/lib/sidebar-visible";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { sidebarNodeKey, useSidebarNavStore, type SidebarNode } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedGroup } from "./feed-group";
 
+const EMPTY_IDS: ReadonlySet<number> = new Set();
+
 export function FeedList() {
   const { t } = useI18n();
   const { data: groups = [], isLoading } = useGroups();
   const { feeds, getFeedsByGroup } = useFeedLookup();
   const { getTotalUnreadCount } = useUnreadCounts();
-  const { total: starredTotal } = useBookmarkLookup();
+  const { total: starredTotal, bookmarks } = useBookmarkLookup();
   const {
     selectedFeedId,
     selectedGroupId,
@@ -48,6 +51,83 @@ export function FeedList() {
     () => new Map(sidebarGroups.map((g) => [g.id, getFeedsByGroup(g.id)])),
     [sidebarGroups, getFeedsByGroup],
   );
+  const unreadByGroup = useMemo(
+    () =>
+      new Map(
+        [...feedsByGroup].map(([id, groupFeeds]) => [
+          id,
+          groupFeeds.reduce((sum, f) => sum + (f.unread_count || 0), 0),
+        ]),
+      ),
+    [feedsByGroup],
+  );
+
+  const starredFeedIds = useMemo(
+    () =>
+      new Set(
+        bookmarks.flatMap((b) => (b.feed_id === null ? [] : [b.feed_id])),
+      ),
+    [bookmarks],
+  );
+  // Feeds shown since this view was entered stay, so marking articles read
+  // doesn't make rows vanish under the reader.
+  const viewKey = `${articleFilter}|${selectedFeedId}|${selectedGroupId}`;
+  const [sticky, setSticky] = useState({
+    key: viewKey,
+    ids: new Set<number>(),
+  });
+  const stickyIds = sticky.key === viewKey ? sticky.ids : EMPTY_IDS;
+  const visibleFeedIds = useMemo(
+    () =>
+      getVisibleFeedIds({
+        feeds,
+        filter: articleFilter,
+        starredFeedIds,
+        selectedFeedId,
+        selectedGroupId,
+        stickyIds,
+      }),
+    [
+      feeds,
+      articleFilter,
+      starredFeedIds,
+      selectedFeedId,
+      selectedGroupId,
+      stickyIds,
+    ],
+  );
+  // Adjusting state during render re-renders at once and settles in one pass.
+  if (
+    sticky.key !== viewKey ||
+    [...visibleFeedIds].some((id) => !sticky.ids.has(id))
+  ) {
+    setSticky({
+      key: viewKey,
+      ids: new Set([...stickyIds, ...visibleFeedIds]),
+    });
+  }
+
+  const visibleFeedsByGroup = useMemo(
+    () =>
+      new Map(
+        [...feedsByGroup].map(([id, groupFeeds]) => {
+          const shown = groupFeeds.filter((f) => visibleFeedIds.has(f.id));
+          // Same array when nothing is hidden, so memoized groups skip re-render.
+          return [id, shown.length === groupFeeds.length ? groupFeeds : shown];
+        }),
+      ),
+    [feedsByGroup, visibleFeedIds],
+  );
+  const visibleGroups = useMemo(
+    () =>
+      sidebarGroups.filter(
+        (g) =>
+          g.id === selectedGroupId ||
+          (visibleFeedsByGroup.get(g.id)?.length ?? 0) > 0,
+      ),
+    [sidebarGroups, visibleFeedsByGroup, selectedGroupId],
+  );
+
   const totalUnread = getTotalUnreadCount();
   const starredCount = starredTotal;
 
@@ -63,7 +143,7 @@ export function FeedList() {
   const nodes = useMemo<SidebarNode[]>(() => {
     const list: SidebarNode[] = [{ key: sidebarNodeKey.all(), kind: "all" }];
 
-    for (const group of sidebarGroups) {
+    for (const group of visibleGroups) {
       list.push({
         key: sidebarNodeKey.group(group.id),
         kind: "group",
@@ -71,7 +151,7 @@ export function FeedList() {
       });
 
       if (!collapsedIds.includes(group.id)) {
-        for (const feed of getFeedsByGroup(group.id)) {
+        for (const feed of visibleFeedsByGroup.get(group.id) ?? []) {
           list.push({
             key: sidebarNodeKey.feed(feed.id),
             kind: "feed",
@@ -83,7 +163,7 @@ export function FeedList() {
     }
 
     return list;
-  }, [collapsedIds, getFeedsByGroup, sidebarGroups]);
+  }, [collapsedIds, visibleFeedsByGroup, visibleGroups]);
 
   useSidebarNavigation(nodes);
 
@@ -137,12 +217,13 @@ export function FeedList() {
 
         {/* Feed groups */}
         <div className="w-full min-w-0 space-y-0.5">
-          {sidebarGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <FeedGroup
               key={group.id}
               groupId={group.id}
               name={group.name}
-              feeds={feedsByGroup.get(group.id) ?? []}
+              feeds={visibleFeedsByGroup.get(group.id) ?? []}
+              unreadCount={unreadByGroup.get(group.id) ?? 0}
             />
           ))}
         </div>
