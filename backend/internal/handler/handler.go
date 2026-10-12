@@ -26,12 +26,11 @@ type Handler struct {
 		RefreshAll(ctx context.Context) (int, error)
 		Wake()
 	}
-	sessions    map[string]int64        // sessionID -> unix expiry seconds
-	mu          sync.RWMutex            // protects sessions state
-	oidcAuth    *auth.OIDCAuthenticator // nil when OIDC is disabled
-	limiter     *loginLimiter
-	oidcLimiter *loginLimiter // throttles GET /oidc/login
-	lastSweep   int64
+	sessions  map[string]int64        // sessionID -> unix expiry seconds
+	mu        sync.RWMutex            // protects sessions state
+	oidcAuth  *auth.OIDCAuthenticator // nil when OIDC is disabled
+	limiter   *loginLimiter
+	lastSweep int64
 
 	refreshAllMu      sync.Mutex
 	refreshAllRunning bool
@@ -57,7 +56,6 @@ func New(store *store.Store, config *config.Config, puller interface {
 		puller:       puller,
 		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
-		oidcLimiter:  newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
 	}
 
 	if h.allowAnonAPI {
@@ -117,7 +115,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 		// OIDC routes (public, no auth middleware)
 		api.GET("/oidc/enabled", h.oidcEnabled)
 		if h.oidcAuth != nil {
-			api.GET("/oidc/login", h.oidcLoginLimit(), h.oidcLogin)
+			api.GET("/oidc/login", h.oidcLogin)
 			api.GET("/oidc/callback", h.oidcCallback)
 			// Compatibility route for deployments that configured redirect_uri without /api.
 			r.GET("/oidc/callback", h.oidcCallback)

@@ -20,12 +20,13 @@ disagree, the code wins — fix the page.
 - Anonymous mode: when both password and OIDC are unconfigured, the auth
   middleware lets every request through.
 - Login attempts are rate limited: excess attempts get `429` with a
-  `Retry-After` header (seconds). `GET /api/oidc/login` has its own limiter
-  with the same settings that counts every request, since each one stores a
-  pending state.
+  `Retry-After` header (seconds). Password login only: `GET /api/oidc/login`
+  is not limited because it keeps no server state.
 - OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and
   `/api/oidc/callback` are registered only when OIDC is configured. Login
-  returns `{data: {auth_url}}` for the client to navigate to; the callback
+  returns `{data: {auth_url}}` for the client to navigate to and sets a signed,
+  single-use `oidc_pending` cookie (state + PKCE verifier, 10 min, key random
+  per process, so a login pending across a restart fails); the callback
   redirects (307) to `/` on success or `/login?error=oidc_failed` on failure.
 
 ## Response envelopes
