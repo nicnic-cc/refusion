@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
+import { articleOpenLink } from "@/lib/article-link";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { parseArticleIdParam } from "@/lib/route-params";
 import { FilteredTag } from "./filtered-tag";
@@ -26,6 +27,7 @@ interface ArticleItemProps {
   isStarred: boolean;
   feedName: string;
   feedFaviconUrl: string | null;
+  openPermalink?: boolean;
   // Arrived with the last reload: plays the fade-out tint once.
   isFresh?: boolean;
 }
@@ -40,6 +42,7 @@ export const ArticleItem = memo(function ArticleItem({
   isStarred,
   feedName,
   feedFaviconUrl,
+  openPermalink = false,
   isFresh,
 }: ArticleItemProps) {
   const { t } = useI18n();
@@ -49,7 +52,9 @@ export const ArticleItem = memo(function ArticleItem({
   useEffect(() => {
     if (isSelected) rootRef.current?.scrollIntoView({ block: "nearest" });
   }, [isSelected]);
-  const safeArticleLink = toSafeExternalUrl(article.link);
+  const safeArticleLink = toSafeExternalUrl(
+    articleOpenLink(article, openPermalink),
+  );
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();

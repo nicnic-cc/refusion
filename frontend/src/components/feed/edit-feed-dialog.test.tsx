@@ -32,6 +32,7 @@ const feed = {
   suspended: false,
   proxy: "http://proxy.invalid:3128",
   default_view: "feed",
+  open_permalink: false,
   fetch_state: {},
 } as Feed;
 
@@ -87,6 +88,16 @@ describe("EditFeedDialog default view", () => {
     await userEvent.click(await screen.findByRole("option", { name: "Web page" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(feedAPI.update).toHaveBeenCalledWith(5, { default_view: "web" });
+  });
+});
+
+describe("EditFeedDialog links open", () => {
+  it("sends open_permalink when the feed's own page is chosen", async () => {
+    setup(feed);
+    await userEvent.click(await screen.findByRole("combobox", { name: "Links open" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Feed's own page" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(feedAPI.update).toHaveBeenCalledWith(5, { open_permalink: true });
   });
 });
 

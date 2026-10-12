@@ -147,6 +147,7 @@ export function useStarredItems(
         guid: bookmark.link || `bookmark:${bookmark.id}`,
         title: bookmark.title,
         link: bookmark.link,
+        permalink: null,
         content: bookmark.content,
         pub_date: bookmark.pub_date,
         unread: bookmark.unread,

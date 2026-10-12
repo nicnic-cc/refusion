@@ -31,7 +31,7 @@ type ListItemsParams struct {
 
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
-		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.filtered, items.created_at
+		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.permalink, items.content, items.pub_date, items.unread, items.filtered, items.created_at
 		FROM items
 	`
 	args := []any{}
@@ -88,9 +88,11 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	for rows.Next() {
 		i := &model.Item{}
 		var unread, filtered int
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt); err != nil {
+		var permalink sql.NullString
+		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &permalink, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt); err != nil {
 			return nil, err
 		}
+		i.Permalink = nullStringPtr(permalink)
 		i.Unread = intToBool(unread)
 		i.Filtered = intToBool(filtered)
 		items = append(items, i)
@@ -104,11 +106,12 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 func (s *Store) GetItem(id int64) (*model.Item, error) {
 	i := &model.Item{}
 	var unread, filtered int
+	var permalink sql.NullString
 	err := s.db.QueryRow(`
-		SELECT id, feed_id, guid, title, link, content, pub_date, unread, filtered, created_at
+		SELECT id, feed_id, guid, title, link, permalink, content, pub_date, unread, filtered, created_at
 		FROM items
 		WHERE id = :id
-	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt)
+	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &permalink, &i.Content, &i.PubDate, &unread, &filtered, &i.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: item", ErrNotFound)
@@ -116,6 +119,7 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 		return nil, fmt.Errorf("get item: %w", err)
 	}
 
+	i.Permalink = nullStringPtr(permalink)
 	i.Unread = intToBool(unread)
 	i.Filtered = intToBool(filtered)
 	return i, s.markFilteredGlobal(i)
@@ -145,6 +149,8 @@ type BatchCreateItemInput struct {
 	Link    string
 	Content string
 	PubDate int64
+	// Permalink is empty when the item has none.
+	Permalink string
 
 	Filtered       bool
 	FilteredGlobal bool
@@ -164,14 +170,25 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO items (feed_id, guid, title, link, content, pub_date, filtered, filtered_global)
-		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date, :filtered, :filtered_global)
+		INSERT INTO items (feed_id, guid, title, link, permalink, content, pub_date, filtered, filtered_global)
+		VALUES (:feed_id, :guid, :title, :link, :permalink, :content, :pub_date, :filtered, :filtered_global)
 		ON CONFLICT(feed_id, guid) DO NOTHING
 	`)
 	if err != nil {
 		return 0, err
 	}
 	defer stmt.Close()
+
+	// DO UPDATE would make RowsAffected count existing items as new, so items
+	// stored before their feed offered a permalink get it filled separately.
+	fillStmt, err := tx.Prepare(`
+		UPDATE items SET permalink = :permalink
+		WHERE feed_id = :feed_id AND guid = :guid AND permalink IS NULL
+	`)
+	if err != nil {
+		return 0, err
+	}
+	defer fillStmt.Close()
 
 	created := 0
 	for _, input := range inputs {
@@ -180,6 +197,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 			sql.Named("guid", input.GUID),
 			sql.Named("title", input.Title),
 			sql.Named("link", input.Link),
+			sql.Named("permalink", nullIfEmpty(input.Permalink)),
 			sql.Named("content", input.Content),
 			sql.Named("pub_date", input.PubDate),
 			sql.Named("filtered", boolToInt(input.Filtered)),
@@ -195,6 +213,15 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 		}
 		if affected > 0 && !input.Filtered {
 			created++
+		}
+		if affected == 0 && input.Permalink != "" {
+			if _, err := fillStmt.Exec(
+				sql.Named("permalink", input.Permalink),
+				sql.Named("feed_id", feedID),
+				sql.Named("guid", input.GUID),
+			); err != nil {
+				return 0, err
+			}
 		}
 	}
 

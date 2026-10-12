@@ -47,8 +47,9 @@ func (h *Handler) getItemPage(c *gin.Context) {
 	}
 
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
+	link := itemOpenLink(item, feed)
 
-	if err := httpc.ValidateRequestURL(c.Request.Context(), item.Link, allowPrivateFeeds); err != nil {
+	if err := httpc.ValidateRequestURL(c.Request.Context(), link, allowPrivateFeeds); err != nil {
 		badRequestError(c, "invalid item link")
 		return
 	}
@@ -59,7 +60,7 @@ func (h *Handler) getItemPage(c *gin.Context) {
 		return
 	}
 
-	page, err := webpage.Fetch(c.Request.Context(), client, item.Link)
+	page, err := webpage.Fetch(c.Request.Context(), client, link)
 	if err != nil {
 		slog.Warn("web page fetch failed", "item_id", item.ID, "error", err)
 		c.Header("X-Content-Type-Options", "nosniff")

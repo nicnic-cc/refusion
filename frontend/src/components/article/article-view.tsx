@@ -51,6 +51,7 @@ export function ArticleView({
     bookmark,
     starred,
     safeArticleLink,
+    safeOpenLink,
     handleToggleRead,
     handleToggleStar,
     handleOpenFeed,
@@ -187,8 +188,8 @@ export function ArticleView({
           <TooltipButton
             label={t("article.action.original")}
             shortcut="o"
-            href={safeArticleLink ?? undefined}
-            disabled={!safeArticleLink}
+            href={safeOpenLink ?? undefined}
+            disabled={!safeOpenLink}
           >
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </TooltipButton>
@@ -259,14 +260,14 @@ export function ArticleView({
                 <span className="text-muted-foreground">
                   {formatDate(article.pub_date)}
                 </span>
-                {safeArticleLink ? (
+                {safeOpenLink ? (
                   <a
-                    href={safeArticleLink}
+                    href={safeOpenLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate text-primary hover:underline"
                   >
-                    {getLinkDomain(safeArticleLink)}
+                    {getLinkDomain(safeOpenLink)}
                   </a>
                 ) : null}
               </div>

@@ -234,6 +234,8 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 			Link:    item.Link,
 			Content: item.Content,
 			PubDate: item.PubDate,
+
+			Permalink: item.Permalink,
 		})
 	}
 

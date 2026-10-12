@@ -19,6 +19,8 @@ export interface Feed {
   proxy?: string;
   refresh_interval_seconds?: number | null;
   default_view: ArticleView;
+  // Open an item's own page (item.permalink) instead of its linked page.
+  open_permalink: boolean;
   created_at: number;
   updated_at: number;
   fetch_state: FeedFetchState;
@@ -47,6 +49,8 @@ export interface Item {
   guid: string;
   title: string;
   link: string;
+  // The item's own page on the feed's site, when the feed provides one.
+  permalink: string | null;
   content: string;
   pub_date: number;
   unread: boolean;
@@ -147,6 +151,7 @@ export interface CreateFeedRequest {
   proxy?: string;
   refresh_interval_seconds?: number | null;
   default_view?: ArticleView;
+  open_permalink?: boolean;
 }
 
 export interface UpdateFeedRequest {
@@ -158,6 +163,7 @@ export interface UpdateFeedRequest {
   proxy?: string;
   refresh_interval_seconds?: number | null;
   default_view?: ArticleView;
+  open_permalink?: boolean;
 }
 
 export interface ValidateFeedRequest {
