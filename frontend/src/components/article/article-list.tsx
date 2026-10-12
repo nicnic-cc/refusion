@@ -251,8 +251,18 @@ export function ArticleList() {
   ]);
 
   // j with the open article gone from the loaded rows (the list reset to page 1):
-  // page in until it returns and step past it, else give up on the first row. Only
-  // "all" keeps the article in the list; in unread it was read away, the top is next.
+  // page in until it returns and step past it, else give up on the first row.
+  // Unread searches only for an article last seen unread; a read one is gone.
+  const lastOpenRef = useRef<{ id: number; unread: boolean } | null>(null);
+  useEffect(() => {
+    if (selectedArticleId === null) return;
+    const index = indexById.get(selectedArticleId);
+    if (index === undefined) return;
+    lastOpenRef.current = {
+      id: selectedArticleId,
+      unread: articles[index].unread,
+    };
+  }, [articles, indexById, selectedArticleId]);
   const searchRef = useRef<{
     id: number;
     listKey: string;
@@ -260,7 +270,13 @@ export function ArticleList() {
     requestedAt: number;
   } | null>(null);
   const claimMissingArticle = useEffectEvent((id: number) => {
-    if (articleFilter !== "all" || !hasMore) return false;
+    // After a failed page nothing re-runs the search effect: take the first row.
+    if (!hasMore || isFetchNextPageError) return false;
+    if (articleFilter === "starred") return false;
+    if (articleFilter === "unread") {
+      const last = lastOpenRef.current;
+      if (last?.id !== id || !last.unread) return false;
+    }
     if (searchRef.current?.id === id && searchRef.current.listKey === pinsKey) {
       return true;
     }
@@ -415,7 +431,9 @@ export function ArticleList() {
     [feeds],
   );
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
-  const isListLoading = isLoading || (articles.length === 0 && hasMore);
+  // A failed refill shows the footer's Retry instead of an endless skeleton.
+  const isListLoading =
+    isLoading || (articles.length === 0 && hasMore && !isFetchNextPageError);
   const showSkeleton = useDelayedFlag(isListLoading, 300);
 
   const handleToggleRead = useStableCallback(
@@ -558,6 +576,13 @@ export function ArticleList() {
                   {t("article.list.openFeedManagement")}
                 </Button>
               </div>
+            ) : hasMore ? (
+              <ArticleListFooter
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                isError={isFetchNextPageError}
+                fetchNextPage={fetchNextPage}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:px-6">
                 <p className="text-sm text-muted-foreground">
