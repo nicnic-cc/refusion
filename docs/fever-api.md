@@ -19,6 +19,8 @@ Fever clients should send:
 
 Username is configured by `FUSION_FEVER_USERNAME` (default: `fusion`).
 Password is your refusion login password (`FUSION_PASSWORD`).
+With OIDC and no password set, Fever is off: an empty password would
+otherwise bypass OIDC.
 
 Example (macOS):
 

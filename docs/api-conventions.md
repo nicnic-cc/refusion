@@ -59,6 +59,8 @@ Handlers report failures as `{"error": "<message>"}`:
 - `400` — invalid input (message varies)
 - `401` — `"unauthorized"`
 - `404` — `"<resource> not found"`
+- `409` — duplicate group name, feed link or bookmark (readable message,
+  from `store.ErrConflict` via `storeClientError`)
 - `429` — `"too many login attempts"` (plus `Retry-After`)
 - `500` — `"internal server error"` (details are logged server-side only)
 - `502` — `"failed to fetch full content"`: the item's original page could not
