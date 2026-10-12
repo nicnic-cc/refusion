@@ -100,6 +100,7 @@ Upstream changes are merged in.
 
 A few things here work the way [yarr](https://github.com/nkanaev/yarr) does them, because I liked them there:
 
+- **Unread, All, Starred** is one switch at the top of the sidebar. It keeps the feed or folder you're in, and under Unread and Starred the sidebar shows only feeds with something to read. `g u`, `g a` and `g s` flip it from the keyboard.
 - **Article rows:** feed, date and the read, star and open buttons on top, the title below, no summary.
 - **Previous and next** sit beside the close button in the article view's top bar on desktop.
 - **Infinite scroll** loads the next page only once scrolling stops near the bottom, so the list doesn't jump mid-fling.
