@@ -6,6 +6,11 @@
   --dialog-header: oklch(0.967 0.001 286.375);
 }
 
+/* amber-500 is used only by the filled star; on white it is too faint, so light mode gets amber-600. */
+:root:not(.dark) {
+  --color-amber-500: oklch(66.6% 0.179 58.318);
+}
+
 :root.dark {
   --background: oklch(0.21 0.006 285.885);
   --card: oklch(0.25 0.006 285.885);
