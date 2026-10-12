@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -296,11 +297,7 @@ func (h *Handler) validateFeed(c *gin.Context) {
 		return
 	}
 
-	var finderOptions *feedfinder.Options
-	if proxy != "" {
-		finderOptions = &feedfinder.Options{RequestProxy: &proxy}
-	}
-	found, err := feedfinder.Find(ctx, target, finderOptions)
+	found, err := discoverFeeds(ctx, target, proxy, allowPrivateFeeds)
 	if err != nil {
 		slog.Warn("feed discovery failed", "url", target, "error", err)
 	}
@@ -362,23 +359,12 @@ func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (str
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+	body, err := fetchCapped(ctx, client, target, allowPrivateFeeds)
 	if err != nil {
 		return "", err
 	}
-	httpc.SetDefaultHeaders(req)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("feed fetch failed")
-	}
-
-	parsedFeed, err := gofeed.NewParser().Parse(resp.Body)
+	parsedFeed, err := gofeed.NewParser().Parse(bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}

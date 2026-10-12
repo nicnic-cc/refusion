@@ -42,7 +42,8 @@ check state. Code: `backend/internal/pull/progress.go`,
 - **The row warning icon has no failure threshold**: it follows
   `last_error` and clears on the next successful check, like the /feeds
   page's error filter.
-- **Adding a feed tries the URL as a feed first.** `feedfinder.Find` waits
+- **Adding a feed tries the URL as a feed first.** Discovery
+  (`discoverFeeds`, fork replacement for `feedfinder.Find`) waits
   for its well-known-path probing (up to 20 sequential GETs) even when the
   URL already is a feed: 4.6 s vs 0.5 s for one fetch, measured on
   `go.dev/blog/feed.atom`. Probing still runs for web pages.

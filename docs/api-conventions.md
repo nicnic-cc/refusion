@@ -20,7 +20,9 @@ disagree, the code wins — fix the page.
 - Anonymous mode: when both password and OIDC are unconfigured, the auth
   middleware lets every request through.
 - Login attempts are rate limited: excess attempts get `429` with a
-  `Retry-After` header (seconds).
+  `Retry-After` header (seconds). `GET /api/oidc/login` has its own limiter
+  with the same settings that counts every request, since each one stores a
+  pending state.
 - OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and
   `/api/oidc/callback` are registered only when OIDC is configured. Login
   returns `{data: {auth_url}}` for the client to navigate to; the callback
