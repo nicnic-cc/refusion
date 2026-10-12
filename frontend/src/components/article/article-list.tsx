@@ -20,6 +20,7 @@ import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import {
   onArticleNavigationEnd,
+  onOpenArticleMissing,
   useArticleNavigation,
 } from "@/hooks/use-keyboard";
 import { useUrlState } from "@/hooks/use-url-state";
@@ -51,6 +52,7 @@ import {
 import type { Bookmark, Item } from "@/lib/api";
 
 const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
+const MAX_REOPEN_PAGES = 20;
 
 interface FeedDisplay {
   name: string;
@@ -243,6 +245,65 @@ export function ArticleList() {
     articles,
     indexById,
     selectedArticleId,
+    hasMore,
+    isFetchNextPageError,
+    setSelectedArticle,
+  ]);
+
+  // j with the open article gone from the loaded rows (the list reset to page 1):
+  // page in until it returns and step past it, else give up on the first row. Only
+  // "all" keeps the article in the list; in unread it was read away, the top is next.
+  const searchRef = useRef<{
+    id: number;
+    listKey: string;
+    pages: number;
+    requestedAt: number;
+  } | null>(null);
+  const claimMissingArticle = useEffectEvent((id: number) => {
+    if (articleFilter !== "all" || !hasMore) return false;
+    if (searchRef.current?.id === id && searchRef.current.listKey === pinsKey) {
+      return true;
+    }
+    searchRef.current = {
+      id,
+      listKey: pinsKey,
+      pages: 1,
+      requestedAt: articles.length,
+    };
+    requestNextPage(true);
+    return true;
+  });
+  useEffect(() => onOpenArticleMissing((id) => claimMissingArticle(id)), []);
+  useEffect(() => {
+    const search = searchRef.current;
+    if (search === null) return;
+    if (selectedArticleId !== search.id || pinsKey !== search.listKey) {
+      searchRef.current = null;
+      return;
+    }
+    const index = indexById.get(search.id);
+    if (index !== undefined) {
+      searchRef.current = null;
+      if (index < articles.length - 1) setSelectedArticle(articles[index + 1].id);
+      else advanceAfterLoad(search.id);
+    } else if (isFetchNextPageError || !hasMore) {
+      searchRef.current = null;
+      if (articles.length > 0) setSelectedArticle(articles[0].id);
+    } else if (articles.length !== search.requestedAt) {
+      if (search.pages >= MAX_REOPEN_PAGES) {
+        searchRef.current = null;
+        if (articles.length > 0) setSelectedArticle(articles[0].id);
+        return;
+      }
+      search.pages++;
+      search.requestedAt = articles.length;
+      requestNextPage(true);
+    }
+  }, [
+    articles,
+    indexById,
+    selectedArticleId,
+    pinsKey,
     hasMore,
     isFetchNextPageError,
     setSelectedArticle,
