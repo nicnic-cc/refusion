@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useLocation } from "@tanstack/react-router";
 import { Inbox, Layers, Star } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollBox } from "@/components/scroll-box";
 import { isArticleFilter, type ArticleFilter } from "@/lib/article-filter";
 import { useGroups } from "@/queries/groups";
 import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
@@ -118,7 +118,7 @@ export function FeedList() {
   }
 
   return (
-    <ScrollArea className="min-h-0 flex-1 w-full min-w-0 overflow-hidden [&_[data-slot=scroll-area-viewport]>div]:!block">
+    <ScrollBox className="min-h-0 w-full min-w-0 flex-1">
       <div className="w-full min-w-0 p-2 space-y-0.5">
         {/* Top-level filters */}
         <div className="space-y-0.5">
@@ -176,6 +176,6 @@ export function FeedList() {
           })}
         </div>
       </div>
-    </ScrollArea>
+    </ScrollBox>
   );
 }

@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollBox } from "@/components/scroll-box";
 import { feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
 import { generateOPML, downloadFile } from "@/lib/opml";
@@ -427,7 +427,7 @@ function FeedsPage() {
           </div>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1">
+        <ScrollBox className="min-h-0 flex-1">
           <div className="space-y-2 p-4 sm:p-6">
             {hasNoFeeds ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
@@ -496,7 +496,7 @@ function FeedsPage() {
               </>
             )}
           </div>
-        </ScrollArea>
+        </ScrollBox>
       </div>
 
       {filterFeed && (
