@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useMatches } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { ArticleDrawer } from "@/components/article/article-drawer";
@@ -16,19 +16,19 @@ import { useMissingScopeRedirect } from "@/hooks/use-missing-scope-redirect";
 import { usePrefetchFilterViews } from "@/hooks/use-prefetch-filter-views";
 import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useReadingPane } from "@/hooks/use-reading-pane";
 import { useUIStore } from "@/store/ui";
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-  // True when an ArticlePane is mounted instead of the drawer.
-  readingPane?: boolean;
-}
-
-export function AppLayout({ children, readingPane = false }: AppLayoutProps) {
+export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
+
+  // The layout is shared by all pages; only article routes mount an
+  // ArticlePane instead of the drawer.
+  const onFeedsPage = useMatches().some((m) => m.routeId === "/feeds");
+  const readingPane = useReadingPane() && !onFeedsPage;
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();

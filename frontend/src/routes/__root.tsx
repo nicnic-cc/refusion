@@ -1,4 +1,10 @@
-import { createRootRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Outlet,
+  redirect,
+  useMatches,
+} from "@tanstack/react-router";
+import { AppLayout } from "@/components/layout/app-layout";
 import { APIError, sessionAPI } from "@/lib/api";
 import {
   pullRemoteSettings,
@@ -57,5 +63,13 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   useRemoteThemeSync();
-  return <Outlet />;
+  const isLogin = useMatches().some((m) => m.routeId === "/login");
+  // One layout above the pages keeps the sidebar mounted across navigation.
+  return isLogin ? (
+    <Outlet />
+  ) : (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  );
 }
