@@ -31,8 +31,10 @@ type Feed struct {
 	Proxy                  string `json:"proxy,omitempty"`
 	RefreshIntervalSeconds *int64 `json:"refresh_interval_seconds,omitempty"`
 	DefaultView            string `json:"default_view"`
-	CreatedAt              int64  `json:"created_at"`
-	UpdatedAt              int64  `json:"updated_at"`
+	// OpenPermalink makes "open original" use an item's permalink when it has one.
+	OpenPermalink bool  `json:"open_permalink"`
+	CreatedAt     int64 `json:"created_at"`
+	UpdatedAt     int64 `json:"updated_at"`
 
 	FetchState FeedFetchState `json:"fetch_state"`
 
@@ -71,15 +73,18 @@ type FeedFetchState struct {
 
 // Item represents a feed item.
 type Item struct {
-	ID       int64  `json:"id"`
-	FeedID   int64  `json:"feed_id"`
-	GUID     string `json:"guid"`
-	Title    string `json:"title"`
-	Link     string `json:"link"`
-	Content  string `json:"content"`
-	PubDate  int64  `json:"pub_date"`
-	Unread   bool   `json:"unread"`
-	Filtered bool   `json:"filtered"`
+	ID     int64  `json:"id"`
+	FeedID int64  `json:"feed_id"`
+	GUID   string `json:"guid"`
+	Title  string `json:"title"`
+	Link   string `json:"link"`
+	// Permalink is the item's own page on the feed's site, when the feed
+	// provides one that differs from Link.
+	Permalink *string `json:"permalink"`
+	Content   string  `json:"content"`
+	PubDate   int64   `json:"pub_date"`
+	Unread    bool    `json:"unread"`
+	Filtered  bool    `json:"filtered"`
 	// FilteredGlobal: hidden by the global filter and not by the feed's own.
 	FilteredGlobal bool  `json:"filtered_global"`
 	CreatedAt      int64 `json:"created_at"`

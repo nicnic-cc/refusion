@@ -28,6 +28,7 @@ type createFeedRequest struct {
 	Proxy                  string `json:"proxy"`
 	RefreshIntervalSeconds *int64 `json:"refresh_interval_seconds"`
 	DefaultView            string `json:"default_view"`
+	OpenPermalink          bool   `json:"open_permalink"`
 }
 
 type updateFeedRequest struct {
@@ -39,6 +40,7 @@ type updateFeedRequest struct {
 	Proxy                  *string `json:"proxy"`
 	RefreshIntervalSeconds *int64  `json:"refresh_interval_seconds"`
 	DefaultView            *string `json:"default_view"`
+	OpenPermalink          *bool   `json:"open_permalink"`
 }
 
 type validateFeedRequest struct {
@@ -168,6 +170,14 @@ func (h *Handler) createFeed(c *gin.Context) {
 		internalError(c, err, "create feed")
 		return
 	}
+	if req.OpenPermalink {
+		// Applied after the insert to keep CreateFeed's signature unchanged.
+		if err := h.store.UpdateFeed(feed.ID, store.UpdateFeedParams{OpenPermalink: &req.OpenPermalink}); err != nil {
+			internalError(c, err, "set open_permalink")
+			return
+		}
+		feed.OpenPermalink = true
+	}
 
 	// Trigger initial pull in background; it wakes the scheduler when done.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
@@ -219,6 +229,7 @@ func (h *Handler) updateFeed(c *gin.Context) {
 		params.Proxy = req.Proxy
 	}
 	params.DefaultView = req.DefaultView
+	params.OpenPermalink = req.OpenPermalink
 	// refresh_interval_seconds on update: absent = keep, 0 = clear back to the
 	// global interval, other values must be whitelisted.
 	if req.RefreshIntervalSeconds != nil {

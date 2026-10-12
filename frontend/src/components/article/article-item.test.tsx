@@ -10,13 +10,14 @@ const article = {
   feed_id: 1,
   title: "Invented headline",
   link: "https://a.test/post",
+  permalink: "https://example-news.test/item/42",
   unread: true,
   filtered: false,
   filtered_global: false,
   pub_date: 1700000000,
 } as Item;
 
-function setup() {
+function setup(openPermalink = false) {
   const props = {
     onSelectArticle: vi.fn(),
     onToggleRead: vi.fn(async () => {}),
@@ -30,6 +31,7 @@ function setup() {
       isStarred={false}
       feedName="Feed"
       feedFaviconUrl={null}
+      openPermalink={openPermalink}
       {...props}
     />,
   );
@@ -55,5 +57,17 @@ describe("ArticleItem keyboard", () => {
     await userEvent.keyboard("{Enter}");
     expect(props.onToggleRead).toHaveBeenCalledTimes(1);
     expect(props.onSelectArticle).not.toHaveBeenCalled();
+  });
+});
+
+describe("ArticleItem open link", () => {
+  it("opens the permalink only when the feed opts in", () => {
+    setup(false);
+    expect(screen.getByLabelText("Open in browser").getAttribute("href")).toBe("https://a.test/post");
+    cleanup();
+    setup(true);
+    expect(screen.getByLabelText("Open in browser").getAttribute("href")).toBe(
+      "https://example-news.test/item/42",
+    );
   });
 });

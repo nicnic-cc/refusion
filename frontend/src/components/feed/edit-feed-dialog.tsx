@@ -45,6 +45,7 @@ import {
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
 import { DefaultViewSelect } from "@/components/feed/default-view-select";
+import { LinksOpenSelect } from "@/components/feed/links-open-select";
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -64,6 +65,7 @@ export function EditFeedDialog() {
   const [suspended, setSuspended] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [defaultView, setDefaultView] = useState<ArticleView>("feed");
+  const [openPermalink, setOpenPermalink] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -97,8 +99,12 @@ export function EditFeedDialog() {
       const stored = editingFeed.refresh_interval_seconds;
       setRefreshInterval(stored && stored > 0 ? stored.toString() : "");
       setDefaultView(editingFeed.default_view);
+      setOpenPermalink(editingFeed.open_permalink);
       setIsAdvancedOpen(
-        !!editingFeed.proxy || stored != null || editingFeed.default_view !== "feed",
+        !!editingFeed.proxy ||
+          stored != null ||
+          editingFeed.default_view !== "feed" ||
+          editingFeed.open_permalink,
       );
     }
   }
@@ -111,6 +117,7 @@ export function EditFeedDialog() {
     setSuspended(false);
     setRefreshInterval("");
     setDefaultView("feed");
+    setOpenPermalink(false);
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -173,6 +180,10 @@ export function EditFeedDialog() {
         request.default_view = defaultView;
       }
 
+      if (openPermalink !== editingFeed.open_permalink) {
+        request.open_permalink = openPermalink;
+      }
+
       if (Object.keys(request).length === 0) {
         toast.info(t("feed.edit.noChanges"));
         handleClose();
@@ -216,7 +227,7 @@ export function EditFeedDialog() {
         onOpenChange={(open) => setEditFeedOpen(open)}
       >
         <DialogContent
-          className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
+          className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
           showCloseButton={false}
           initialFocus={urlInputRef}
         >
@@ -232,7 +243,7 @@ export function EditFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="space-y-5 p-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
             {/* URL Section */}
             <div className="space-y-2">
               <label htmlFor="edit-feed-url" className="block text-[13px] font-medium">
@@ -360,6 +371,11 @@ export function EditFeedDialog() {
                   idPrefix="edit-feed"
                   value={defaultView}
                   onChange={setDefaultView}
+                />
+                <LinksOpenSelect
+                  idPrefix="edit-feed"
+                  value={openPermalink}
+                  onChange={setOpenPermalink}
                 />
                 <div className="space-y-2">
                   <label htmlFor="edit-feed-proxy" className="block text-[13px] font-medium">

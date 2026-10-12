@@ -30,6 +30,9 @@ type ParsedItem struct {
 	Link    string
 	Content string
 	PubDate int64
+	// Permalink is the item's own page on the feed's site; empty when the
+	// main link already is that page or none was found.
+	Permalink string
 }
 
 type FetchResult struct {
@@ -97,7 +100,7 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 		return result, fmt.Errorf("feed too large (over %d bytes)", maxFeedBytes)
 	}
 
-	fp := gofeed.NewParser()
+	fp := newFeedParser()
 	parsedFeed, err := fp.Parse(bytes.NewReader(body))
 	if err != nil {
 		return result, fmt.Errorf("parse feed: %w", err)
@@ -353,6 +356,8 @@ func mapItem(item *gofeed.Item, baseURL *url.URL) *ParsedItem {
 		Link:    link,
 		Content: content,
 		PubDate: pubDate,
+
+		Permalink: findPermalink(item, link, baseURL),
 	}
 }
 

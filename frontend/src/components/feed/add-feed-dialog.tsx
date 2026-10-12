@@ -44,6 +44,7 @@ import {
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
 import { DefaultViewSelect } from "@/components/feed/default-view-select";
+import { LinksOpenSelect } from "@/components/feed/links-open-select";
 
 export function AddFeedDialog() {
   const { t } = useI18n();
@@ -64,6 +65,7 @@ export function AddFeedDialog() {
   const [proxy, setProxy] = useState("");
   const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [defaultView, setDefaultView] = useState<ArticleView>("feed");
+  const [openPermalink, setOpenPermalink] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -85,6 +87,7 @@ export function AddFeedDialog() {
     setProxy("");
     setRefreshInterval("");
     setDefaultView("feed");
+    setOpenPermalink(false);
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setKnownFeeds([]);
@@ -228,6 +231,10 @@ export function AddFeedDialog() {
         request.default_view = defaultView;
       }
 
+      if (openPermalink) {
+        request.open_permalink = true;
+      }
+
       await createFeed.mutateAsync(request);
       toast.success(t("feed.toast.added"));
       handleClose();
@@ -242,7 +249,7 @@ export function AddFeedDialog() {
     <>
       <Dialog open={isAddFeedOpen} onOpenChange={setAddFeedOpen}>
         <DialogContent
-          className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
+          className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
           showCloseButton={false}
         >
           {/* Header */}
@@ -257,7 +264,7 @@ export function AddFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="space-y-5 p-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
             {/* URL Section */}
             <div className="space-y-2">
               <label htmlFor="add-feed-url" className="block text-[13px] font-medium">
@@ -387,6 +394,11 @@ export function AddFeedDialog() {
                   idPrefix="add-feed"
                   value={defaultView}
                   onChange={setDefaultView}
+                />
+                <LinksOpenSelect
+                  idPrefix="add-feed"
+                  value={openPermalink}
+                  onChange={setOpenPermalink}
                 />
                 <div className="space-y-2">
                   <label htmlFor="add-feed-proxy" className="block text-[13px] font-medium">

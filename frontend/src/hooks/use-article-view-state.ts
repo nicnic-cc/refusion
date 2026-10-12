@@ -18,6 +18,7 @@ import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
 import { apiErrorMessage, itemAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { toggledView } from "@/lib/article-view";
+import { articleOpenLink } from "@/lib/article-link";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { useReadStatePins, usePreferencesStore } from "@/store";
 import { autoMarkReadDelayMs } from "@/store/preferences";
@@ -87,6 +88,9 @@ export function useArticleViewState() {
     : null;
   const starred = article ? isItemStarred(article.id, article.link) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
+  const safeOpenLink = article
+    ? toSafeExternalUrl(articleOpenLink(article, feed?.open_permalink ?? false))
+    : null;
 
   const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
   const autoMarkDelayMs = autoMarkReadDelayMs(autoMarkRead);
@@ -145,7 +149,7 @@ export function useArticleViewState() {
 
   // Bookmark-only snapshots have negative ids and no server item to fetch for.
   const canLoadFullText =
-    article !== null && article.id > 0 && safeArticleLink !== null;
+    article !== null && article.id > 0 && safeOpenLink !== null;
   const canShowWebPage = canLoadFullText;
   const defaultView: ArticleView = canLoadFullText
     ? (feed?.default_view ?? "feed")
@@ -218,8 +222,8 @@ export function useArticleViewState() {
   }, [fullViewId]);
 
   const handleOpenOriginal = () => {
-    if (!safeArticleLink) return;
-    window.open(safeArticleLink, "_blank", "noopener,noreferrer");
+    if (!safeOpenLink) return;
+    window.open(safeOpenLink, "_blank", "noopener,noreferrer");
   };
 
   const handleOpenFeed = () => {
@@ -249,6 +253,7 @@ export function useArticleViewState() {
     bookmark,
     starred,
     safeArticleLink,
+    safeOpenLink,
     handleToggleRead,
     handleToggleStar,
     handleOpenFeed,

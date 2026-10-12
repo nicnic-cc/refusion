@@ -57,6 +57,7 @@ const MAX_REOPEN_PAGES = 20;
 interface FeedDisplay {
   name: string;
   faviconUrl: string;
+  openPermalink: boolean;
 }
 
 interface ArticleRowsProps {
@@ -106,6 +107,7 @@ const ArticleRows = memo(function ArticleRows({
           unknownFeedName
         }
         feedFaviconUrl={feed?.faviconUrl ?? null}
+        openPermalink={feed?.openPermalink ?? false}
       />
     );
   });
@@ -427,7 +429,11 @@ export function ArticleList() {
       new Map(
         feeds.map((f) => [
           f.id,
-          { name: f.name, faviconUrl: getFaviconUrl(f.link, f.site_url) },
+          {
+            name: f.name,
+            faviconUrl: getFaviconUrl(f.link, f.site_url),
+            openPermalink: f.open_permalink,
+          },
         ]),
       ),
     [feeds],

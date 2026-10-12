@@ -46,8 +46,9 @@ func (h *Handler) getItemFullContent(c *gin.Context) {
 	}
 
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
+	link := itemOpenLink(item, feed)
 
-	if err := httpc.ValidateRequestURL(c.Request.Context(), item.Link, allowPrivateFeeds); err != nil {
+	if err := httpc.ValidateRequestURL(c.Request.Context(), link, allowPrivateFeeds); err != nil {
 		badRequestError(c, "invalid item link")
 		return
 	}
@@ -58,7 +59,7 @@ func (h *Handler) getItemFullContent(c *gin.Context) {
 		return
 	}
 
-	article, err := fulltext.Fetch(c.Request.Context(), client, item.Link)
+	article, err := fulltext.Fetch(c.Request.Context(), client, link)
 	if err != nil {
 		slog.Warn("full content fetch failed", "item_id", item.ID, "error", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to fetch full content"})
