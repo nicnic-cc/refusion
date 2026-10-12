@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_feeds_group_id ON feeds(group_id);
 
 
 CREATE TABLE IF NOT EXISTS items (
-	id         INTEGER PRIMARY KEY,
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
 	feed_id    INTEGER NOT NULL REFERENCES feeds(id) ON UPDATE CASCADE ON DELETE CASCADE,
 	guid       TEXT NOT NULL,
 	title      TEXT DEFAULT '',
