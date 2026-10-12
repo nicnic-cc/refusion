@@ -38,6 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { feedAPI, groupAPI } from "@/lib/api";
 import type { Feed, Group } from "@/lib/api";
 import { generateOPML, downloadFile } from "@/lib/opml";
+import { DEFAULT_GROUP_ID } from "@/lib/groups";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -228,7 +229,7 @@ function FeedsPage() {
       return "";
     }
 
-    const target = groups.find((group) => group.id === 1);
+    const target = groups.find((group) => group.id === DEFAULT_GROUP_ID);
     return t("feeds.deleteGroup.moveHint", {
       count,
       target: target?.name ?? t("feeds.deleteGroup.targetDefault"),

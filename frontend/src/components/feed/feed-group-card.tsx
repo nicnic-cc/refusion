@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { getFeedErrorPreview } from "@/lib/feed-error";
+import { DEFAULT_GROUP_ID } from "@/lib/groups";
 import type { TranslationKey } from "@/lib/i18n";
 import type { Move } from "@/lib/reorder";
 import { cn, formatDate } from "@/lib/utils";
@@ -208,7 +209,7 @@ export function FeedGroupCard({
             >
               <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
             </WithTooltip>
-            {group.id !== 1 && (
+            {group.id !== DEFAULT_GROUP_ID && (
               <WithTooltip
                 label={t("feeds.deleteGroup.title")}
                 render={
