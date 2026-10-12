@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0x2E/feedfinder"
+	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
 	"github.com/0x2E/fusion/internal/pull"
 	"github.com/0x2E/fusion/internal/store"
@@ -26,7 +27,7 @@ type createFeedRequest struct {
 	SiteURL                string `json:"site_url"`
 	Proxy                  string `json:"proxy"`
 	RefreshIntervalSeconds *int64 `json:"refresh_interval_seconds"`
-	FullContent            bool   `json:"full_content"`
+	DefaultView            string `json:"default_view"`
 }
 
 type updateFeedRequest struct {
@@ -37,7 +38,7 @@ type updateFeedRequest struct {
 	Suspended              *bool   `json:"suspended"`
 	Proxy                  *string `json:"proxy"`
 	RefreshIntervalSeconds *int64  `json:"refresh_interval_seconds"`
-	FullContent            *bool   `json:"full_content"`
+	DefaultView            *string `json:"default_view"`
 }
 
 type validateFeedRequest struct {
@@ -156,7 +157,10 @@ func (h *Handler) createFeed(c *gin.Context) {
 		return
 	}
 
-	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, refreshInterval, req.FullContent)
+	if req.DefaultView == "" {
+		req.DefaultView = model.ViewFeed
+	}
+	feed, err := h.store.CreateFeed(req.GroupID, req.Name, req.Link, req.SiteURL, req.Proxy, refreshInterval, req.DefaultView)
 	if err != nil {
 		if storeClientError(c, err) {
 			return
@@ -214,7 +218,7 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	if req.Proxy != nil {
 		params.Proxy = req.Proxy
 	}
-	params.FullContent = req.FullContent
+	params.DefaultView = req.DefaultView
 	// refresh_interval_seconds on update: absent = keep, 0 = clear back to the
 	// global interval, other values must be whitelisted.
 	if req.RefreshIntervalSeconds != nil {

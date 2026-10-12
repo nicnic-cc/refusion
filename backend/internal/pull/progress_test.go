@@ -32,11 +32,11 @@ func TestRefreshFeedsReportsPendingThenNewItems(t *testing.T) {
 	}))
 	defer server.Close()
 
-	a, err := st.CreateFeed(1, "A", server.URL+"/a", "", "", nil, false)
+	a, err := st.CreateFeed(1, "A", server.URL+"/a", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed A: %v", err)
 	}
-	b, err := st.CreateFeed(1, "B", server.URL+"/b", "", "", nil, false)
+	b, err := st.CreateFeed(1, "B", server.URL+"/b", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed B: %v", err)
 	}

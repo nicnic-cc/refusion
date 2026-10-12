@@ -32,7 +32,7 @@ func TestUpdateFeedRefreshInterval(t *testing.T) {
 	}
 
 	interval := int64(900)
-	feed, err := s.CreateFeed(group.ID, "Feed", "https://example.com/feed", "", "", &interval, false)
+	feed, err := s.CreateFeed(group.ID, "Feed", "https://example.com/feed", "", "", &interval, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -98,19 +98,19 @@ func TestListDueFeedsAndNextWakeTime(t *testing.T) {
 	}
 
 	now := time.Now().Unix()
-	due, err := s.CreateFeed(group.ID, "Due", "https://example.com/due", "", "", nil, false)
+	due, err := s.CreateFeed(group.ID, "Due", "https://example.com/due", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create due feed: %v", err)
 	}
-	future, err := s.CreateFeed(group.ID, "Future", "https://example.com/future", "", "", nil, false)
+	future, err := s.CreateFeed(group.ID, "Future", "https://example.com/future", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create future feed: %v", err)
 	}
-	suspended, err := s.CreateFeed(group.ID, "Suspended", "https://example.com/suspended", "", "", nil, false)
+	suspended, err := s.CreateFeed(group.ID, "Suspended", "https://example.com/suspended", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create suspended feed: %v", err)
 	}
-	retryHold, err := s.CreateFeed(group.ID, "Retry", "https://example.com/retry", "", "", nil, false)
+	retryHold, err := s.CreateFeed(group.ID, "Retry", "https://example.com/retry", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create retry feed: %v", err)
 	}
@@ -180,7 +180,7 @@ func TestNextWakeTimeEmptyAndZeroState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := s.CreateFeed(group.ID, "F", "https://example.com/f", "", "", nil, false)
+	feed, err := s.CreateFeed(group.ID, "F", "https://example.com/f", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}

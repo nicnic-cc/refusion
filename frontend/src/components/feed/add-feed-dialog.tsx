@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -30,6 +29,7 @@ import { useAppInfo } from "@/queries/app";
 import {
   apiErrorMessage,
   feedAPI,
+  type ArticleView,
   type CreateFeedRequest,
   type DiscoveredFeed,
 } from "@/lib/api";
@@ -43,6 +43,7 @@ import {
   intervalOptions,
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
+import { DefaultViewSelect } from "@/components/feed/default-view-select";
 
 export function AddFeedDialog() {
   const { t } = useI18n();
@@ -62,7 +63,7 @@ export function AddFeedDialog() {
   const [groupId, setGroupId] = useState<string>("");
   const [proxy, setProxy] = useState("");
   const [refreshInterval, setRefreshInterval] = useState<string>("");
-  const [fullContent, setFullContent] = useState(false);
+  const [defaultView, setDefaultView] = useState<ArticleView>("feed");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -83,7 +84,7 @@ export function AddFeedDialog() {
     setGroupId("");
     setProxy("");
     setRefreshInterval("");
-    setFullContent(false);
+    setDefaultView("feed");
     setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setKnownFeeds([]);
@@ -223,8 +224,8 @@ export function AddFeedDialog() {
         request.refresh_interval_seconds = parseInt(refreshInterval, 10);
       }
 
-      if (fullContent) {
-        request.full_content = true;
+      if (defaultView !== "feed") {
+        request.default_view = defaultView;
       }
 
       await createFeed.mutateAsync(request);
@@ -382,24 +383,11 @@ export function AddFeedDialog() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <label
-                      htmlFor="add-feed-full-content"
-                      className="block text-[13px] font-medium"
-                    >
-                      {t("feed.add.fullContentLabel")}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("feed.add.fullContentDescription")}
-                    </p>
-                  </div>
-                  <Switch
-                    id="add-feed-full-content"
-                    checked={fullContent}
-                    onCheckedChange={setFullContent}
-                  />
-                </div>
+                <DefaultViewSelect
+                  idPrefix="add-feed"
+                  value={defaultView}
+                  onChange={setDefaultView}
+                />
                 <div className="space-y-2">
                   <label htmlFor="add-feed-proxy" className="block text-[13px] font-medium">
                     {t("feed.add.proxyLabel")}

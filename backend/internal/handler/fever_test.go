@@ -107,7 +107,7 @@ func TestFeverReadAndMarkFlows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -229,7 +229,7 @@ func TestFeverMarkSavedLinksExistingBookmarkToItem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestFeverFeedsIncludesFeedsGroups(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	if _, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false); err != nil {
+	if _, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed"); err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
 
@@ -347,7 +347,7 @@ func TestFeverItemsWithMaxIDZeroReturnsRecentItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -410,7 +410,7 @@ func TestFeverFaviconsHaveDataURI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	if _, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false); err != nil {
+	if _, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed"); err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
 
@@ -459,7 +459,7 @@ func TestFeverMarkFeedReadRespectsBefore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
@@ -518,7 +518,7 @@ func TestFeverMarkReadSupportsCSVItemIDs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Fusion Feed", "https://example.com/rss.xml", "https://example.com", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}

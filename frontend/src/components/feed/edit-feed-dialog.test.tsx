@@ -31,7 +31,7 @@ const feed = {
   link: "https://lighthouse.invalid/feed",
   suspended: false,
   proxy: "http://proxy.invalid:3128",
-  full_content: false,
+  default_view: "feed",
   fetch_state: {},
 } as Feed;
 
@@ -76,6 +76,17 @@ describe("EditFeedDialog proxy", () => {
     setup({ ...feed, proxy: undefined });
     await userEvent.click(await screen.findByRole("button", { name: "Save" }));
     expect(feedAPI.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("EditFeedDialog default view", () => {
+  // The advanced section opens on a non-default view so it is not hidden.
+  it("sends default_view when another view is chosen", async () => {
+    setup({ ...feed, proxy: undefined, default_view: "full" });
+    await userEvent.click(await screen.findByRole("combobox", { name: "Open articles as" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Web page" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(feedAPI.update).toHaveBeenCalledWith(5, { default_view: "web" });
   });
 });
 

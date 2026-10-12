@@ -31,7 +31,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Panes:** the open article sits in a third column beside the list on wide screens.
 - **Drawer:** the article slides over the list. Narrower windows use it even when Panes is chosen.
-- **Full article:** press `w` to fetch the whole article from the site, or turn on "Always load full article" for a feed.
+- **Full article and web page:** press `w` to fetch the whole article from the site, or `shift+w` to show the original page. Per feed, "Open articles as" picks which view an article starts in; turning a view off returns to that default.
 - **YouTube:** videos play inside the article view.
 - **Text settings:** font and text size in the article view, and relative ("3 hours ago") or absolute dates.
 

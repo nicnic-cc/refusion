@@ -17,15 +17,15 @@ func TestReorderEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	a, err := st.CreateFeed(g2.ID, "a", "https://a", "", "", nil, false)
+	a, err := st.CreateFeed(g2.ID, "a", "https://a", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
-	b, err := st.CreateFeed(g2.ID, "b", "https://b", "", "", nil, false)
+	b, err := st.CreateFeed(g2.ID, "b", "https://b", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
-	other, err := st.CreateFeed(1, "o", "https://o", "", "", nil, false)
+	other, err := st.CreateFeed(1, "o", "https://o", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
