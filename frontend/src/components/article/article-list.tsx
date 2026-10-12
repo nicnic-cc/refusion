@@ -8,6 +8,7 @@ import { ArticleFilterSwitch } from "./article-filter-switch";
 import { ArticleItem } from "./article-item";
 import { ShowFilteredToggle } from "./show-filtered-toggle";
 import { ArticleListFooter } from "./article-list-footer";
+import { ScrollBox } from "@/components/scroll-box";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
@@ -322,9 +323,9 @@ export function ArticleList() {
         <PullIndicator pane="list" {...pull} />
 
         {/* Article list */}
-        <div
+        <ScrollBox
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+          className="min-h-0 flex-1 overscroll-y-contain"
         >
           <NewArticlesPill count={newCount} onClick={showNew} />
           {isListLoading ? (
@@ -391,7 +392,7 @@ export function ArticleList() {
               />
             </>
           )}
-        </div>
+        </ScrollBox>
       </div>
     </div>
   );
