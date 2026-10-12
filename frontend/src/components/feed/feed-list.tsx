@@ -8,12 +8,12 @@ import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
 import { useBookmarkLookup } from "@/queries/bookmarks";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
+import { getSidebarGroups } from "@/lib/groups";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { sidebarNodeKey, useSidebarNavStore, type SidebarNode } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedGroup } from "./feed-group";
-import { FeedItem } from "./feed-item";
 
 // Must match the order of topFilters below.
 const sidebarFilterValues: ArticleFilter[] = ["unread", "starred", "all"];
@@ -41,6 +41,10 @@ export function FeedList() {
     typeof firstPathSegment === "string" && isArticleFilter(firstPathSegment);
   const isTopLevelSelected =
     isOnHomePage && selectedFeedId === null && selectedGroupId === null;
+  const sidebarGroups = useMemo(
+    () => getSidebarGroups(groups, feeds),
+    [groups, feeds],
+  );
   const totalUnread = getTotalUnreadCount();
   const starredCount = starredTotal;
 
@@ -77,7 +81,7 @@ export function FeedList() {
       filter,
     }));
 
-    for (const group of groups) {
+    for (const group of sidebarGroups) {
       list.push({
         key: sidebarNodeKey.group(group.id),
         kind: "group",
@@ -96,17 +100,8 @@ export function FeedList() {
       }
     }
 
-    for (const feed of feeds.filter((f) => f.group_id === 0)) {
-      list.push({
-        key: sidebarNodeKey.feed(feed.id),
-        kind: "feed",
-        feedId: feed.id,
-        groupId: 0,
-      });
-    }
-
     return list;
-  }, [collapsedIds, feeds, getFeedsByGroup, groups]);
+  }, [collapsedIds, getFeedsByGroup, sidebarGroups]);
 
   useSidebarNavigation(nodes);
 
@@ -167,7 +162,7 @@ export function FeedList() {
 
         {/* Feed groups */}
         <div className="w-full min-w-0 space-y-0.5">
-          {groups.map((group) => {
+          {sidebarGroups.map((group) => {
             const groupFeeds = getFeedsByGroup(group.id);
 
             return (
@@ -179,13 +174,6 @@ export function FeedList() {
               />
             );
           })}
-
-          {/* Ungrouped feeds (group_id = 0) */}
-          {feeds
-            .filter((f) => f.group_id === 0)
-            .map((feed) => (
-              <FeedItem key={feed.id} feed={feed} />
-            ))}
         </div>
       </div>
     </ScrollArea>

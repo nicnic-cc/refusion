@@ -166,7 +166,6 @@ export const frMessages: PartialMessages = {
   "opml.dialog.dropHint": "Déposez votre fichier OPML ici ou cliquez pour parcourir",
   "opml.dialog.supportHint": "Prend en charge les fichiers .opml et .xml",
   "opml.dialog.title": "Importer OPML",
-  "opml.group.default": "Importé sans groupe",
   "opml.toast.failed": "Échec de l'import OPML",
   "opml.toast.failedItems": "{count} flux en échec : {errors}",
   "opml.toast.imported": "{count} flux importés",

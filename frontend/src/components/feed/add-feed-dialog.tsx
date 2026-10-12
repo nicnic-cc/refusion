@@ -33,6 +33,7 @@ import {
   type DiscoveredFeed,
 } from "@/lib/api";
 import { toast } from "sonner";
+import { DEFAULT_GROUP_ID } from "@/lib/groups";
 import { useI18n } from "@/lib/i18n";
 import {
   DEFAULT_PULL_INTERVAL,
@@ -205,7 +206,7 @@ export function AddFeedDialog() {
 
       const selectedGroupId = groupId
         ? parseInt(groupId, 10)
-        : (groups[0]?.id ?? 1);
+        : DEFAULT_GROUP_ID;
 
       const request: CreateFeedRequest = {
         link,

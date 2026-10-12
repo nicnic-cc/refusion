@@ -13,6 +13,7 @@ import { groupAPI, feedAPI } from "@/lib/api";
 import { queryKeys } from "@/queries/keys";
 import { pullQueryKey } from "@/queries/pull";
 import { toast } from "sonner";
+import { DEFAULT_GROUP_ID } from "@/lib/groups";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { parseOPML } from "@/lib/opml";
@@ -111,23 +112,11 @@ export function ImportOpmlDialog() {
         }
       }
 
-      // Use default group for feeds without a group
-      let defaultGroupId: number | undefined = groupNameToId
-        .values()
-        .next().value;
-      if (defaultGroupId === undefined) {
-        const res = await groupAPI.create({ name: t("opml.group.default") });
-        if (res.data) {
-          defaultGroupId = res.data.id;
-          groupNameToId.set(t("opml.group.default"), res.data.id);
-        }
-      }
-
       // Prepare batch create request
       const feedsToCreate = parsedFeeds.map((feed) => {
         const groupId = feed.groupName
-          ? (groupNameToId.get(feed.groupName) ?? defaultGroupId!)
-          : defaultGroupId!;
+          ? (groupNameToId.get(feed.groupName) ?? DEFAULT_GROUP_ID)
+          : DEFAULT_GROUP_ID;
         return {
           group_id: groupId,
           name: feed.name,

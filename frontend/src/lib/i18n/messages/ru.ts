@@ -166,7 +166,6 @@ export const ruMessages: PartialMessages = {
   "opml.dialog.dropHint": "Перетащите OPML-файл сюда или нажмите для выбора",
   "opml.dialog.supportHint": "Поддерживаются файлы .opml и .xml",
   "opml.dialog.title": "Импорт OPML",
-  "opml.group.default": "Импортировано без группы",
   "opml.toast.failed": "Не удалось импортировать OPML",
   "opml.toast.failedItems": "Не удалось импортировать {count} лент: {errors}",
   "opml.toast.imported": "Импортировано лент: {count}",

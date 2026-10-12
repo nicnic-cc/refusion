@@ -62,6 +62,11 @@ or `with-tooltip.tsx` to keep a control's own markup), never a native
 `title=`, which looks out of place and shows late. Done on `/feeds` and the
 sidebar so far.
 
+Every feed has a folder: "no folder" means the backend's fallback group
+(`DEFAULT_GROUP_ID` in `lib/groups.ts`), which the sidebar hides while
+empty. A nullable `group_id` with top-level feeds was rejected: the Fever
+API and OPML both assume a group per feed, and it would drift from upstream.
+
 ## 5. Data flow
 
 - API layer lives in `frontend/src/lib/api/`

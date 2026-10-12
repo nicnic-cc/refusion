@@ -166,7 +166,6 @@ export const svMessages: PartialMessages = {
   "opml.dialog.dropHint": "Släpp din OPML-fil här eller klicka för att bläddra",
   "opml.dialog.supportHint": "Stöder .opml- och .xml-filer",
   "opml.dialog.title": "Importera OPML",
-  "opml.group.default": "Importerad utan grupp",
   "opml.toast.failed": "Kunde inte importera OPML",
   "opml.toast.failedItems": "{count} flöden misslyckades: {errors}",
   "opml.toast.imported": "Importerade {count} flöden",

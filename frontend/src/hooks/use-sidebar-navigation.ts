@@ -213,8 +213,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
             : node.kind === "feed"
               ? node.groupId
               : null;
-        // Ungrouped feeds have no folder to collapse.
-        if (groupId === null || groupId === 0) {
+        if (groupId === null) {
           return;
         }
         const willCollapse = !state.collapsedIds.includes(groupId);
