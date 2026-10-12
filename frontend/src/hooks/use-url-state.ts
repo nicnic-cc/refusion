@@ -192,10 +192,6 @@ export function useUrlState(opts?: { article?: boolean }) {
     [navigateToList],
   );
 
-  const selectAll = useCallback(() => {
-    selectTopLevelFilter("all");
-  }, [selectTopLevelFilter]);
-
   const selectAllFeeds = useCallback(() => {
     navigateToList({ feedId: null, groupId: null, articleId: null });
   }, [navigateToList]);
@@ -210,7 +206,6 @@ export function useUrlState(opts?: { article?: boolean }) {
     setSelectedArticle,
     setArticleFilter,
     selectTopLevelFilter,
-    selectAll,
     selectAllFeeds,
   };
 }
