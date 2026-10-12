@@ -68,6 +68,9 @@ export const itemQueries = {
       // infiniteQueryBehavior): a refetch asks for 1 page, not all loaded
       // ones; fetchNextPage is unaffected. Guarded by items-refetch.test.tsx.
       ...({ pages: 1 } as object),
+      // Coming back online must not move the list being read; the pill offers
+      // the reload. Guarded by items-refetch.test.tsx.
+      refetchOnReconnect: false,
     });
   },
   detail: (itemId: number) =>
