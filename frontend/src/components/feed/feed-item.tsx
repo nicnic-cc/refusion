@@ -7,6 +7,7 @@ import { FeedRowIcon } from "@/components/feed/feed-row-icon";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { usePrefetchList } from "@/hooks/use-prefetch-list";
 
 interface FeedItemProps {
   feed: Feed;
@@ -16,6 +17,7 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
   const { t } = useI18n();
   const isSelected = useIsFeedSelected(feed.id);
   const { setSelectedFeed } = useUrlActions();
+  const prefetchList = usePrefetchList();
   const setEditFeedOpen = useUIStore((s) => s.setEditFeedOpen);
 
   const feedKey = sidebarNodeKey.feed(feed.id);
@@ -39,6 +41,9 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
     >
       <button
         type="button"
+        onPointerDown={(e) => {
+          if (e.button === 0) prefetchList({ feedId: feed.id, groupId: null });
+        }}
         onClick={() => {
           setFocusedKey(feedKey);
           setSelectedFeed(feed.id);

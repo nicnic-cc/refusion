@@ -77,7 +77,7 @@ function goToList(
   });
 }
 
-function parseFilter(value: unknown): ArticleFilter {
+export function parseFilter(value: unknown): ArticleFilter {
   return typeof value === "string" && isArticleFilter(value)
     ? value
     : defaultArticleFilter;

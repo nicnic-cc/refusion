@@ -22,6 +22,7 @@ import {
   type NormalizedItemFilters,
 } from "./keys";
 import { usePreferencesStore } from "@/store";
+import type { ArticleFilter } from "@/lib/article-filter";
 import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
@@ -86,6 +87,32 @@ export const itemQueries = {
 export function useItems(filters: ItemFilters, enabled = true) {
   const articlePageSize = usePreferencesStore((state) => state.articlePageSize);
   return useInfiniteQuery({ ...itemQueries.list(filters, articlePageSize), enabled });
+}
+
+/**
+ * Starts the first page of a list before the route opens it, so the list
+ * joins the in-flight request instead of starting its own.
+ */
+export function prefetchItemList(
+  qc: QueryClient,
+  target: { feedId: number | null; groupId: number | null },
+  articleFilter: ArticleFilter,
+) {
+  // The starred view shows bookmarks and makes no items request.
+  if (articleFilter === "starred") return;
+
+  const options = itemQueries.list(
+    {
+      ...target,
+      unread: articleFilter === "unread" ? true : undefined,
+      // A newly opened feed or group always starts without filtered rows.
+      includeFiltered: false,
+    },
+    usePreferencesStore.getState().articlePageSize,
+  );
+  // Cached lists (even stale) keep today's behaviour: shown, then refetched.
+  if (qc.getQueryData(options.queryKey) !== undefined) return;
+  void qc.prefetchInfiniteQuery(options);
 }
 
 export function useItem(itemId: number | null, enabled = true) {

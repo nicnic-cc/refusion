@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useIsGroupSelected, useUrlActions } from "@/hooks/use-url-state";
 import { sidebarNodeKey, useSidebarNavStore } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
+import { usePrefetchList } from "@/hooks/use-prefetch-list";
 import { FeedItem } from "./feed-item";
 import type { Feed } from "@/lib/api";
 
@@ -43,6 +44,7 @@ export const FeedGroup = memo(function FeedGroup({
   };
   const isSelected = useIsGroupSelected(groupId);
   const { setSelectedGroup } = useUrlActions();
+  const prefetchList = usePrefetchList();
 
   const unreadCount = feeds.reduce(
     (sum, feed) => sum + (feed.unread_count || 0),
@@ -82,6 +84,9 @@ export const FeedGroup = memo(function FeedGroup({
         </button>
         <button
           type="button"
+          onPointerDown={(e) => {
+            if (e.button === 0) prefetchList({ feedId: null, groupId });
+          }}
           onClick={() => {
             setFocusedKey(groupKey);
             setSelectedGroup(groupId);
