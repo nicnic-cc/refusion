@@ -27,6 +27,9 @@ export interface FeedGroupReorder {
 
 interface FeedGroupCardProps {
   group: Group;
+  togglingFilterFeedId: number | null;
+  onOpenFilter: (feedId: number) => void;
+  onToggleFilter: (feedId: number, enabled: boolean) => void;
   reorder?: FeedGroupReorder;
   groupFeeds: Feed[];
   isCollapsed: boolean;
@@ -56,6 +59,9 @@ function getDomain(url: string) {
 
 export function FeedGroupCard({
   group,
+  togglingFilterFeedId,
+  onOpenFilter,
+  onToggleFilter,
   reorder,
   groupFeeds,
   isCollapsed,
@@ -310,7 +316,12 @@ export function FeedGroupCard({
                 </span>
                 {!reorder && (
                   <>
-                    <FeedFilterControl feed={feed} />
+                    <FeedFilterControl
+                      feedId={feed.id}
+                      toggling={togglingFilterFeedId === feed.id}
+                      onOpen={onOpenFilter}
+                      onToggle={onToggleFilter}
+                    />
                     <WithTooltip
                       label={t("feeds.tooltip.editFeed")}
                       render={

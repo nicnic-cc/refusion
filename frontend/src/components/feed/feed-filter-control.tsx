@@ -1,31 +1,31 @@
-import { useState } from "react";
+import { memo } from "react";
 import { Filter, Globe } from "lucide-react";
-import { toast } from "sonner";
 import { WithTooltip } from "@/components/common/with-tooltip";
-import { FilterDialog } from "@/components/feed/filter-dialog";
 import { Switch } from "@/components/ui/switch";
-import type { Feed } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import {
-  useFeedFilters,
-  useHiddenCounts,
-  useSetFeedFilterEnabled,
-} from "@/queries/feed-filters";
+import { useFeedFilter, useFeedHiddenCounts } from "@/queries/feed-filters";
 
-export function FeedFilterControl({
-  feed,
-  className,
-}: {
-  feed: Feed;
+interface FeedFilterControlProps {
+  feedId: number;
+  toggling: boolean;
+  onOpen: (feedId: number) => void;
+  onToggle: (feedId: number, enabled: boolean) => void;
   className?: string;
-}) {
+}
+
+// The page owns the dialog and the toggle mutation. Each row subscribes only
+// to its own filter and counts, so arriving data redraws rows, not the page.
+export const FeedFilterControl = memo(function FeedFilterControl({
+  feedId,
+  toggling,
+  onOpen,
+  onToggle,
+  className,
+}: FeedFilterControlProps) {
   const { t } = useI18n();
-  const { byFeedId } = useFeedFilters();
-  const setEnabled = useSetFeedFilterEnabled();
-  const [open, setOpen] = useState(false);
-  const filter = byFeedId.get(feed.id);
-  const counts = useHiddenCounts()?.[feed.id];
+  const filter = useFeedFilter(feedId);
+  const counts = useFeedHiddenCounts(feedId);
 
   const label = filter
     ? [
@@ -73,7 +73,7 @@ export function FeedFilterControl({
         render={
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => onOpen(feedId)}
             className={cn(
               "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent",
               dim ? "text-muted-foreground/70" : "text-foreground",
@@ -96,27 +96,13 @@ export function FeedFilterControl({
             <Switch
               size="sm"
               checked={filter.enabled}
-              disabled={setEnabled.isPending}
+              disabled={toggling}
               aria-label={t("feedFilter.enabled")}
-              onCheckedChange={(enabled) =>
-                setEnabled.mutate(
-                  { feedId: feed.id, enabled },
-                  {
-                    onError: () =>
-                      toast.error(t("feedFilter.toast.toggleFailed")),
-                  },
-                )
-              }
+              onCheckedChange={(enabled) => onToggle(feedId, enabled)}
             />
           }
         />
       )}
-      <FilterDialog
-        feed={feed}
-        filter={filter}
-        open={open}
-        onOpenChange={setOpen}
-      />
     </div>
   );
-}
+});
