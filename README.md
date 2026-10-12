@@ -14,8 +14,8 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 ## At a glance
 
-- **Reading:** two layouts, full article text on demand, YouTube in the article view
-- **New articles:** pull to refresh with progress per feed, and the list never jumps
+- **Reading:** two layouts, full article text or the original page on demand, YouTube in the article view
+- **New articles:** pull to refresh, with progress per feed
 - **Filters:** hide articles per feed or everywhere, with a live preview
 - **Organising:** folders in your own order, mark all as read, OPML
 - **Search:** feeds and article text, with excerpts and Google Reader shortcuts
@@ -60,6 +60,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
   <img src="./assets/screenshots/feeds.png" alt="Manage feeds: folders, the global filter and hidden-article counts per feed" width="100%" />
 </p>
 
+- **Adding feeds:** paste a site's address and refusion finds its feeds. That also works for GitHub repos, GitHub users and subreddits.
 - **Folders:** group feeds and collapse folders in the sidebar.
 - **Reorder mode:** move folders and feeds up and down on the feeds page. The sidebar follows.
 - **Mark all as read:** covers a whole feed or folder, including articles not loaded yet. Press `shift+a` or the checkmark.
@@ -88,7 +89,8 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks, search, keyboard shortcuts, the Fever API and the PWA. refusion adds:
 
-- the Panes layout, full article text and YouTube playback
+- the Panes layout, full article text, the web page view and YouTube playback
+- per-feed settings for which view articles open in, and for links to the feed's own page
 - pull to refresh with progress per feed, and the new-articles pill
 - feed and global filters
 - reorder mode, search excerpts and the text settings
