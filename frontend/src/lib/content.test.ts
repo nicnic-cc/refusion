@@ -34,6 +34,12 @@ describe("processArticleContent", () => {
     expect(out).not.toContain("<img");
   });
 
+  it("makes kept images lazy and async-decoded", () => {
+    const out = processArticleContent('<img src="https://a.test/photo.jpg">');
+    expect(out).toContain('loading="lazy"');
+    expect(out).toContain('decoding="async"');
+  });
+
   it("strips width and height from a kept image", () => {
     const out = processArticleContent(
       '<img width="640" height="480" src="https://a.test/photo.jpg">',

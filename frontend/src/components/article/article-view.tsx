@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Circle,
   CircleCheck,
@@ -66,10 +67,23 @@ export function ArticleView({
   const appearance = useArticleAppearanceStyles();
   const isMobile = useIsMobile();
 
+  const showingFullText = fullText !== null;
+  const articleHtml = article?.content;
+  const fullTextHtml = fullText?.html;
+  // Sanitizing is costly and the view re-renders on read-state and cache updates;
+  // the inputs are strings, so unchanged content keeps the memo.
+  const processedHtml = useMemo(
+    () =>
+      processArticleContent(
+        (showingFullText ? fullTextHtml : articleHtml) ?? "",
+        safeArticleLink ?? undefined,
+      ),
+    [showingFullText, fullTextHtml, articleHtml, safeArticleLink],
+  );
+
   if (!article) return null;
 
   const video = safeArticleLink ? youtubeVideo(safeArticleLink) : null;
-  const showingFullText = fullText !== null;
   const fullTextLabel = showingFullText
     ? t("article.action.feedContent")
     : t("article.action.fullText");
@@ -243,12 +257,7 @@ export function ArticleView({
           <div
             className="typeset typeset-article mt-6 min-w-0 max-w-none"
             style={appearance.body}
-            dangerouslySetInnerHTML={{
-              __html: processArticleContent(
-                showingFullText ? fullText.html : article.content,
-                safeArticleLink ?? undefined,
-              ),
-            }}
+            dangerouslySetInnerHTML={{ __html: processedHtml }}
           />
         </article>
       </ScrollBox>
