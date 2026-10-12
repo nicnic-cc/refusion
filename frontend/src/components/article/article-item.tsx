@@ -10,8 +10,8 @@ import { toSafeExternalUrl } from "@/lib/safe-url";
 import { parseArticleIdParam } from "@/lib/route-params";
 import { FilteredTag } from "./filtered-tag";
 
-// Actions sit in the meta row: read stays visible but dimmed, the others appear
-// on hover/focus and keep their space so the date doesn't shift.
+// Actions sit in the meta row: the unread dot shows at full strength, the read
+// circle dimmed; the others appear on hover/focus and keep their space so the date doesn't shift.
 const rowAction = "opacity-60 group-hover:opacity-100 group-focus-within:opacity-100";
 const hoverAction = "invisible group-hover:visible group-focus-within:visible";
 const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
@@ -112,7 +112,7 @@ export const ArticleItem = memo(function ArticleItem({
               }
               onClick={handleToggleRead}
               disabled={!canToggleRead}
-              className={rowAction}
+              className={article.unread ? undefined : rowAction}
             >
               <Circle
                 className={
