@@ -68,4 +68,8 @@ One extra filter hides articles in every feed. Code:
   global filter alone, each only when above 0. The global row has no
   count. With "show filtered" on, an article's tag reads "Feed filter" or
   "Global filter".
+- **The app preloads filters and counts on load**
+  (`usePrefetchFilterViews` in the app layout), so Manage feeds draws them
+  in its first pass: their late arrival redrew every row, a ~120 ms freeze
+  with 200 feeds at 4x slower CPU.
 - **A feed can't opt out yet** (deferred).

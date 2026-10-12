@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createLazyFileRoute } from "@tanstack/react-router";
 import {
   ArrowUpDown,
@@ -46,9 +46,11 @@ import {
   useMoveFeedsToGroup,
   useRefreshFeeds,
 } from "@/queries/feeds";
+import { useSetFeedFilterEnabled } from "@/queries/feed-filters";
 import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
 import { useUIStore } from "@/store";
 import { FeedGroupCard } from "@/components/feed/feed-group-card";
+import { FeedFilterDialogHost } from "@/components/feed/feed-filter-dialog-host";
 import { GlobalFilterRow } from "@/components/feed/global-filter-row";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useReorder } from "@/hooks/use-reorder";
@@ -95,6 +97,27 @@ function FeedsPage() {
     number | null
   >(null);
   const isMobile = useIsMobile();
+
+  const setFilterEnabled = useSetFeedFilterEnabled();
+  const [filterFeedId, setFilterFeedId] = useState<number | null>(null);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const filterFeed = feeds.find((f) => f.id === filterFeedId);
+  const togglingFilterFeedId = setFilterEnabled.isPending
+    ? setFilterEnabled.variables.feedId
+    : null;
+  const openFilter = useCallback((feedId: number) => {
+    setFilterFeedId(feedId);
+    setFilterDialogOpen(true);
+  }, []);
+  const { mutate: mutateFilterEnabled } = setFilterEnabled;
+  const toggleFilter = useCallback(
+    (feedId: number, enabled: boolean) =>
+      mutateFilterEnabled(
+        { feedId, enabled },
+        { onError: () => toast.error(t("feedFilter.toast.toggleFailed")) },
+      ),
+    [mutateFilterEnabled, t],
+  );
 
   const statusFilterLabels: Record<StatusFilter, string> = {
     all: t("feeds.status.all"),
@@ -422,6 +445,9 @@ function FeedsPage() {
                     <FeedGroupCard
                       key={group.id}
                       group={group}
+                      togglingFilterFeedId={togglingFilterFeedId}
+                      onOpenFilter={openFilter}
+                      onToggleFilter={toggleFilter}
                       reorder={
                         isReordering
                           ? {
@@ -473,6 +499,15 @@ function FeedsPage() {
           </div>
         </ScrollArea>
       </div>
+
+      {filterFeed && (
+        <FeedFilterDialogHost
+          key={filterFeed.id}
+          feed={filterFeed}
+          open={filterDialogOpen}
+          onOpenChange={setFilterDialogOpen}
+        />
+      )}
 
       <Dialog
         open={deletingGroup !== null}

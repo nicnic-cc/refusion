@@ -13,6 +13,7 @@ import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { usePullRun } from "@/hooks/use-pull-run";
 import { useMissingScopeRedirect } from "@/hooks/use-missing-scope-redirect";
+import { usePrefetchFilterViews } from "@/hooks/use-prefetch-filter-views";
 import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUIStore } from "@/store/ui";
@@ -33,6 +34,7 @@ export function AppLayout({ children, readingPane = false }: AppLayoutProps) {
   useKeyboardShortcuts();
   usePullRun();
   useMissingScopeRedirect();
+  usePrefetchFilterViews();
 
   // Close mobile sidebar on navigation
   const location = useLocation();
