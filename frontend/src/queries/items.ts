@@ -34,6 +34,8 @@ type ItemsMutationContext = {
   prevBookmarkLists: Array<
     [readonly unknown[], BookmarksInfiniteData | undefined]
   >;
+  // Set by onError so a late re-apply does not undo the rollback.
+  failed: boolean;
 };
 
 function buildListItemsParams(
@@ -138,7 +140,25 @@ function snapshotItemsMutationState(
     prevBookmarkLists: qc.getQueriesData<BookmarksInfiniteData>({
       queryKey: queryKeys.bookmarks.lists(),
     }),
+    failed: false,
   };
+}
+
+// Cancels only what the optimistic update overwrites. A next-page load is
+// kept: it appends a page and does not replace the rows being flipped.
+function cancelOptimisticTargets(qc: QueryClient, ids: number[]) {
+  const idSet = new Set(ids);
+  return Promise.all([
+    qc.cancelQueries({
+      queryKey: queryKeys.items.lists(),
+      predicate: (query) => !query.state.fetchMeta?.fetchMore,
+    }),
+    qc.cancelQueries({
+      queryKey: queryKeys.items.details(),
+      predicate: (query) => idSet.has(query.queryKey[2] as number),
+    }),
+    qc.cancelQueries({ queryKey: queryKeys.feeds.all }),
+  ]);
 }
 
 function applyOptimisticItemReadState(
@@ -158,34 +178,36 @@ function applyOptimisticItemReadState(
     { queryKey: queryKeys.items.lists() },
     (old) => {
       if (!old) return old;
+      let changed = false;
+      const pages = old.pages.map((page) => {
+        let pageChanged = false;
+        const data = page.data.map((item) => {
+          if (!idSet.has(item.id) || item.unread === targetUnread) {
+            return item;
+          }
+          if (skipFiltered && item.filtered) return item;
 
-      return {
-        ...old,
-        pages: old.pages.map((page) => ({
-          ...page,
-          data: page.data.map((item) => {
-            if (!idSet.has(item.id) || item.unread === targetUnread) {
-              return item;
-            }
-            if (skipFiltered && item.filtered) return item;
+          // Count each item once even when several cached lists hold it;
+          // filtered rows are not in the counts.
+          if (!item.filtered && !countedIds.has(item.id)) {
+            countedIds.add(item.id);
+            const delta = targetUnread ? 1 : -1;
+            feedDeltaMap.set(
+              item.feed_id,
+              (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
+            );
+          }
 
-            // Count each item once even when several cached lists hold it;
-            // filtered rows are not in the counts.
-            if (!item.filtered && !countedIds.has(item.id)) {
-              countedIds.add(item.id);
-              const delta = targetUnread ? 1 : -1;
-              feedDeltaMap.set(
-                item.feed_id,
-                (feedDeltaMap.get(item.feed_id) ?? 0) + delta,
-              );
-            }
-
-            const updatedItem = { ...item, unread: targetUnread };
-            updatedItemsById.set(item.id, updatedItem);
-            return updatedItem;
-          }),
-        })),
-      };
+          const updatedItem = { ...item, unread: targetUnread };
+          updatedItemsById.set(item.id, updatedItem);
+          pageChanged = true;
+          return updatedItem;
+        });
+        if (!pageChanged) return page;
+        changed = true;
+        return { ...page, data };
+      });
+      return changed ? { ...old, pages } : old;
     },
   );
 
@@ -245,6 +267,51 @@ function applyOptimisticItemReadState(
   );
 }
 
+// A next-page fetch builds its result from the pages it saw at start, so it
+// would bring back the old unread flags. Flip the rows again once it lands.
+function reapplyAfterNextPageLoads(
+  qc: QueryClient,
+  ids: number[],
+  targetUnread: boolean,
+  skipFiltered: boolean,
+  context: ItemsMutationContext,
+) {
+  const idSet = new Set(ids);
+  const inFlight = qc.getQueryCache().findAll({
+    queryKey: queryKeys.items.lists(),
+    predicate: (query) =>
+      query.state.fetchStatus === "fetching" && !!query.state.fetchMeta?.fetchMore,
+  });
+  for (const query of inFlight) {
+    const reapply = () => {
+      if (context.failed) return;
+      qc.setQueryData<ItemsInfiniteData>(query.queryKey, (old) => {
+        if (!old) return old;
+        let changed = false;
+        const pages = old.pages.map((page) => {
+          let pageChanged = false;
+          const data = page.data.map((item) => {
+            if (
+              !idSet.has(item.id) ||
+              item.unread === targetUnread ||
+              (skipFiltered && item.filtered)
+            ) {
+              return item;
+            }
+            pageChanged = true;
+            return { ...item, unread: targetUnread };
+          });
+          if (!pageChanged) return page;
+          changed = true;
+          return { ...page, data };
+        });
+        return changed ? { ...old, pages } : old;
+      });
+    };
+    void query.promise?.then(reapply, reapply);
+  }
+}
+
 function rollbackItemsMutation(
   qc: QueryClient,
   context: ItemsMutationContext | undefined,
@@ -282,20 +349,21 @@ function useSetItemsReadState(targetUnread: boolean) {
       return ids;
     },
     onMutate: async (ids) => {
-      await Promise.all([
-        qc.cancelQueries({ queryKey: queryKeys.items.all }),
-        qc.cancelQueries({ queryKey: queryKeys.feeds.all }),
-      ]);
+      await cancelOptimisticTargets(qc, ids);
 
       const context = snapshotItemsMutationState(qc, ids);
       applyOptimisticItemReadState(qc, ids, targetUnread, context.prevFeeds);
+      reapplyAfterNextPageLoads(qc, ids, targetUnread, false, context);
       return context;
     },
     onError: (_error, _ids, context) => {
+      if (context) context.failed = true;
       rollbackItemsMutation(qc, context);
     },
-    onSettled: async () => {
-      await qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
+    // Not awaited: the mutation settles when the mark request does, and the
+    // auto-mark-read hook retries while one is pending.
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
     },
   });
 }
@@ -323,31 +391,29 @@ export function useMarkScopeRead() {
       await itemAPI.markScopeRead(vars.request);
     },
     onMutate: async ({ loadedIds }) => {
-      await Promise.all([
-        qc.cancelQueries({ queryKey: queryKeys.items.all }),
-        qc.cancelQueries({ queryKey: queryKeys.feeds.all }),
-      ]);
+      await cancelOptimisticTargets(qc, loadedIds);
 
       const context = snapshotItemsMutationState(qc, loadedIds);
       applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds, true);
+      reapplyAfterNextPageLoads(qc, loadedIds, false, true, context);
       return context;
     },
     onError: (_error, _vars, context) => {
+      if (context) context.failed = true;
       rollbackItemsMutation(qc, context);
     },
-    onSettled: async () => {
+    // Not awaited, so the mutation settles when the mark request does.
+    onSettled: () => {
       // No refetch of the open list: it would drop the rows pinned for undo.
-      await Promise.all([
-        qc.invalidateQueries({
-          queryKey: queryKeys.items.all,
-          refetchType: "none",
-        }),
-        qc.invalidateQueries({
-          queryKey: queryKeys.bookmarks.all,
-          refetchType: "none",
-        }),
-        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
-      ]);
+      void qc.invalidateQueries({
+        queryKey: queryKeys.items.all,
+        refetchType: "none",
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.bookmarks.all,
+        refetchType: "none",
+      });
+      void qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
     },
   });
 }
