@@ -29,8 +29,8 @@ export function FeedList() {
     selectedGroupId,
     articleFilter,
     selectTopLevelFilter,
-  } = useUrlState();
-  const { pathname } = useLocation();
+  } = useUrlState({ article: false });
+  const pathname = useLocation({ select: (l) => l.pathname });
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
   const ringKey = useSidebarNavStore((s) =>
     s.ringVisible ? s.focusedKey : null,
@@ -44,6 +44,11 @@ export function FeedList() {
   const sidebarGroups = useMemo(
     () => getSidebarGroups(groups, feeds),
     [groups, feeds],
+  );
+  // Stable between renders so memoized groups skip re-rendering on URL changes.
+  const feedsByGroup = useMemo(
+    () => new Map(sidebarGroups.map((g) => [g.id, getFeedsByGroup(g.id)])),
+    [sidebarGroups, getFeedsByGroup],
   );
   const totalUnread = getTotalUnreadCount();
   const starredCount = starredTotal;
@@ -162,18 +167,14 @@ export function FeedList() {
 
         {/* Feed groups */}
         <div className="w-full min-w-0 space-y-0.5">
-          {sidebarGroups.map((group) => {
-            const groupFeeds = getFeedsByGroup(group.id);
-
-            return (
-              <FeedGroup
-                key={group.id}
-                groupId={group.id}
-                name={group.name}
-                feeds={groupFeeds}
-              />
-            );
-          })}
+          {sidebarGroups.map((group) => (
+            <FeedGroup
+              key={group.id}
+              groupId={group.id}
+              name={group.name}
+              feeds={feedsByGroup.get(group.id) ?? []}
+            />
+          ))}
         </div>
       </div>
     </ScrollBox>

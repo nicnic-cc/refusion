@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { useUrlState } from "@/hooks/use-url-state";
+import { useIsGroupSelected, useUrlActions } from "@/hooks/use-url-state";
 import { sidebarNodeKey, useSidebarNavStore } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedItem } from "./feed-item";
@@ -13,7 +14,11 @@ interface FeedGroupProps {
   feeds: Feed[];
 }
 
-export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
+export const FeedGroup = memo(function FeedGroup({
+  groupId,
+  name,
+  feeds,
+}: FeedGroupProps) {
   const isOpen = useCollapsedGroupsStore(
     (s) => !s.collapsedIds.includes(groupId),
   );
@@ -36,8 +41,8 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
       setFocusedKey(groupKey);
     }
   };
-  const { selectedGroupId, setSelectedGroup } = useUrlState();
-  const isSelected = selectedGroupId === groupId;
+  const isSelected = useIsGroupSelected(groupId);
+  const { setSelectedGroup } = useUrlActions();
 
   const unreadCount = feeds.reduce(
     (sum, feed) => sum + (feed.unread_count || 0),
@@ -100,4 +105,4 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
       </CollapsibleContent>
     </Collapsible>
   );
-}
+});

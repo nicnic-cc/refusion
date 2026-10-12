@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation, useMatches } from "@tanstack/react-router";
+import { useMatches, useRouter } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { ArticleDrawer } from "@/components/article/article-drawer";
@@ -19,6 +19,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useReadingPane } from "@/hooks/use-reading-pane";
 import { useUIStore } from "@/store/ui";
 
+// Its own component so the feeds/groups fetch state re-renders only this null.
+function MissingScopeRedirect() {
+  useMissingScopeRedirect();
+  return null;
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
@@ -27,20 +33,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // The layout is shared by all pages; only article routes mount an
   // ArticlePane instead of the drawer.
-  const onFeedsPage = useMatches().some((m) => m.routeId === "/feeds");
+  const onFeedsPage = useMatches({
+    select: (ms) => ms.some((m) => m.routeId === "/feeds"),
+  });
   const readingPane = useReadingPane() && !onFeedsPage;
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
   usePullRun();
-  useMissingScopeRedirect();
   usePrefetchFilterViews();
 
-  // Close mobile sidebar on navigation
-  const location = useLocation();
+  // Close mobile sidebar on navigation. Subscribing to the router instead of
+  // reading the location keeps this layout from re-rendering on every URL change.
+  const router = useRouter();
   useEffect(() => {
     setSidebarOpen(false);
-  }, [location.pathname, location.searchStr, setSidebarOpen]);
+    return router.subscribe("onResolved", ({ hrefChanged }) => {
+      if (hrefChanged) setSidebarOpen(false);
+    });
+  }, [router, setSidebarOpen]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -60,6 +71,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </SheetContent>
         </Sheet>
       )}
+
+      <MissingScopeRedirect />
 
       {/* Main content */}
       <main className="flex-1 overflow-hidden">{children}</main>

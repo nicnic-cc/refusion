@@ -52,5 +52,8 @@ export const useUIStore = create<UIState>((set) => ({
 
   setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
 
-  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+  // Returning the same state skips listener notification, so the per-navigation
+  // close does not wake every subscriber.
+  setSidebarOpen: (open) =>
+    set((s) => (s.isSidebarOpen === open ? s : { isSidebarOpen: open })),
 }));
