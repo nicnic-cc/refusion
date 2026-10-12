@@ -35,7 +35,9 @@ Examples:
 
 Scope and filter each have one control: the sidebar sets only the scope, the
 switch in the sidebar header sets only the filter. Rows that set both drifted
-out of sync with the switch, which keeps the scope.
+out of sync with the switch, which keeps the scope. Under Unread and Starred the
+sidebar hides feeds with nothing matching, but keeps every feed it showed since
+the view was entered, so reading or marking all read doesn't pull rows away.
 
 This keeps list context stable while opening/closing article detail. `g u` /
 `g a` / `g s` switch the filter of the current view, `g h` / `g f` jump to all feeds / feed management; all are navigation sugar over the same URLs.
