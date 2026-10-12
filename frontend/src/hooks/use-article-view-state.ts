@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUrlState } from "@/hooks/use-url-state";
-import type { Item } from "@/lib/api";
+import type { ArticleView, Item } from "@/lib/api";
 import {
   useItem,
   useMarkItemsRead,
@@ -17,6 +17,7 @@ import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
 import { apiErrorMessage, itemAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { toggledView } from "@/lib/article-view";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { useReadStatePins, usePreferencesStore } from "@/store";
 import { autoMarkReadDelayMs } from "@/store/preferences";
@@ -142,80 +143,79 @@ export function useArticleViewState() {
     }
   };
 
-  // Keyed by item id so navigating to another item drops the fetched text
-  // without an effect; the text is never persisted.
-  const [fullText, setFullText] = useState<{ id: number; html: string } | null>(
-    null,
-  );
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  // Last item whose full text was requested. Auto-load skips it (so w back to
-  // feed text, or a failure, sticks) and older responses that land late are
-  // dropped instead of overwriting it.
-  const requestedIdRef = useRef<number | null>(null);
-  const showingFullText = article !== null && fullText?.id === article.id;
-  const loadingFullText = article !== null && loadingId === article.id;
   // Bookmark-only snapshots have negative ids and no server item to fetch for.
   const canLoadFullText =
     article !== null && article.id > 0 && safeArticleLink !== null;
-
-  // Keyed by item id like the full text, so navigating away leaves the view.
-  const [webPageId, setWebPageId] = useState<number | null>(null);
-  const showingWebPage = article !== null && webPageId === article.id;
   const canShowWebPage = canLoadFullText;
-  // Web page and full text are exclusive: switching to the web page drops the
-  // full text (and any in-flight request) so leaving it shows the feed text.
-  const handleToggleWebPage = () => {
-    if (!article || !canShowWebPage) return;
-    if (showingWebPage) {
-      setWebPageId(null);
-      return;
-    }
-    setWebPageId(article.id);
-    setFullText(null);
-    requestedIdRef.current = null;
-  };
+  const defaultView: ArticleView = canLoadFullText
+    ? (feed?.default_view ?? "feed")
+    : "feed";
 
-  const handleToggleFullText = async () => {
-    if (!article || !canLoadFullText) return;
-    if (showingWebPage) {
-      setWebPageId(null);
-    } else if (showingFullText) {
-      setFullText(null);
-      return;
-    }
-    if (loadingFullText) {
-      // Re-claim a request the web page view dropped, instead of firing another.
-      requestedIdRef.current = article.id;
-      return;
-    }
-    const id = article.id;
-    requestedIdRef.current = id;
-    setLoadingId(id);
-    try {
-      const res = await itemAPI.getFullContent(id);
-      if (requestedIdRef.current === id) {
-        setFullText({ id, html: res.data?.content ?? "" });
-      }
-    } catch (error) {
-      console.error("Failed to load full article:", error);
-      if (requestedIdRef.current === id) {
+  // The view picked by the user for one article. Keyed by id so another
+  // article falls back to its feed's default, and a pick of "feed" on a "full"
+  // feed is not undone by the auto-load.
+  const [choice, setChoice] = useState<{
+    id: number;
+    view: ArticleView;
+  } | null>(null);
+  const view: ArticleView =
+    article !== null && choice?.id === article.id ? choice.view : defaultView;
+
+  // The fetched text is kept per item id and never persisted. Responses
+  // superseded by a newer request are dropped, so they cannot overwrite it.
+  const [fullTextData, setFullTextData] = useState<{
+    id: number;
+    html: string;
+  } | null>(null);
+  const latestRequestIdRef = useRef<number | null>(null);
+  const showingFullText =
+    article !== null && view === "full" && fullTextData?.id === article.id;
+  // In the full view without text means a request is on its way: a failure
+  // leaves the view (see loadFullText).
+  const loadingFullText =
+    article !== null && view === "full" && fullTextData?.id !== article.id;
+  const showingWebPage = article !== null && view === "web";
+
+  const loadFullText = (id: number) => {
+    if (fullTextData?.id === id) return;
+    latestRequestIdRef.current = id;
+    itemAPI
+      .getFullContent(id)
+      .then((res) => {
+        if (latestRequestIdRef.current === id) {
+          setFullTextData({ id, html: res.data?.content ?? "" });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load full article:", error);
+        if (latestRequestIdRef.current !== id) return;
         toast.error(t("article.toast.fullTextFailed"));
-      }
-    } finally {
-      setLoadingId((current) => (current === id ? null : current));
-    }
+        // Leave the empty full view so a later w retries; never override a
+        // choice made for another article.
+        const fallback = toggledView("full", "full", defaultView);
+        setChoice((current) =>
+          current === null || (current.id === id && current.view === "full")
+            ? { id, view: fallback }
+            : current,
+        );
+      });
   };
 
-  const autoLoadFullText = useEffectEvent(() => {
-    void handleToggleFullText();
+  const toggleView = (target: "full" | "web") => {
+    if (!article || !canLoadFullText) return;
+    setChoice({ id: article.id, view: toggledView(view, target, defaultView) });
+  };
+  const handleToggleFullText = () => toggleView("full");
+  const handleToggleWebPage = () => toggleView("web");
+
+  // Entering the full view by any route (w, or a "full" feed default) fetches.
+  const startFullTextLoad = useEffectEvent(() => {
+    if (article) loadFullText(article.id);
   });
-  const autoLoadId =
-    feed?.full_content && canLoadFullText ? article.id : null;
+  const fullViewId = view === "full" && canLoadFullText ? article.id : null;
   useEffect(() => {
-    if (autoLoadId !== null && autoLoadId !== requestedIdRef.current) {
-      autoLoadFullText();
-    }
-  }, [autoLoadId]);
+    if (fullViewId !== null) startFullTextLoad();
+  }, [fullViewId]);
 
   const handleOpenOriginal = () => {
     if (!safeArticleLink) return;
@@ -237,9 +237,7 @@ export function useArticleViewState() {
         void handleToggleStar();
       },
       onOpenOriginal: handleOpenOriginal,
-      onToggleFullText: () => {
-        void handleToggleFullText();
-      },
+      onToggleFullText: handleToggleFullText,
       onToggleWebPage: handleToggleWebPage,
     });
 
@@ -254,7 +252,7 @@ export function useArticleViewState() {
     handleToggleRead,
     handleToggleStar,
     handleOpenFeed,
-    fullText: showingFullText ? fullText : null,
+    fullText: showingFullText ? fullTextData : null,
     loadingFullText,
     canLoadFullText,
     handleToggleFullText,

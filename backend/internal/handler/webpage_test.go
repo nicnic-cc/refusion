@@ -23,7 +23,7 @@ func TestGetItemPageServesSandboxedCopy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateGroup: %v", err)
 	}
-	feed, err := st.CreateFeed(group.ID, "Feed", site.URL+"/feed", site.URL, "", nil, false)
+	feed, err := st.CreateFeed(group.ID, "Feed", site.URL+"/feed", site.URL, "", nil, "feed")
 	if err != nil {
 		t.Fatalf("CreateFeed: %v", err)
 	}

@@ -8,6 +8,18 @@ type Group struct {
 	UpdatedAt int64  `json:"updated_at"`
 }
 
+// Views an article can open in; a feed's default_view is one of these.
+const (
+	ViewFeed = "feed"
+	ViewFull = "full"
+	ViewWeb  = "web"
+)
+
+// IsValidDefaultView reports whether v is an accepted feed default_view.
+func IsValidDefaultView(v string) bool {
+	return v == ViewFeed || v == ViewFull || v == ViewWeb
+}
+
 // Feed represents an RSS/Atom feed.
 type Feed struct {
 	ID                     int64  `json:"id"`
@@ -18,7 +30,7 @@ type Feed struct {
 	Suspended              bool   `json:"suspended"`
 	Proxy                  string `json:"proxy,omitempty"`
 	RefreshIntervalSeconds *int64 `json:"refresh_interval_seconds,omitempty"`
-	FullContent            bool   `json:"full_content"`
+	DefaultView            string `json:"default_view"`
 	CreatedAt              int64  `json:"created_at"`
 	UpdatedAt              int64  `json:"updated_at"`
 

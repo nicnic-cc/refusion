@@ -6,6 +6,9 @@ export interface Group {
   updated_at: number;
 }
 
+// How a feed's articles open: feed text, extracted full article, or original page.
+export type ArticleView = "feed" | "full" | "web";
+
 export interface Feed {
   id: number;
   group_id: number;
@@ -15,7 +18,7 @@ export interface Feed {
   suspended: boolean;
   proxy?: string;
   refresh_interval_seconds?: number | null;
-  full_content: boolean;
+  default_view: ArticleView;
   created_at: number;
   updated_at: number;
   fetch_state: FeedFetchState;
@@ -143,7 +146,7 @@ export interface CreateFeedRequest {
   site_url?: string;
   proxy?: string;
   refresh_interval_seconds?: number | null;
-  full_content?: boolean;
+  default_view?: ArticleView;
 }
 
 export interface UpdateFeedRequest {
@@ -154,7 +157,7 @@ export interface UpdateFeedRequest {
   suspended?: boolean;
   proxy?: string;
   refresh_interval_seconds?: number | null;
-  full_content?: boolean;
+  default_view?: ArticleView;
 }
 
 export interface ValidateFeedRequest {

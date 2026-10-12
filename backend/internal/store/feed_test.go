@@ -101,7 +101,7 @@ func TestCreateFeed(t *testing.T) {
 	}
 
 	// Test UNIQUE constraint on link
-	_, err := store.CreateFeed(group.ID, "Duplicate", link, siteURL, "", nil, false)
+	_, err := store.CreateFeed(group.ID, "Duplicate", link, siteURL, "", nil, "feed")
 	if err == nil {
 		t.Error("expected error when creating duplicate feed link, got nil")
 	}

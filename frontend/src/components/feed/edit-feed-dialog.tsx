@@ -30,7 +30,11 @@ import { useGroups } from "@/queries/groups";
 import { useUpdateFeed, useDeleteFeed, useFeedLookup } from "@/queries/feeds";
 import { FeedCheckStatus } from "@/components/feed/feed-check-status";
 import { useAppInfo } from "@/queries/app";
-import { apiErrorMessage, type UpdateFeedRequest } from "@/lib/api";
+import {
+  apiErrorMessage,
+  type ArticleView,
+  type UpdateFeedRequest,
+} from "@/lib/api";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -40,6 +44,7 @@ import {
   intervalOptions,
 } from "@/lib/refresh-interval";
 import { cn } from "@/lib/utils";
+import { DefaultViewSelect } from "@/components/feed/default-view-select";
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -58,7 +63,7 @@ export function EditFeedDialog() {
   const [proxy, setProxy] = useState("");
   const [suspended, setSuspended] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<string>("");
-  const [fullContent, setFullContent] = useState(false);
+  const [defaultView, setDefaultView] = useState<ArticleView>("feed");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -91,9 +96,9 @@ export function EditFeedDialog() {
       // live global fallback, and an untouched save sends nothing.
       const stored = editingFeed.refresh_interval_seconds;
       setRefreshInterval(stored && stored > 0 ? stored.toString() : "");
-      setFullContent(editingFeed.full_content);
+      setDefaultView(editingFeed.default_view);
       setIsAdvancedOpen(
-        !!editingFeed.proxy || stored != null || editingFeed.full_content,
+        !!editingFeed.proxy || stored != null || editingFeed.default_view !== "feed",
       );
     }
   }
@@ -105,7 +110,7 @@ export function EditFeedDialog() {
     setProxy("");
     setSuspended(false);
     setRefreshInterval("");
-    setFullContent(false);
+    setDefaultView("feed");
     setIsAdvancedOpen(false);
     setIsDeleteOpen(false);
   };
@@ -164,8 +169,8 @@ export function EditFeedDialog() {
           selected === globalPullInterval ? 0 : selected;
       }
 
-      if (fullContent !== editingFeed.full_content) {
-        request.full_content = fullContent;
+      if (defaultView !== editingFeed.default_view) {
+        request.default_view = defaultView;
       }
 
       if (Object.keys(request).length === 0) {
@@ -351,24 +356,11 @@ export function EditFeedDialog() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <label
-                      htmlFor="edit-feed-full-content"
-                      className="block text-[13px] font-medium"
-                    >
-                      {t("feed.add.fullContentLabel")}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("feed.add.fullContentDescription")}
-                    </p>
-                  </div>
-                  <Switch
-                    id="edit-feed-full-content"
-                    checked={fullContent}
-                    onCheckedChange={setFullContent}
-                  />
-                </div>
+                <DefaultViewSelect
+                  idPrefix="edit-feed"
+                  value={defaultView}
+                  onChange={setDefaultView}
+                />
                 <div className="space-y-2">
                   <label htmlFor="edit-feed-proxy" className="block text-[13px] font-medium">
                     {t("feed.add.proxyLabel")}

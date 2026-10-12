@@ -14,7 +14,7 @@ func TestFeedFilterEndpoints(t *testing.T) {
 	router := h.SetupRouter()
 	jsonHdr := map[string]string{"Content-Type": "application/json"}
 
-	feed, err := st.CreateFeed(1, "Cooking blog", "https://cookingblog.example/feed", "", "", nil, false)
+	feed, err := st.CreateFeed(1, "Cooking blog", "https://cookingblog.example/feed", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}

@@ -13,7 +13,7 @@ func TestGlobalFilterEndpoints(t *testing.T) {
 	router := h.SetupRouter()
 	jsonHdr := map[string]string{"Content-Type": "application/json"}
 
-	garden, err := st.CreateFeed(1, "Garden notes", "https://gardennotes.example/feed", "", "", nil, false)
+	garden, err := st.CreateFeed(1, "Garden notes", "https://gardennotes.example/feed", "", "", nil, "feed")
 	if err != nil {
 		t.Fatalf("create feed: %v", err)
 	}
