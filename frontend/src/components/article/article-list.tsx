@@ -51,7 +51,6 @@ import {
 import type { Bookmark, Item } from "@/lib/api";
 
 const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
-const PREFETCH_ROWS = 3;
 
 interface FeedDisplay {
   name: string;
@@ -185,6 +184,7 @@ export function ArticleList() {
   ]);
 
   const articleLoading = usePreferencesStore((s) => s.articleLoading);
+  const articlePageSize = usePreferencesStore((s) => s.articlePageSize);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // The layout stays mounted across pages, so the scroll box is reused: start
@@ -250,8 +250,9 @@ export function ArticleList() {
 
   const selectedIndex =
     selectedArticleId === null ? -1 : (indexById.get(selectedArticleId) ?? -1);
+  // One page ahead, so key repeat never waits on a fetch.
   const selectionNearEnd =
-    selectedIndex >= 0 && selectedIndex >= articles.length - PREFETCH_ROWS;
+    selectedIndex >= 0 && selectedIndex >= articles.length - articlePageSize;
 
   // With the last loaded row selected, show the footer too: the spinner while the
   // page loads, the button in button mode, and the new rows land in place.

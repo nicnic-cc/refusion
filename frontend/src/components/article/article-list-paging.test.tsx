@@ -98,7 +98,7 @@ afterEach(() => {
   setSelectedArticle.mockClear();
   fetchNextPage.mockClear();
   scrollIntoView.mockClear();
-  usePreferencesStore.setState({ articleLoading: "scroll" });
+  usePreferencesStore.setState({ articleLoading: "scroll", articlePageSize: 20 });
   state.articles = [make(1), make(2), make(3)];
   state.hasMore = true;
   state.selectedArticleId = 3;
@@ -170,6 +170,27 @@ describe("article list paging with j", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("article list prefetch", () => {
+  const page = () => Array.from({ length: 10 }, (_, i) => make(i + 1));
+
+  // Entering the last loaded page asks for the next one, so j never waits on a fetch.
+  it("requests the next page once the selection is in the last loaded page", () => {
+    usePreferencesStore.setState({ articlePageSize: 10 });
+    state.articles = page();
+    state.selectedArticleId = 2;
+    render(<ArticleList />);
+    expect(fetchNextPage).toHaveBeenCalled();
+  });
+
+  it("does not prefetch in button mode", () => {
+    usePreferencesStore.setState({ articleLoading: "button", articlePageSize: 10 });
+    state.articles = page();
+    state.selectedArticleId = 2;
+    render(<ArticleList />);
+    expect(fetchNextPage).not.toHaveBeenCalled();
   });
 });
 
