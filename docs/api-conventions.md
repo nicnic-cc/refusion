@@ -38,7 +38,8 @@ disagree, the code wins — fix the page.
   `next_cursor` is `null` when there are no more pages.
 - `GET /api/items` adds `snapshot_id`: the server's max item id, read before
   the list query. "Mark all read" sends it as `max_id`, so items saved after
-  the list was read are not marked.
+  the list was read are not marked. This relies on item ids never being
+  reused (see `items` in [backend-design.md](backend-design.md)).
 
 ## Cursor pagination
 
