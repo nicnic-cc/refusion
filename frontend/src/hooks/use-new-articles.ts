@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleFilter } from "@/lib/article-filter";
 import { queryKeys } from "@/queries/keys";
@@ -50,6 +56,17 @@ export function useNewArticles({
   );
   // Highest item id the server had when the list's first page was read.
   const listSnapshotId = items.data?.pages[0]?.snapshot_id;
+
+  // A refetch keeps only the first page, so a long list shrinks under the
+  // scroll offset; start it at the top rather than at the clamped end.
+  const pageCount = items.data?.pages.length ?? 0;
+  const prevPageCount = useRef(pageCount);
+  useLayoutEffect(() => {
+    if (pageCount < prevPageCount.current) {
+      scrollRef.current?.scrollTo({ top: 0 });
+    }
+    prevPageCount.current = pageCount;
+  }, [pageCount, scrollRef]);
 
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [dismissedUpTo, setDismissedUpTo] = useState(0);

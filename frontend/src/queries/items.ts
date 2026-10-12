@@ -64,6 +64,10 @@ export const itemQueries = {
         itemAPI.list(buildListItemsParams(normalizedFilters, pageParam, pageSize)),
       initialPageParam: null as string | null,
       getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+      // Undocumented in v5 for observers (query-core reads it in
+      // infiniteQueryBehavior): a refetch asks for 1 page, not all loaded
+      // ones; fetchNextPage is unaffected. Guarded by items-refetch.test.tsx.
+      ...({ pages: 1 } as object),
     });
   },
   detail: (itemId: number) =>
