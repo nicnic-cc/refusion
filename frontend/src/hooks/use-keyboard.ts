@@ -286,6 +286,18 @@ export function useKeyboardShortcuts() {
   }, []);
 }
 
+// The article list owns paging, so j on the last loaded row tells it instead
+// of fetching here.
+type ArticleEndListener = (lastArticleId: number) => void;
+const articleEndListeners = new Set<ArticleEndListener>();
+
+export function onArticleNavigationEnd(listener: ArticleEndListener) {
+  articleEndListeners.add(listener);
+  return () => {
+    articleEndListeners.delete(listener);
+  };
+}
+
 export function useArticleNavigation(
   articleIds: number[],
   options: ArticleNavigationOptions = {},
@@ -389,6 +401,10 @@ export function useArticleNavigation(
         event.preventDefault();
         if (currentIndex < state.articleIds.length - 1) {
           state.setSelectedArticle(state.articleIds[currentIndex + 1]);
+        } else if (currentIndex >= 0) {
+          articleEndListeners.forEach((l) =>
+            l(state.articleIds[currentIndex]),
+          );
         }
         return;
       }
