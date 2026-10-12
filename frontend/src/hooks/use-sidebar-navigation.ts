@@ -8,7 +8,7 @@ import {
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isTypingTarget } from "./use-keyboard";
-import { useUrlState } from "./use-url-state";
+import { useUrlActions } from "./use-url-state";
 
 const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
 
@@ -20,91 +20,67 @@ const modifierKeys = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
  */
 export function useSidebarNavigation(nodes: SidebarNode[]) {
   const { selectTopLevelFilter, setSelectedGroup, setSelectedFeed } =
-    useUrlState();
+    useUrlActions();
   const isMobile = useIsMobile();
-  const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
-  const focusedKey = useSidebarNavStore((s) => s.focusedKey);
-  const ringVisible = useSidebarNavStore((s) => s.ringVisible);
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
   const setGroupOpen = useCollapsedGroupsStore((s) => s.setGroupOpen);
-  const isSearchOpen = useUIStore((s) => s.isSearchOpen);
-  const isSettingsOpen = useUIStore((s) => s.isSettingsOpen);
-  const isAddGroupOpen = useUIStore((s) => s.isAddGroupOpen);
-  const isAddFeedOpen = useUIStore((s) => s.isAddFeedOpen);
-  const isEditFeedOpen = useUIStore((s) => s.isEditFeedOpen);
-  const isImportOpmlOpen = useUIStore((s) => s.isImportOpmlOpen);
-  const isShortcutsOpen = useUIStore((s) => s.isShortcutsOpen);
 
   const latestStateRef = useRef({
     nodes,
-    focusedKey,
     collapsedIds,
     isMobile,
-    isSidebarOpen,
     selectTopLevelFilter,
     setSelectedGroup,
     setSelectedFeed,
     setFocusedKey,
     setGroupOpen,
-    isSearchOpen,
-    isSettingsOpen,
-    isAddGroupOpen,
-    isAddFeedOpen,
-    isEditFeedOpen,
-    isImportOpmlOpen,
-    isShortcutsOpen,
   });
 
   useEffect(() => {
     latestStateRef.current = {
       nodes,
-      focusedKey,
       collapsedIds,
       isMobile,
-      isSidebarOpen,
       selectTopLevelFilter,
       setSelectedGroup,
       setSelectedFeed,
       setFocusedKey,
       setGroupOpen,
-      isSearchOpen,
-      isSettingsOpen,
-      isAddGroupOpen,
-      isAddFeedOpen,
-      isEditFeedOpen,
-      isImportOpmlOpen,
-      isShortcutsOpen,
     };
   }, [
     nodes,
-    focusedKey,
     collapsedIds,
     isMobile,
-    isSidebarOpen,
     selectTopLevelFilter,
     setSelectedGroup,
     setSelectedFeed,
     setFocusedKey,
     setGroupOpen,
-    isSearchOpen,
-    isSettingsOpen,
-    isAddGroupOpen,
-    isAddFeedOpen,
-    isEditFeedOpen,
-    isImportOpmlOpen,
-    isShortcutsOpen,
   ]);
 
   // Keep the highlighted item visible; a mouse click must not scroll the list.
+  // Subscribed outside render so focus moves don't re-render the whole list.
   useEffect(() => {
-    if (focusedKey === null || !ringVisible) {
-      return;
-    }
-    document
-      .querySelector(`[data-sidebar-key="${focusedKey}"]`)
-      ?.scrollIntoView({ block: "nearest" });
-  }, [focusedKey, ringVisible]);
+    const scrollToFocus = (focusedKey: string | null, ringVisible: boolean) => {
+      if (focusedKey === null || !ringVisible) {
+        return;
+      }
+      document
+        .querySelector(`[data-sidebar-key="${focusedKey}"]`)
+        ?.scrollIntoView({ block: "nearest" });
+    };
+    const initial = useSidebarNavStore.getState();
+    scrollToFocus(initial.focusedKey, initial.ringVisible);
+    return useSidebarNavStore.subscribe((state, prev) => {
+      if (
+        state.focusedKey !== prev.focusedKey ||
+        state.ringVisible !== prev.ringVisible
+      ) {
+        scrollToFocus(state.focusedKey, state.ringVisible);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const { setRingVisible } = useSidebarNavStore.getState();
@@ -131,21 +107,23 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
       }
 
       const state = latestStateRef.current;
+      const ui = useUIStore.getState();
+      const { focusedKey } = useSidebarNavStore.getState();
 
       if (
-        state.isSearchOpen ||
-        state.isSettingsOpen ||
-        state.isAddGroupOpen ||
-        state.isAddFeedOpen ||
-        state.isEditFeedOpen ||
-        state.isImportOpmlOpen ||
-        state.isShortcutsOpen
+        ui.isSearchOpen ||
+        ui.isSettingsOpen ||
+        ui.isAddGroupOpen ||
+        ui.isAddFeedOpen ||
+        ui.isEditFeedOpen ||
+        ui.isImportOpmlOpen ||
+        ui.isShortcutsOpen
       ) {
         return;
       }
 
       // On mobile the sidebar lives in a Sheet; ignore chords while it is hidden.
-      if (state.isMobile && !state.isSidebarOpen) {
+      if (state.isMobile && !ui.isSidebarOpen) {
         return;
       }
 
@@ -169,7 +147,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
         setRingVisible(true);
 
         const currentIndex = state.nodes.findIndex(
-          (node) => node.key === state.focusedKey,
+          (node) => node.key === focusedKey,
         );
         const direction = key === "n" || key === "j" ? 1 : -1;
         const nextIndex =
@@ -192,7 +170,7 @@ export function useSidebarNavigation(nodes: SidebarNode[]) {
         return;
       }
 
-      const node = state.nodes.find((item) => item.key === state.focusedKey);
+      const node = state.nodes.find((item) => item.key === focusedKey);
       if (!node) {
         return;
       }

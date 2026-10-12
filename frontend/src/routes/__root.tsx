@@ -64,7 +64,9 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   useRemoteThemeSync();
-  const isLogin = useMatches().some((m) => m.routeId === "/login");
+  const isLogin = useMatches({
+    select: (ms) => ms.some((m) => m.routeId === "/login"),
+  });
   // One layout above the pages keeps the sidebar mounted across navigation.
   return (
     <>

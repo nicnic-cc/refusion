@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { Search, Settings, Rss } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/logo";
@@ -12,11 +12,12 @@ import { usePullStore } from "@/store/pull";
 import { useI18n } from "@/lib/i18n";
 import { useUIStore } from "@/store";
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const { t } = useI18n();
-  const { setSearchOpen, setSettingsOpen } = useUIStore();
+  const setSearchOpen = useUIStore((s) => s.setSearchOpen);
+  const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const pathname = useLocation({ select: (l) => l.pathname });
   const isFeedsPage = pathname === "/feeds";
   const feedListRef = useRef<HTMLDivElement>(null);
   const isPullIdle = usePullStore((s) => s.phase === "idle");
@@ -72,5 +73,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
-
+});

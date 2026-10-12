@@ -1,19 +1,24 @@
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { usePullStatus } from "@/queries/pull";
+import { pullQueries } from "@/queries/pull";
 
 // Same 16px box in every state so rows never shift. Reads the shared status
-// query only; the app-wide poller owns the requests.
+// query only (as a per-feed boolean, so the 1s poll does not re-render every
+// row); the app-wide poller owns the requests.
 export function FeedRowIcon({ feed }: { feed: Feed }) {
   const { t } = useI18n();
-  const { data } = usePullStatus();
+  const { data: isPending } = useQuery({
+    ...pullQueries.status(),
+    select: (status) => status.pending.includes(feed.id),
+  });
   const error = feed.fetch_state.last_error?.trim();
 
-  if (data?.pending.includes(feed.id)) {
+  if (isPending) {
     return (
       <Loader2
         aria-label={t("pull.checking")}

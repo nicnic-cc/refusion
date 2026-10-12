@@ -1,5 +1,6 @@
+import { memo } from "react";
 import { cn } from "@/lib/utils";
-import { useUrlState } from "@/hooks/use-url-state";
+import { useIsFeedSelected, useUrlActions } from "@/hooks/use-url-state";
 import { sidebarNodeKey, useSidebarNavStore, useUIStore } from "@/store";
 import type { Feed } from "@/lib/api";
 import { FeedRowIcon } from "@/components/feed/feed-row-icon";
@@ -11,18 +12,17 @@ interface FeedItemProps {
   feed: Feed;
 }
 
-export function FeedItem({ feed }: FeedItemProps) {
+export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
   const { t } = useI18n();
-  const { selectedFeedId, setSelectedFeed } = useUrlState();
-  const { setEditFeedOpen } = useUIStore();
+  const isSelected = useIsFeedSelected(feed.id);
+  const { setSelectedFeed } = useUrlActions();
+  const setEditFeedOpen = useUIStore((s) => s.setEditFeedOpen);
 
   const feedKey = sidebarNodeKey.feed(feed.id);
   const isFocused = useSidebarNavStore(
     (s) => s.ringVisible && s.focusedKey === feedKey,
   );
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
-
-  const isSelected = selectedFeedId === feed.id;
 
   const handleSettingsClick = () => {
     setEditFeedOpen(true, feed);
@@ -66,4 +66,4 @@ export function FeedItem({ feed }: FeedItemProps) {
       </div>
     </div>
   );
-}
+});

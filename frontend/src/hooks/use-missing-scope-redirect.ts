@@ -8,7 +8,7 @@ import { useUrlState } from "./use-url-state";
 // bookmark, deleted in another tab). Waits for a settled, successful list: a
 // fetch in flight may still be about to add a just-created feed.
 export function useMissingScopeRedirect() {
-  const { selectedFeedId, selectedGroupId, selectTopLevelFilter } = useUrlState();
+  const { selectedFeedId, selectedGroupId, selectTopLevelFilter } = useUrlState({ article: false });
   const feeds = useFeeds();
   const groups = useGroups();
 
