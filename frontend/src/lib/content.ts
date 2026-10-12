@@ -107,7 +107,12 @@ function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void
     img.setAttribute("src", safeSrc);
     if (isTrackingPixel(img)) {
       img.remove();
+      continue;
     }
+
+    // Keeps an image-heavy article from starting every download at once.
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
   }
 }
 
