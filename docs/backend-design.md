@@ -50,6 +50,10 @@ here, it duplicates the migrations and rots.
 - `items` — unique `(feed_id, guid)`; unread partial index, `pub_date` and
   `(feed_id, unread)` indexes. `filtered` / `filtered_global` hold the
   stored filter result (migrations 903, 904; see [feed-filter.md](feed-filter.md)).
+  `id` is `AUTOINCREMENT`, so ids are never reused: "mark all read" marks
+  `id <= snapshot_id`, and a reused id would mark unseen items. Only
+  databases created from 2026-10-12 on have it (set in `001_initial.sql`,
+  no migration); older ones need a one-off table rebuild.
 - `feed_filters` — one optional filter per feed, 1:1 via `feed_id`
   (`ON DELETE CASCADE`).
 - `global_filter` — single row (`id = 1`), the filter applied to every feed.

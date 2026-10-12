@@ -25,7 +25,7 @@ Reading state is split between path params and search params:
 | Path param   | `filter`  | `all \| unread \| starred` | Active article filter    |
 | Path param   | `feedId`  | number                     | Selected feed scope      |
 | Path param   | `groupId` | number                     | Selected group scope     |
-| Search param | `article` | number                     | Opened article (drawer or reading pane) |
+| Search param | `article` | number                     | Opened article (drawer or reading pane); negative = a starred article whose item was deleted (`-bookmark.id`) |
 
 Examples:
 
@@ -110,6 +110,8 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
 - The "starred" view is powered by bookmarks, which are content
   snapshots — starred items survive deletion of the source feed/item
   (see the bookmarks rationale in `backend-design.md` §5).
+- Star state matches by item id, then by link: `bookmarks.link` is unique,
+  so the same article cross-posted in two feeds shows starred in both.
 
 ## 7. Keyboard interactions
 
