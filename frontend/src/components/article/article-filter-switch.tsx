@@ -60,7 +60,7 @@ export function ArticleFilterSwitch({
                 <TabsPrimitive.Tab
                   value={optionValue}
                   aria-label={label}
-                  className="relative z-10 inline-flex h-full w-[30px] items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
+                  className="relative z-10 inline-flex h-full w-[30px] items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
                 />
               }
             >
