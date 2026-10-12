@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { Inbox, Layers, Star } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import type { ArticleFilter } from "@/hooks/use-url-state";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -57,20 +53,19 @@ export function ArticleFilterSwitch({
         {options.map(({ value: optionValue, icon: Icon, labelKey }) => {
           const label = t(labelKey);
           return (
-            <Tooltip key={optionValue}>
-              <TooltipTrigger
-                render={
-                  <TabsPrimitive.Tab
-                    value={optionValue}
-                    aria-label={label}
-                    className="relative z-10 inline-flex h-full w-[30px] items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
-                  />
-                }
-              >
-                <Icon className="size-4" aria-hidden="true" />
-              </TooltipTrigger>
-              <TooltipContent>{label}</TooltipContent>
-            </Tooltip>
+            <SharedTooltipTrigger
+              key={optionValue}
+              tip={label}
+              render={
+                <TabsPrimitive.Tab
+                  value={optionValue}
+                  aria-label={label}
+                  className="relative z-10 inline-flex h-full w-[30px] items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
+                />
+              }
+            >
+              <Icon className="size-4" aria-hidden="true" />
+            </SharedTooltipTrigger>
           );
         })}
       </TabsPrimitive.List>

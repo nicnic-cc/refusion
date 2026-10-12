@@ -12,11 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import type { TranslationKey } from "@/lib/i18n";
 import type { Move } from "@/lib/reorder";
 
@@ -43,34 +39,34 @@ function ReorderButton({
   children: ReactNode;
 }) {
   return (
-    <Tooltip>
-      {disabled ? (
-        <TooltipTrigger render={<span className="inline-flex" />}>
+    <SharedTooltipTrigger
+      tip={label}
+      render={
+        disabled ? (
+          <span className="inline-flex" />
+        ) : (
           <button
             type="button"
-            disabled
+            onClick={onClick}
             className={buttonClass}
             aria-label={label}
-          >
-            {children}
-          </button>
-        </TooltipTrigger>
-      ) : (
-        <TooltipTrigger
-          render={
-            <button
-              type="button"
-              onClick={onClick}
-              className={buttonClass}
-              aria-label={label}
-            />
-          }
+          />
+        )
+      }
+    >
+      {disabled ? (
+        <button
+          type="button"
+          disabled
+          className={buttonClass}
+          aria-label={label}
         >
           {children}
-        </TooltipTrigger>
+        </button>
+      ) : (
+        children
       )}
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    </SharedTooltipTrigger>
   );
 }
 
@@ -105,24 +101,22 @@ export function ReorderControls({
         </ReorderButton>
       ) : (
         <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <DropdownMenuTrigger
-                  render={
-                    <button
-                      type="button"
-                      className={buttonClass}
-                      aria-label={t("feeds.reorder.move")}
-                    />
-                  }
-                />
-              }
-            >
-              <EllipsisVertical className="h-3.5 w-3.5" />
-            </TooltipTrigger>
-            <TooltipContent>{t("feeds.reorder.move")}</TooltipContent>
-          </Tooltip>
+          <SharedTooltipTrigger
+            tip={t("feeds.reorder.move")}
+            render={
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    className={buttonClass}
+                    aria-label={t("feeds.reorder.move")}
+                  />
+                }
+              />
+            }
+          >
+            <EllipsisVertical className="h-3.5 w-3.5" />
+          </SharedTooltipTrigger>
           <DropdownMenuContent align="end" className="w-auto">
             <DropdownMenuItem disabled={atTop} onClick={() => onMove("top")}>
               <ArrowUpToLine className="mr-2 h-4 w-4" />

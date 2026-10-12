@@ -1,9 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 
 // Styled tooltip around an existing control, so its own markup and classes
 // stay untouched (TooltipButton would restyle it as a Button).
@@ -19,9 +15,8 @@ export function WithTooltip({
   side?: "top" | "bottom" | "left" | "right";
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger render={render}>{children}</TooltipTrigger>
-      <TooltipContent side={side}>{label}</TooltipContent>
-    </Tooltip>
+    <SharedTooltipTrigger tip={label} side={side} render={render}>
+      {children}
+    </SharedTooltipTrigger>
   );
 }

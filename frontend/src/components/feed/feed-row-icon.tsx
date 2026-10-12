@@ -1,9 +1,5 @@
 import { AlertCircle, Loader2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { SharedTooltipTrigger } from "@/components/common/shared-tooltip";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
@@ -28,25 +24,20 @@ export function FeedRowIcon({ feed }: { feed: Feed }) {
 
   if (error) {
     return (
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              role="img"
-              aria-label={t("feeds.status.error")}
-              className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-destructive"
-            />
-          }
-        >
-          <AlertCircle className="h-4 w-4" />
-        </TooltipTrigger>
-        <TooltipContent
-          side="right"
-          className="max-w-sm whitespace-normal break-words"
-        >
-          {error}
-        </TooltipContent>
-      </Tooltip>
+      <SharedTooltipTrigger
+        tip={error}
+        side="right"
+        popupClassName="max-w-sm whitespace-normal break-words"
+        render={
+          <span
+            role="img"
+            aria-label={t("feeds.status.error")}
+            className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-destructive"
+          />
+        }
+      >
+        <AlertCircle className="h-4 w-4" />
+      </SharedTooltipTrigger>
     );
   }
 
