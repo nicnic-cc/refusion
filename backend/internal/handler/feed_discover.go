@@ -72,7 +72,7 @@ type feedDiscoverer struct {
 	allowPrivate bool
 }
 
-// discoverFeeds replaces feedfinder.Find, whose HTTP client cannot be swapped
+// discoverFeeds replaces feedfinder's Find, whose HTTP client cannot be swapped
 // and so bypasses the dial-time IP check, redirect validation and body cap.
 func discoverFeeds(ctx context.Context, target, proxy string, allowPrivate bool) ([]feedfinder.Feed, error) {
 	u, err := url.Parse(target)
@@ -127,22 +127,103 @@ func hostIs(host, domain string) bool {
 	return host == domain || strings.HasSuffix(host, "."+domain)
 }
 
-// fromService handles known sites. GitHub and Reddit feeds are derived from
-// the URL alone, so feedfinder is only used there; an unmatched path would make
-// it fetch from the same public host, which is accepted. YouTube needs a page
-// fetch and goes through the guarded client.
+// fromService handles known sites. GitHub and Reddit feeds are derived from the
+// URL alone (feedfinder's Find cannot take the guarded client); unmatched paths
+// return nil and fall through to the guarded page and well-known discovery.
 func (d *feedDiscoverer) fromService(ctx context.Context) []feedfinder.Feed {
 	host := d.target.Hostname()
 	switch {
-	case hostIs(host, "github.com"), hostIs(host, "reddit.com"):
-		var o *feedfinder.Options
-		if d.proxy != "" {
-			o = &feedfinder.Options{RequestProxy: &d.proxy}
-		}
-		feeds, _ := feedfinder.Find(ctx, d.target.String(), o)
-		return feeds
+	case hostIs(host, "github.com"):
+		return githubFeeds(d.target)
+	case hostIs(host, "reddit.com"):
+		return redditFeeds(d.target)
 	case hostIs(host, "youtube.com"), hostIs(host, "youtu.be"):
 		return d.youtubeFeeds(ctx)
+	}
+	return nil
+}
+
+var (
+	reGitHubRepo = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-_\.]{0,98}[a-zA-Z0-9]$`)
+	reGitHubUser = regexp.MustCompile(`^[a-zA-Z0-9][-]?[a-zA-Z0-9]{0,38}$`)
+)
+
+// githubFeeds ports feedfinder's githubMatcher rules. An invalid repo name
+// yields nothing rather than falling back to the user feed.
+func githubFeeds(u *url.URL) []feedfinder.Feed {
+	parts := strings.SplitN(u.Path, "/", 4)
+	if len(parts) < 2 {
+		return []feedfinder.Feed{
+			{Title: "global public timeline", Link: "https://github.com/timeline"},
+			{Title: "global security advisories", Link: "https://github.com/security-advisories.atom"},
+		}
+	}
+	user := parts[1]
+	repo := ""
+	if len(parts) >= 3 {
+		repo = parts[2]
+	}
+	if repo != "" {
+		if !reGitHubRepo.MatchString(repo) {
+			return nil
+		}
+		userRepo := user + "/" + repo
+		return []feedfinder.Feed{
+			{Title: userRepo + " commits", Link: "https://github.com/" + userRepo + "/commits.atom"},
+			{Title: userRepo + " releases", Link: "https://github.com/" + userRepo + "/releases.atom"},
+			{Title: userRepo + " tags", Link: "https://github.com/" + userRepo + "/tags.atom"},
+			{Title: userRepo + " wiki", Link: "https://github.com/" + userRepo + "/wiki.atom"},
+		}
+	}
+	if user != "" && reGitHubUser.MatchString(user) {
+		return []feedfinder.Feed{{Title: user + " public timeline", Link: "https://github.com/" + user + ".atom"}}
+	}
+	return nil
+}
+
+// redditFeeds ports feedfinder's redditMatcher rules; an empty name yields
+// nothing instead of a feed for "/r//".
+func redditFeeds(u *url.URL) []feedfinder.Feed {
+	parts := strings.SplitN(u.Path, "/", 4)
+	if len(parts) < 3 {
+		return []feedfinder.Feed{{Title: "global", Link: "https://www.reddit.com/.rss"}}
+	}
+	mode, param := parts[1], parts[2]
+	if param == "" {
+		return nil
+	}
+	switch mode {
+	case "r":
+		if len(parts) >= 4 && strings.HasPrefix(parts[3], "comments") {
+			return []feedfinder.Feed{{Title: "post", Link: u.String() + ".rss"}}
+		}
+		feeds := make([]feedfinder.Feed, 0, 4)
+		for _, sort := range []string{"hot", "new", "top", "rising"} {
+			feeds = append(feeds, feedfinder.Feed{
+				Title: "/r/" + param + " " + sort,
+				Link:  "https://reddit.com/r/" + param + "/" + sort + "/.rss",
+			})
+		}
+		return feeds
+	case "user":
+		base := "https://reddit.com/user/" + param
+		var feeds []feedfinder.Feed
+		for _, kind := range []struct{ title, path string }{
+			{"overview", "/.rss"}, {"post", "/submitted/.rss"}, {"comments", "/comments/.rss"},
+		} {
+			for _, sort := range []string{"new", "hot", "top"} {
+				feeds = append(feeds, feedfinder.Feed{
+					Title: "/u/" + param + " " + kind.title + " " + sort,
+					Link:  base + kind.path + "?sort=" + sort,
+				})
+			}
+		}
+		return append(feeds, feedfinder.Feed{
+			Title: "/u/" + param + " awards received (legacy)",
+			Link:  "https://old.reddit.com/user/" + param + "/gilded/.rss",
+		})
+	case "domain":
+		return []feedfinder.Feed{{Title: "/domain/" + param, Link: "https://reddit.com/domain/" + param + "/.rss"}}
 	}
 	return nil
 }
