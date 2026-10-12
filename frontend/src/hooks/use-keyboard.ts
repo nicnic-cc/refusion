@@ -298,6 +298,18 @@ export function onArticleNavigationEnd(listener: ArticleEndListener) {
   };
 }
 
+// j with the open article missing from the loaded rows (the list reset to its
+// first page): a listener returning true takes over, else j selects the first row.
+type ArticleMissingListener = (openArticleId: number) => boolean;
+const articleMissingListeners = new Set<ArticleMissingListener>();
+
+export function onOpenArticleMissing(listener: ArticleMissingListener) {
+  articleMissingListeners.add(listener);
+  return () => {
+    articleMissingListeners.delete(listener);
+  };
+}
+
 export function useArticleNavigation(
   articleIds: number[],
   options: ArticleNavigationOptions = {},
@@ -399,6 +411,14 @@ export function useArticleNavigation(
       // J or ArrowDown: Next article
       if (key === "j" || key === "n" || event.key === "ArrowDown") {
         event.preventDefault();
+        const openId = state.selectedArticleId;
+        if (
+          openId !== null &&
+          currentIndex === -1 &&
+          [...articleMissingListeners].some((l) => l(openId))
+        ) {
+          return;
+        }
         if (currentIndex < state.articleIds.length - 1) {
           state.setSelectedArticle(state.articleIds[currentIndex + 1]);
         } else if (currentIndex >= 0) {
