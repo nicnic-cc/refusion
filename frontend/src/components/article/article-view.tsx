@@ -12,7 +12,7 @@ import {
 import { SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollBox } from "@/components/scroll-box";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatDate } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
@@ -181,7 +181,7 @@ export function ArticleView({
       </div>
 
       {/* Content. Keyed so each article opens at the top; the subtree holds no state worth keeping. */}
-      <ScrollArea key={article.id} className="min-h-0 flex-1">
+      <ScrollBox key={article.id} className="min-h-0 flex-1">
         <article className="min-w-0 px-4 py-6 sm:px-6 sm:py-8">
           <div className="space-y-3">
             <h1
@@ -251,7 +251,7 @@ export function ArticleView({
             }}
           />
         </article>
-      </ScrollArea>
+      </ScrollBox>
 
       {/* Footer - Navigation (mobile only: in thumb reach; desktop has it in the header) */}
       {isMobile && (

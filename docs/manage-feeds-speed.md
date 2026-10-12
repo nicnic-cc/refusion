@@ -50,3 +50,10 @@ Base runs drift ~20 ms between sessions, so compare within one run.
   but the upgrade changes the React tree above the control, so React
   replaces its DOM node and a Tab-focused icon loses focus. Only a hand-
   written hover/focus layer over one moving anchor would do both; not built.
+- **Native scrolling, no Base UI ScrollArea** (2026-10-12,
+  `components/scroll-box.tsx`): trackpad scrolling inside ScrollArea
+  felt janky on Manage feeds, the sidebar and the article view; the same
+  page with a plain `overflow-y-auto` div felt smooth. Headed Chrome
+  traces with synthetic wheel input showed no dropped frames either way,
+  so judge scrolling by eye on a real trackpad, not by trace. ScrollBox
+  keeps `data-slot="scroll-area-viewport"` for the selectors that use it.
