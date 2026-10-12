@@ -11,7 +11,10 @@ import { ArticleListFooter } from "./article-list-footer";
 import { ScrollBox } from "@/components/scroll-box";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
-import { useArticleNavigation } from "@/hooks/use-keyboard";
+import {
+  onArticleNavigationEnd,
+  useArticleNavigation,
+} from "@/hooks/use-keyboard";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
@@ -39,6 +42,9 @@ import {
   useReadStatePins,
 } from "@/store";
 import type { Item } from "@/lib/api";
+
+const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
+const PREFETCH_ROWS = 3;
 
 export function ArticleList() {
   const { t } = useI18n();
@@ -125,21 +131,62 @@ export function ArticleList() {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [pinsKey]);
 
-  // Same rule as yarr's itemListCloseToBottom: load only near the bottom, and
-  // not while the empty-list refill above is already fetching.
+  const requestNextPage = useEffectEvent(() => {
+    if (articleLoading !== "scroll") return;
+    if (isLoading || isLoadingMore || isFetchNextPageError || !hasMore) return;
+    fetchNextPage();
+  });
+
+  // Look ahead by whole viewports: a page requested at 70px from the end
+  // arrives after the user has already hit it.
   const loadMoreIfNearBottom = useEffectEvent(() => {
     const el = scrollRef.current;
     if (!el || el.scrollHeight === 0 || articles.length === 0) return;
-    if (articleLoading !== "scroll") return;
-    if (isLoading || isLoadingMore || isFetchNextPageError || !hasMore) return;
-
-    const scale =
-      (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) /
-      16;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 70 * scale) {
-      fetchNextPage();
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (remaining < SCROLL_LOOKAHEAD_VIEWPORTS * el.clientHeight) {
+      requestNextPage();
     }
   });
+
+  // j on the last loaded row waits for the next page, then steps onto its first
+  // article. One pending step; it is dropped when the selection or list moves on.
+  const pendingAdvanceRef = useRef<number | null>(null);
+  const advanceAfterLoad = useEffectEvent((lastId: number) => {
+    if (articleLoading !== "scroll" || !hasMore) return;
+    pendingAdvanceRef.current = lastId;
+    requestNextPage();
+  });
+  useEffect(
+    () => onArticleNavigationEnd((lastId) => advanceAfterLoad(lastId)),
+    [],
+  );
+  useEffect(() => {
+    const pending = pendingAdvanceRef.current;
+    if (pending === null) return;
+    const index = articles.findIndex((a) => a.id === pending);
+    const isLast = index === articles.length - 1;
+    if (
+      selectedArticleId !== pending ||
+      index === -1 ||
+      isFetchNextPageError ||
+      (isLast && !hasMore)
+    ) {
+      pendingAdvanceRef.current = null;
+    } else if (!isLast) {
+      pendingAdvanceRef.current = null;
+      setSelectedArticle(articles[index + 1].id);
+    }
+  }, [
+    articles,
+    selectedArticleId,
+    hasMore,
+    isFetchNextPageError,
+    setSelectedArticle,
+  ]);
+
+  const selectedIndex = articles.findIndex((a) => a.id === selectedArticleId);
+  const selectionNearEnd =
+    selectedIndex >= 0 && selectedIndex >= articles.length - PREFETCH_ROWS;
 
   // Wait until scrolling stops, so a page never lands mid-fling.
   useEffect(() => {
@@ -157,11 +204,14 @@ export function ArticleList() {
     };
   }, []);
 
-  // Once a page has landed, check again so a list shorter than the viewport
-  // keeps filling.
+  // Once a page has landed, check again so a list shorter than the look-ahead
+  // keeps filling; keyboard navigation near the end prefetches without waiting
+  // for a scroll.
   useEffect(() => {
     loadMoreIfNearBottom();
+    if (selectionNearEnd) requestNextPage();
   }, [
+    selectionNearEnd,
     articles.length,
     hasMore,
     isLoading,
