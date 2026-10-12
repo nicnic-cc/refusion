@@ -34,7 +34,7 @@ Examples:
 - `/groups/3/starred?article=289`
 
 This keeps list context stable while opening/closing article detail. `g u` /
-`g a` / `g s` / `g f` view jumps are navigation sugar over the same URLs.
+`g a` / `g s` switch the filter of the current view, `g h` / `g f` jump to all feeds / feed management; all are navigation sugar over the same URLs.
 
 ## 4. Layout system
 
@@ -115,7 +115,7 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
 
 ## 7. Keyboard interactions
 
-The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, view jumps (`g u` / `g a` / `g s` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
+The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, filter switches and jumps (`g u` / `g a` / `g s` / `g h` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
 ## 8. Authentication UX
 

@@ -64,8 +64,12 @@ export function useKeyboardShortcuts() {
   const isSearchOpen = useUIStore((s) => s.isSearchOpen);
   const isSettingsOpen = useUIStore((s) => s.isSettingsOpen);
   const isShortcutsOpen = useUIStore((s) => s.isShortcutsOpen);
-  const { selectedArticleId, setSelectedArticle, selectTopLevelFilter } =
-    useUrlState();
+  const {
+    selectedArticleId,
+    setSelectedArticle,
+    setArticleFilter,
+    selectAllFeeds,
+  } = useUrlState();
   const navigate = useNavigate();
   const { mutate: startPull } = useStartPull();
   const pendingPrefixRef = useRef<"g" | null>(null);
@@ -79,7 +83,8 @@ export function useKeyboardShortcuts() {
     setSettingsOpen,
     setShortcutsOpen,
     setSelectedArticle,
-    selectTopLevelFilter,
+    setArticleFilter,
+    selectAllFeeds,
     navigate,
     startPull,
   });
@@ -94,7 +99,8 @@ export function useKeyboardShortcuts() {
       setSettingsOpen,
       setShortcutsOpen,
       setSelectedArticle,
-      selectTopLevelFilter,
+      setArticleFilter,
+      selectAllFeeds,
       navigate,
       startPull,
     };
@@ -107,7 +113,8 @@ export function useKeyboardShortcuts() {
     setSettingsOpen,
     setShortcutsOpen,
     setSelectedArticle,
-    selectTopLevelFilter,
+    setArticleFilter,
+    selectAllFeeds,
     navigate,
     startPull,
   ]);
@@ -212,19 +219,25 @@ export function useKeyboardShortcuts() {
       if (pendingPrefixRef.current === "g") {
         if (key === "u") {
           event.preventDefault();
-          state.selectTopLevelFilter("unread");
+          state.setArticleFilter("unread");
           resetPrefix();
           return;
         }
         if (key === "a") {
           event.preventDefault();
-          state.selectTopLevelFilter("all");
+          state.setArticleFilter("all");
           resetPrefix();
           return;
         }
         if (key === "s") {
           event.preventDefault();
-          state.selectTopLevelFilter("starred");
+          state.setArticleFilter("starred");
+          resetPrefix();
+          return;
+        }
+        if (key === "h") {
+          event.preventDefault();
+          state.selectAllFeeds();
           resetPrefix();
           return;
         }

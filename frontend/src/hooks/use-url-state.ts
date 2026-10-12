@@ -196,6 +196,10 @@ export function useUrlState(opts?: { article?: boolean }) {
     selectTopLevelFilter("all");
   }, [selectTopLevelFilter]);
 
+  const selectAllFeeds = useCallback(() => {
+    navigateToList({ feedId: null, groupId: null, articleId: null });
+  }, [navigateToList]);
+
   return {
     selectedFeedId,
     selectedGroupId,
@@ -207,6 +211,7 @@ export function useUrlState(opts?: { article?: boolean }) {
     setArticleFilter,
     selectTopLevelFilter,
     selectAll,
+    selectAllFeeds,
   };
 }
 
@@ -262,6 +267,7 @@ export function useUrlActions() {
         go({ groupId, feedId: null, articleId: null }),
       selectTopLevelFilter: (filter: ArticleFilter) =>
         go({ filter, feedId: null, groupId: null, articleId: null }),
+      selectAllFeeds: () => go({ feedId: null, groupId: null, articleId: null }),
     };
   }, [navigate, router]);
 }

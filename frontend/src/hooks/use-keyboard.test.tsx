@@ -5,11 +5,15 @@ import { useUIStore } from "@/store";
 import { useKeyboardShortcuts } from "./use-keyboard";
 
 const setSelectedArticle = vi.fn();
+const setArticleFilter = vi.fn();
+const selectTopLevelFilter = vi.fn();
 vi.mock("./use-url-state", () => ({
   useUrlState: () => ({
     selectedArticleId: 5,
     setSelectedArticle,
-    selectTopLevelFilter: vi.fn(),
+    setArticleFilter,
+    selectAllFeeds: vi.fn(),
+    selectTopLevelFilter,
   }),
 }));
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
@@ -18,6 +22,8 @@ vi.mock("@/queries/pull", () => ({ useStartPull: () => ({ mutate: vi.fn() }) }))
 afterEach(() => {
   cleanup();
   setSelectedArticle.mockClear();
+  setArticleFilter.mockClear();
+  selectTopLevelFilter.mockClear();
   useUIStore.setState({ isEditFeedOpen: false, isAddFeedOpen: false });
 });
 
@@ -71,5 +77,16 @@ describe("useKeyboardShortcuts with a DOM popup open", () => {
     } finally {
       drawer.remove();
     }
+  });
+});
+
+describe("useKeyboardShortcuts g chords", () => {
+  // g u switches the filter of the current view; it must not reset feed/group scope.
+  it("g then u sets the filter and keeps the scope", () => {
+    renderHook(() => useKeyboardShortcuts());
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "g", bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "u", bubbles: true }));
+    expect(setArticleFilter).toHaveBeenCalledWith("unread");
+    expect(selectTopLevelFilter).not.toHaveBeenCalled();
   });
 });

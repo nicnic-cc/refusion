@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { useLocation } from "@tanstack/react-router";
-import { Inbox, Layers, Star } from "lucide-react";
+import { Layers } from "lucide-react";
 import { ScrollBox } from "@/components/scroll-box";
-import { isArticleFilter, type ArticleFilter } from "@/lib/article-filter";
+import { isArticleFilter } from "@/lib/article-filter";
+import { allFeedsLabelKey } from "@/lib/all-feeds-label";
 import { useGroups } from "@/queries/groups";
 import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
 import { useBookmarkLookup } from "@/queries/bookmarks";
@@ -15,9 +16,6 @@ import { sidebarNodeKey, useSidebarNavStore, type SidebarNode } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { FeedGroup } from "./feed-group";
 
-// Must match the order of topFilters below.
-const sidebarFilterValues: ArticleFilter[] = ["unread", "starred", "all"];
-
 export function FeedList() {
   const { t } = useI18n();
   const { data: groups = [], isLoading } = useGroups();
@@ -28,7 +26,7 @@ export function FeedList() {
     selectedFeedId,
     selectedGroupId,
     articleFilter,
-    selectTopLevelFilter,
+    selectAllFeeds,
   } = useUrlState({ article: false });
   const pathname = useLocation({ select: (l) => l.pathname });
   const collapsedIds = useCollapsedGroupsStore((s) => s.collapsedIds);
@@ -53,38 +51,17 @@ export function FeedList() {
   const totalUnread = getTotalUnreadCount();
   const starredCount = starredTotal;
 
-  const topFilters: Array<{
-    value: "all" | "unread" | "starred";
-    label: string;
-    count?: number;
-    icon: typeof Inbox;
-  }> = [
-    {
-      value: "unread",
-      label: t("article.filter.unread"),
-      count: totalUnread,
-      icon: Inbox,
-    },
-    {
-      value: "starred",
-      label: t("article.filter.starred"),
-      count: starredCount,
-      icon: Star,
-    },
-    {
-      value: "all",
-      label: t("article.filter.all"),
-      icon: Layers,
-    },
-  ];
+  const allCount =
+    articleFilter === "unread"
+      ? totalUnread
+      : articleFilter === "starred"
+        ? starredCount
+        : undefined;
+  const allNodeKey = sidebarNodeKey.all();
 
   // Flat view of the rendered tree, top to bottom, for Shift+N / Shift+P etc.
   const nodes = useMemo<SidebarNode[]>(() => {
-    const list: SidebarNode[] = sidebarFilterValues.map((filter) => ({
-      key: sidebarNodeKey.filter(filter),
-      kind: "filter",
-      filter,
-    }));
+    const list: SidebarNode[] = [{ key: sidebarNodeKey.all(), kind: "all" }];
 
     for (const group of sidebarGroups) {
       list.push({
@@ -125,38 +102,31 @@ export function FeedList() {
   return (
     <ScrollBox className="min-h-0 w-full min-w-0 flex-1">
       <div className="w-full min-w-0 p-2 space-y-0.5">
-        {/* Top-level filters */}
-        <div className="space-y-0.5">
-          {topFilters.map(({ value, label, count, icon: Icon }) => {
-            const nodeKey = sidebarNodeKey.filter(value);
-
-            return (
-              <button
-                key={value}
-                data-sidebar-key={nodeKey}
-                onClick={() => {
-                  setFocusedKey(nodeKey);
-                  selectTopLevelFilter(value);
-                }}
-                className={cn(
-                  "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-[15px] leading-6 transition-colors",
-                  isTopLevelSelected && articleFilter === value
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50",
-                  ringKey === nodeKey && "ring-2 ring-inset ring-ring",
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1">{label}</span>
-                {typeof count === "number" && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* All feeds (unscoped list, current filter) */}
+        <button
+          data-sidebar-key={allNodeKey}
+          onClick={() => {
+            setFocusedKey(allNodeKey);
+            selectAllFeeds();
+          }}
+          className={cn(
+            "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-[15px] leading-6 transition-colors",
+            isTopLevelSelected
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent/50",
+            ringKey === allNodeKey && "ring-2 ring-inset ring-ring",
+          )}
+        >
+          <Layers className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            {t(allFeedsLabelKey(articleFilter))}
+          </span>
+          {typeof allCount === "number" && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {allCount}
+            </span>
+          )}
+        </button>
 
         {/* Feeds header */}
         <div className="mt-2 flex items-center justify-between px-2 py-1">
