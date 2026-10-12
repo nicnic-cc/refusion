@@ -33,7 +33,12 @@ check state. Code: `backend/internal/pull/progress.go`,
   items show as a pill (`GET /api/pull/new-count`), and a click reloads.
   Items saved between the list fetch and that snapshot are missed rather
   than double-counted. New rows get a fading tint because the list is
-  sorted by publish date, so they can land mid-list.
+  sorted by publish date, so they can land mid-list. A finished check or a
+  network reconnect doesn't reload an open list either (decided
+  2026-10-12: the app doesn't move what you're reading unless you asked),
+  with one exception: a list showing only its first page, scrolled to the
+  top, reloads in place when a check ends. Lists that aren't on screen
+  are still marked stale.
 - **The row warning icon has no failure threshold**: it follows
   `last_error` and clears on the next successful check, like the /feeds
   page's error filter.

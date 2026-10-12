@@ -34,5 +34,7 @@
   items carry a stored `filtered` flag, and what "hidden" covers
 - `manage-feeds-speed.md` (fork): why Manage feeds keeps one filter
   dialog and one app layout, with the measured freeze numbers
+- `reading-speed.md` (fork): why the reading loop (j/k, feed switch,
+  mark read, startup) is built for speed, with the measured numbers
 - `old-database-schema.md`: legacy pre-migrations schema snapshot, kept
   for migration work only
