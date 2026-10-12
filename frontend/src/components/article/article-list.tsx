@@ -49,7 +49,7 @@ import {
   useArticlePinsStore,
   useReadStatePins,
 } from "@/store";
-import type { Bookmark, Item } from "@/lib/api";
+import { APIError, type Bookmark, type Item } from "@/lib/api";
 
 const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
 const MAX_REOPEN_PAGES = 20;
@@ -64,8 +64,11 @@ interface ArticleRowsProps {
   feedDisplay: Map<number, FeedDisplay>;
   unknownFeedName: string;
   freshAfter: number | null;
-  isItemStarred: (itemId: number) => boolean;
-  getBookmarkByItemId: (itemId: number) => Bookmark | undefined;
+  isItemStarred: (itemId: number, link?: string) => boolean;
+  getBookmarkByItemId: (
+    itemId: number,
+    link?: string,
+  ) => Bookmark | undefined;
   onSelectArticle: (articleId: number | null) => void;
   onToggleRead: (article: Item) => Promise<void>;
   onToggleStar: (article: Item) => Promise<void>;
@@ -96,10 +99,10 @@ const ArticleRows = memo(function ArticleRows({
         onToggleStar={onToggleStar}
         canToggleRead={article.id > 0}
         isFresh={freshAfter !== null && article.id > freshAfter}
-        isStarred={isItemStarred(article.id)}
+        isStarred={isItemStarred(article.id, article.link)}
         feedName={
           feed?.name ??
-          getBookmarkByItemId(article.id)?.feed_name ??
+          getBookmarkByItemId(article.id, article.link)?.feed_name ??
           unknownFeedName
         }
         feedFaviconUrl={feed?.faviconUrl ?? null}
@@ -459,8 +462,8 @@ export function ArticleList() {
   const handleToggleStar = useStableCallback(
     async (article: Item) => {
       try {
-        if (isItemStarred(article.id)) {
-          const bookmark = getBookmarkByItemId(article.id);
+        if (isItemStarred(article.id, article.link)) {
+          const bookmark = getBookmarkByItemId(article.id, article.link);
           if (bookmark) {
             await deleteBookmark.mutateAsync(bookmark.id);
           }
@@ -470,7 +473,11 @@ export function ArticleList() {
         await createBookmark.mutateAsync(article);
       } catch (error) {
         console.error("Failed to toggle star:", error);
-        toast.error(t("article.toast.starFailed"));
+        toast.error(
+          error instanceof APIError
+            ? error.message
+            : t("article.toast.starFailed"),
+        );
       }
     },
   );

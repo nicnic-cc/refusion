@@ -15,7 +15,7 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useAutoMarkRead } from "@/hooks/use-auto-mark-read";
-import { itemAPI } from "@/lib/api";
+import { APIError, itemAPI } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { useReadStatePins, usePreferencesStore } from "@/store";
@@ -81,8 +81,10 @@ export function useArticleViewState() {
   const readArticle = storeArticle ?? fetchedArticle ?? null;
   const canToggleRead = readArticle !== null && readArticle.id > 0;
   const feed = article ? getFeedById(article.feed_id) : null;
-  const bookmark = article ? getBookmarkByItemId(article.id) : null;
-  const starred = article ? isItemStarred(article.id) : false;
+  const bookmark = article
+    ? getBookmarkByItemId(article.id, article.link)
+    : null;
+  const starred = article ? isItemStarred(article.id, article.link) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
 
   const autoMarkRead = usePreferencesStore((s) => s.autoMarkRead);
@@ -127,7 +129,7 @@ export function useArticleViewState() {
     if (!article) return;
     try {
       if (starred) {
-        const bookmark = getBookmarkByItemId(article.id);
+        const bookmark = getBookmarkByItemId(article.id, article.link);
         if (bookmark) {
           await deleteBookmark.mutateAsync(bookmark.id);
         }
@@ -136,7 +138,11 @@ export function useArticleViewState() {
       }
     } catch (error) {
       console.error("Failed to toggle star:", error);
-      toast.error(t("article.toast.starFailed"));
+      toast.error(
+        error instanceof APIError
+          ? error.message
+          : t("article.toast.starFailed"),
+      );
     }
   };
 
