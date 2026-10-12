@@ -20,6 +20,7 @@ export function setUnauthorizedCallback(callback: () => void) {
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
+  silentUnauthorized = false,
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
@@ -35,8 +36,14 @@ async function request<T>(
   if (!response.ok) {
     // A 401 from /sessions is handled by its callers (the login form shows an
     // error toast, the route guard redirects); the global redirect here would
-    // reload the page and destroy that feedback.
-    if (response.status === 401 && onUnauthorized && endpoint !== "/sessions") {
+    // reload the page and destroy that feedback. silentUnauthorized leaves the
+    // decision to a caller that runs alongside the session probe.
+    if (
+      response.status === 401 &&
+      onUnauthorized &&
+      endpoint !== "/sessions" &&
+      !silentUnauthorized
+    ) {
       onUnauthorized();
     }
 
@@ -66,8 +73,11 @@ async function request<T>(
   return JSON.parse(body) as T;
 }
 
-async function get<T>(endpoint: string): Promise<T> {
-  return request<T>(endpoint, { method: "GET" });
+async function get<T>(
+  endpoint: string,
+  silentUnauthorized = false,
+): Promise<T> {
+  return request<T>(endpoint, { method: "GET" }, silentUnauthorized);
 }
 
 async function post<T>(
