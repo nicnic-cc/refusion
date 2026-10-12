@@ -38,14 +38,22 @@ between sessions, so compare old and new binaries within one session.
   in both loading modes.** In button mode a key press counts as asking,
   like clicking the button; scrolling there still never loads. The list
   scrolls so its footer (spinner or button) shows under the last row.
-  Holding `j` can still pause at a page boundary, because key repeat is
-  faster than the 3-row look-ahead.
+  The next page is requested as soon as the selection enters the last
+  loaded page, so holding `j` doesn't pause at page ends; the cost is one
+  extra page for a list left early.
 - **A stale list refetches only its first page** (`pages: 1` on
   `itemQueries.list`), so one request instead of one per loaded page.
   Because that reset jumps to the top, background reloads of the open
   list were stopped; see
-  [fetch-progress.md](fetch-progress.md#decisions). Known: after a reset,
-  an open article that's no longer loaded makes `j` start from the top.
+  [fetch-progress.md](fetch-progress.md#decisions). After a reset in the
+  all view, `j` loads pages until the open article is back (at most 20)
+  and moves on from it; in unread it was read away, so `j` starts at the
+  top.
+- **Crossing the panes/drawer width keeps the list mounted** (same tree
+  position in both modes), so it neither jumps to the top nor refetches.
+  Accepted: dragging the window re-wraps rows in drawer mode, and the
+  browser's scroll anchoring lets the list drift a row or so per drag. A
+  custom anchor wasn't worth the code for something done this rarely.
 - **Startup doesn't wait in line.** The settings fetch runs alongside the
   session check and is applied only once the session is confirmed;
   matched route chunks load at startup.
