@@ -32,5 +32,7 @@
   articles pill and per-feed check state
 - `feed-filter.md` (fork): the per-feed and global article filters, why
   items carry a stored `filtered` flag, and what "hidden" covers
+- `manage-feeds-speed.md` (fork): why Manage feeds keeps one filter
+  dialog and one app layout, with the measured freeze numbers
 - `old-database-schema.md`: legacy pre-migrations schema snapshot, kept
   for migration work only
