@@ -199,6 +199,22 @@ flowchart TD
 - `POST /pull` and `GET /pull/status` are the tracked variant the UI uses:
   see [fetch-progress.md](fetch-progress.md)
 
+### Item permalink
+
+Link blogs and aggregators point an item's main link at another site; the
+item's own page on the feed's site (`items.permalink`) is opened instead when
+the feed sets `open_permalink`. Decisions (2026-10-12):
+
+- Generic, no per-site rules. Only looked for when the main link's host
+  differs from the feed's site host; the first candidate on that host (or a
+  subdomain) wins: RSS `<comments>`, item links, a URL GUID
+  (`pull/permalink.go`).
+- No links taken from the content: they picked tag or about pages.
+- gofeed v1.4.0 drops RSS `<comments>` and Atom `rel="related"` links from its
+  universal item, so both are added back by translator wrappers.
+- The insert keeps `ON CONFLICT DO NOTHING` (its row count is the new-items
+  count); items stored earlier get their permalink by a separate `UPDATE`.
+
 ## 9. Security model
 
 - Password auth with bcrypt hash computed at startup
