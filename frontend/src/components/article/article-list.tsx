@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -117,6 +117,12 @@ export function ArticleList() {
 
   const articleLoading = usePreferencesStore((s) => s.articleLoading);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // The layout stays mounted across pages, so the scroll box is reused: start
+  // each new list at the top, before paint, instead of at the old offset.
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [pinsKey]);
 
   // Same rule as yarr's itemListCloseToBottom: load only near the bottom, and
   // not while the empty-list refill above is already fetching.
