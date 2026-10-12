@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, renderHook } from "@testing-library/react";
+import { act, cleanup, render, renderHook } from "@testing-library/react";
 import type { Item } from "@/lib/api";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
+import { usePreferencesStore } from "@/store/preferences";
 import { ArticleList } from "./article-list";
 
 function make(id: number) {
@@ -85,13 +86,17 @@ vi.mock("./article-item", () => ({
   ArticleItem: ({ article }: { article: Item }) => <div>{article.title}</div>,
 }));
 
-// jsdom has no layout or scrollTo.
+// jsdom has no layout, scrollTo or scrollIntoView.
 Element.prototype.scrollTo = vi.fn();
+const scrollIntoView = vi.fn();
+Element.prototype.scrollIntoView = scrollIntoView;
 
 afterEach(() => {
   cleanup();
   setSelectedArticle.mockClear();
   fetchNextPage.mockClear();
+  scrollIntoView.mockClear();
+  usePreferencesStore.setState({ articleLoading: "scroll" });
   state.articles = [make(1), make(2), make(3)];
   state.hasMore = true;
   state.selectedArticleId = 3;
@@ -130,5 +135,55 @@ describe("article list paging with j", () => {
     state.articles = [...state.articles, make(4)];
     view.rerender(<ArticleList />);
     expect(setSelectedArticle).not.toHaveBeenCalled();
+  });
+
+  // Button mode: a key press counts as asking, like clicking the button.
+  it("loads the next page on j in button mode", () => {
+    usePreferencesStore.setState({ articleLoading: "button" });
+    const view = render(<ArticleList />);
+    fetchNextPage.mockClear();
+    pressJ();
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+
+    state.articles = [...state.articles, make(4), make(5)];
+    view.rerender(<ArticleList />);
+    expect(setSelectedArticle).toHaveBeenCalledExactlyOnceWith(4);
+  });
+
+  // Scrolling to the bottom never loads in button mode.
+  it("does not load on scroll in button mode", () => {
+    vi.useFakeTimers();
+    try {
+      usePreferencesStore.setState({ articleLoading: "button" });
+      state.selectedArticleId = 1;
+      const view = render(<ArticleList />);
+      const box = view.container.querySelector("[data-slot='scroll-area-viewport']")!;
+      Object.defineProperty(box, "scrollHeight", { value: 600 });
+      Object.defineProperty(box, "clientHeight", { value: 400 });
+      box.dispatchEvent(new Event("scroll"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("article list footer reveal", () => {
+  // The footer (spinner or Load more) must be visible while the next page loads.
+  it("scrolls the footer into view when the last loaded row is selected", () => {
+    const view = render(<ArticleList />);
+    const footer = scrollIntoView.mock.contexts.at(-1) as HTMLElement;
+    expect(footer).toBeDefined();
+    expect(footer.contains(view.container.querySelector("svg"))).toBe(true);
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "nearest" });
+  });
+
+  it("leaves the scroll alone when the selection is not the last row", () => {
+    state.selectedArticleId = 2;
+    render(<ArticleList />);
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
