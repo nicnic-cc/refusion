@@ -131,8 +131,9 @@ export function ArticleList() {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [pinsKey]);
 
-  const requestNextPage = useEffectEvent(() => {
-    if (articleLoading !== "scroll") return;
+  // Scrolling only loads in scroll mode; a key press counts as asking, like the button.
+  const requestNextPage = useEffectEvent((asked = false) => {
+    if (articleLoading !== "scroll" && !asked) return;
     if (isLoading || isLoadingMore || isFetchNextPageError || !hasMore) return;
     fetchNextPage();
   });
@@ -152,9 +153,9 @@ export function ArticleList() {
   // article. One pending step; it is dropped when the selection or list moves on.
   const pendingAdvanceRef = useRef<number | null>(null);
   const advanceAfterLoad = useEffectEvent((lastId: number) => {
-    if (articleLoading !== "scroll" || !hasMore) return;
+    if (!hasMore) return;
     pendingAdvanceRef.current = lastId;
-    requestNextPage();
+    requestNextPage(true);
   });
   useEffect(
     () => onArticleNavigationEnd((lastId) => advanceAfterLoad(lastId)),
@@ -187,6 +188,17 @@ export function ArticleList() {
   const selectedIndex = articles.findIndex((a) => a.id === selectedArticleId);
   const selectionNearEnd =
     selectedIndex >= 0 && selectedIndex >= articles.length - PREFETCH_ROWS;
+
+  // With the last loaded row selected, show the footer too: the spinner while the
+  // page loads, the button in button mode, and the new rows land in place.
+  const footerRef = useRef<HTMLDivElement>(null);
+  const lastRowSelectedWithMore =
+    hasMore && selectedIndex >= 0 && selectedIndex === articles.length - 1;
+  useEffect(() => {
+    if (lastRowSelectedWithMore) {
+      footerRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [lastRowSelectedWithMore, selectedArticleId]);
 
   // Wait until scrolling stops, so a page never lands mid-fling.
   useEffect(() => {
@@ -434,12 +446,14 @@ export function ArticleList() {
                   />
                 );
               })}
-              <ArticleListFooter
-                hasMore={hasMore}
-                isLoadingMore={isLoadingMore}
-                isError={isFetchNextPageError}
-                fetchNextPage={fetchNextPage}
-              />
+              <div ref={footerRef}>
+                <ArticleListFooter
+                  hasMore={hasMore}
+                  isLoadingMore={isLoadingMore}
+                  isError={isFetchNextPageError}
+                  fetchNextPage={fetchNextPage}
+                />
+              </div>
             </>
           )}
         </ScrollBox>
