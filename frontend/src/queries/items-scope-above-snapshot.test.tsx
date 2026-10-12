@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
-import { itemAPI } from "@/lib/api";
+import { itemAPI, type Item } from "@/lib/api";
+import { queryKeys } from "./keys";
 import { useMarkScopeRead } from "./items";
 
 vi.mock("@/lib/api", async (orig) => ({
@@ -14,8 +15,18 @@ vi.mock("@/lib/api", async (orig) => ({
   },
 }));
 
-function mark(request: { max_id: number }, loadedIds: number[]) {
+function mark(
+  request: { max_id: number },
+  loadedIds: number[],
+  rows: Item[] = [],
+) {
   const qc = new QueryClient();
+  if (rows.length > 0) {
+    qc.setQueryData([...queryKeys.items.lists(), { unread: false }, 50], {
+      pages: [{ data: rows, total: rows.length, next_cursor: null }],
+      pageParams: [null],
+    });
+  }
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
@@ -37,5 +48,15 @@ describe("useMarkScopeRead with loaded rows above the snapshot", () => {
     await mark({ max_id: 10 }, [5, 10]);
     expect(itemAPI.markScopeRead).toHaveBeenCalledWith({ max_id: 10 });
     expect(itemAPI.markRead).not.toHaveBeenCalled();
+  });
+
+  // The scope mark skips filtered rows; a by-id mark would change them.
+  it("does not mark a filtered loaded row above max_id by id", async () => {
+    const rows = [
+      { id: 12, feed_id: 1, unread: true, filtered: false },
+      { id: 13, feed_id: 1, unread: true, filtered: true },
+    ] as Item[];
+    await mark({ max_id: 10 }, [12, 13], rows);
+    expect(itemAPI.markRead).toHaveBeenCalledWith({ ids: [12] });
   });
 });

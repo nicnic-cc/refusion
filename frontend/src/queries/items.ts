@@ -144,14 +144,16 @@ function snapshotItemsMutationState(
   };
 }
 
-// Cancels only what the optimistic update overwrites. A next-page load is
-// kept: it appends a page and does not replace the rows being flipped.
+// Cancels only what the optimistic update overwrites. Kept: a next-page load
+// (appends, replaces nothing) and a list without data (a cancel would leave it
+// pending and idle, never refetched).
 function cancelOptimisticTargets(qc: QueryClient, ids: number[]) {
   const idSet = new Set(ids);
   return Promise.all([
     qc.cancelQueries({
       queryKey: queryKeys.items.lists(),
-      predicate: (query) => !query.state.fetchMeta?.fetchMore,
+      predicate: (query) =>
+        !query.state.fetchMeta?.fetchMore && query.state.data !== undefined,
     }),
     qc.cancelQueries({
       queryKey: queryKeys.items.details(),
@@ -420,6 +422,18 @@ export function useMarkItemsUnread() {
   return useSetItemsReadState(true);
 }
 
+function loadedFilteredIds(qc: QueryClient) {
+  const ids = new Set<number>();
+  for (const [, data] of qc.getQueriesData<ItemsInfiniteData>({
+    queryKey: queryKeys.items.lists(),
+  })) {
+    for (const page of data?.pages ?? []) {
+      for (const item of page.data) if (item.filtered) ids.add(item.id);
+    }
+  }
+  return ids;
+}
+
 /**
  * Marks a whole feed, group or everything read on the server. Only the loaded
  * rows flip optimistically; caches holding the rest are marked stale.
@@ -434,8 +448,11 @@ export function useMarkScopeRead() {
     }) => {
       await itemAPI.markScopeRead(vars.request);
       // Later pages are not bounded by max_id; the scope mark skips those rows.
+      // A by-id mark would also change filtered rows, which the scope mark
+      // never touches, so they are left out.
+      const filteredIds = loadedFilteredIds(qc);
       const aboveSnapshot = vars.loadedIds.filter(
-        (id) => id > vars.request.max_id,
+        (id) => id > vars.request.max_id && !filteredIds.has(id),
       );
       if (aboveSnapshot.length > 0) {
         await itemAPI.markRead({ ids: aboveSnapshot });
