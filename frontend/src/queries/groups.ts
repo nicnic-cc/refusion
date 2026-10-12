@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { groupAPI, type Group } from "@/lib/api";
+import { invalidateGroupItemLists } from "./feeds";
 import { queryKeys } from "./keys";
 
 export const groupQueries = {
@@ -64,6 +65,8 @@ export function useDeleteGroup() {
         old?.filter((g) => g.id !== id),
       );
       qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
+      // Its feeds moved to the default group.
+      void invalidateGroupItemLists(qc);
     },
   });
 }
