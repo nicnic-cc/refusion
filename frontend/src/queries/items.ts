@@ -267,12 +267,15 @@ function applyOptimisticItemReadState(
 
 // A next-page fetch builds its result from the pages it saw at start, so it
 // would bring back the old unread flags. Flip the rows again once it lands.
+// maxId also flips rows the page brings that were not loaded when the scope
+// mark started: the server marked every id up to it.
 function reapplyAfterNextPageLoads(
   qc: QueryClient,
   ids: number[],
   targetUnread: boolean,
   skipFiltered: boolean,
   context: ItemsMutationContext,
+  maxId?: number,
 ) {
   const idSet = new Set(ids);
   const inFlight = qc.getQueryCache().findAll({
@@ -290,7 +293,10 @@ function reapplyAfterNextPageLoads(
           let pageChanged = false;
           const data = page.data.map((item) => {
             if (
-              !idSet.has(item.id) ||
+              !(
+                idSet.has(item.id) ||
+                (maxId !== undefined && item.id <= maxId)
+              ) ||
               item.unread === targetUnread ||
               (skipFiltered && item.filtered)
             ) {
@@ -427,13 +433,27 @@ export function useMarkScopeRead() {
       loadedIds: number[];
     }) => {
       await itemAPI.markScopeRead(vars.request);
+      // Later pages are not bounded by max_id; the scope mark skips those rows.
+      const aboveSnapshot = vars.loadedIds.filter(
+        (id) => id > vars.request.max_id,
+      );
+      if (aboveSnapshot.length > 0) {
+        await itemAPI.markRead({ ids: aboveSnapshot });
+      }
     },
-    onMutate: async ({ loadedIds }) => {
+    onMutate: async ({ request, loadedIds }) => {
       await cancelOptimisticTargets(qc, loadedIds);
 
       const context = snapshotItemsMutationState(qc, loadedIds);
       applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds, true);
-      reapplyAfterNextPageLoads(qc, loadedIds, false, true, context);
+      reapplyAfterNextPageLoads(
+        qc,
+        loadedIds,
+        false,
+        true,
+        context,
+        request.max_id,
+      );
       return context;
     },
     onError: (_error, _vars, context) => {
