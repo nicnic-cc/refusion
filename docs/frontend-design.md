@@ -138,3 +138,24 @@ The app is keyboard-first. Shortcut categories: search/dialog toggles, article n
 - If password is empty and OIDC is not configured, the UI is directly accessible without `/login`
 - When OIDC is enabled, login page shows "Sign in with OIDC"
 - OIDC callback failure is surfaced as `/login?error=oidc_failed`
+
+## 9. Colours
+
+Fork colour overrides live in `frontend/src/fork-colors.css`, not in the theme
+blocks of `index.css`. `index.css` is upstream's file, and its theme blocks change
+with every shadcn regeneration, so edits there would conflict on each merge.
+The cost: an upstream change to a token we override is silently masked. After
+each upstream merge, diff the `:root` and `.dark` blocks of `index.css` and decide
+per token. The overrides use `:root.dark` and `:root:not(.dark)` because the import
+is hoisted above `index.css`'s own blocks, so a plain `:root` or `.dark` would lose.
+
+Colours are picked by eye from real-app screenshots, one named problem at a
+time; contrast scores only check the pick. A palette derived from WCAG/APCA
+targets was rejected (2026-10-11) because it looked worse. Some light-mode pairs
+therefore stay under 3:1 on purpose:
+- Field borders (`--input`, 1.87): a 3:1 border looked heavy.
+- The 50% focus halo: every focusable control also draws a solid `border-ring`
+  (4.84) on focus. A new focusable control needs that border too.
+
+Dark mode: the reading area is the lightest surface, and the sidebar is a step
+darker as a frame, the same as in light mode.
