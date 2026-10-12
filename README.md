@@ -14,10 +14,10 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 ## At a glance
 
-- **Reading:** two layouts, full article text or the original page on demand, YouTube in the article view
-- **New articles:** pull to refresh, with progress per feed
-- **Filters:** hide articles per feed or everywhere, with a live preview
-- **Organising:** folders in your own order, mark all as read, OPML
+- **Reading:** two layouts (drawer and panes), full article text or the original page on demand, YouTube in the article view
+- **New articles:** automatic checks and pull to refresh, with progress per feed
+- **Filters:** hide (or show only) articles per feed or everywhere, with a live preview
+- **Organising:** folders in your own order, mark all as read, OPML import and export
 - **Search:** feeds and article text, with excerpts and Google Reader shortcuts
 - **Self-hosting:** one binary and one SQLite file, Fever API for mobile apps, a PWA
 
@@ -31,15 +31,21 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Panes:** the open article sits in a third column beside the list on wide screens.
 - **Drawer:** the article slides over the list. Narrower windows use it even when Panes is chosen.
-- **Full article and web page:** press `w` to fetch the whole article from the site, or `shift+w` to show the original page. Per feed, "Open articles as" picks which view an article starts in; turning a view off returns to that default. For link blogs and aggregators, "Links open: Feed's own page" opens the item's page on the feed's site (the post or the discussion) instead of the linked site.
+- **Full article and web page:** press `w` to fetch the whole article from the site, or `shift+w` to show the original page.
+  - Per feed, "Open articles as" picks which view an article starts in; turning a view off returns to that default.
+  - For link blogs and aggregators, "Links open: Feed's own page" opens the item's page on the feed's site (the post or the discussion) instead of the linked site.
 - **YouTube:** videos play inside the article view.
 - **Text settings:** font and text size in the article view, and relative ("3 hours ago") or absolute dates.
+
+<p align="center">
+  <img src="./assets/screenshots/feed-edit.png" alt="Edit feed dialog with the Open articles as and Links open options" width="100%" />
+</p>
 
 ### New articles
 
 - **Pull to refresh:** pull down on the sidebar or the list, or press `r` for the current view and `shift+r` for every feed.
 - **Progress:** each feed shows a spinner while it is checked, and a warning with the error when a check fails.
-- **A steady list:** articles that arrive while you read are counted in a pill. Click it to load them.
+- **New-articles pill:** articles that arrive while you read are counted at the top of the list, which stays where it is. Click the pill to load them.
 - **Schedule:** feeds are checked in the background, and each feed can have its own interval.
 
 ### Filters
