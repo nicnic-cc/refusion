@@ -30,6 +30,20 @@ export function resolveBookmarkItemId(bookmark: Bookmark): number {
   return bookmark.item_id ?? -bookmark.id;
 }
 
+// Finds the bookmark of an item by id or, failing that, by link: bookmarks.link
+// is UNIQUE, so a cross-posted article (same link, other item id) is starred
+// through the one bookmark that exists.
+export function indexBookmarks(bookmarks: Bookmark[]) {
+  const byItemId = new Map<number, Bookmark>();
+  const byLink = new Map<string, Bookmark>();
+  for (const b of bookmarks) {
+    byItemId.set(resolveBookmarkItemId(b), b);
+    if (b.link) byLink.set(b.link, b);
+  }
+  return (itemId: number, link?: string): Bookmark | undefined =>
+    byItemId.get(itemId) ?? (link ? byLink.get(link) : undefined);
+}
+
 function buildListBookmarksParams(
   filters: NormalizedBookmarkFilters,
   cursor: string | null,
@@ -88,20 +102,15 @@ export function useBookmarkLookup() {
   );
   const total = query.data?.pages.at(-1)?.total ?? 0;
 
-  const byItemId = useMemo(
-    () => new Map(bookmarks.map((b) => [resolveBookmarkItemId(b), b])),
-    [bookmarks],
-  );
+  const findBookmark = useMemo(() => indexBookmarks(bookmarks), [bookmarks]);
 
   const isItemStarred = useCallback(
-    (itemId: number) => byItemId.has(itemId),
-    [byItemId],
+    (itemId: number, link?: string) =>
+      findBookmark(itemId, link) !== undefined,
+    [findBookmark],
   );
 
-  const getBookmarkByItemId = useCallback(
-    (itemId: number) => byItemId.get(itemId),
-    [byItemId],
-  );
+  const getBookmarkByItemId = findBookmark;
 
   return { bookmarks, total, isItemStarred, getBookmarkByItemId };
 }

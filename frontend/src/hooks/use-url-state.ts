@@ -10,7 +10,10 @@ import {
   isArticleFilter,
   type ArticleFilter,
 } from "@/lib/article-filter";
-import { parsePositiveIntegerParam } from "@/lib/route-params";
+import {
+  parseArticleIdParam,
+  parsePositiveIntegerParam,
+} from "@/lib/route-params";
 
 export type { ArticleFilter } from "@/lib/article-filter";
 
@@ -107,7 +110,7 @@ export function useUrlState(opts?: { article?: boolean }) {
 
   const routeFeedId = parsePositiveIntegerParam(feedIdParam);
   const routeGroupId = parsePositiveIntegerParam(groupIdParam);
-  const selectedArticleId = parsePositiveIntegerParam(articleParam);
+  const selectedArticleId = parseArticleIdParam(articleParam);
   const routeFilter = parseFilter(filterParam);
 
   const selectedFeedId = routeFeedId;

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useItems } from "@/queries/items";
 import { useIncludeFiltered } from "@/hooks/use-show-filtered";
 import {
-  resolveBookmarkItemId,
+  indexBookmarks,
   useBookmarkLookup,
   useStarredItems,
 } from "@/queries/bookmarks";
@@ -84,22 +84,18 @@ export function useArticleList(filters: ArticleListFilters) {
   const bookmarkSource: Bookmark[] = isStarredMode
     ? starred.bookmarks
     : lookup.bookmarks;
-  const bookmarkByItemId = useMemo(
-    () =>
-      new Map(bookmarkSource.map((b) => [resolveBookmarkItemId(b), b])),
+  const findBookmark = useMemo(
+    () => indexBookmarks(bookmarkSource),
     [bookmarkSource],
   );
 
   const isItemStarred = useCallback(
-    (itemId: number) =>
-      isStarredMode ? true : bookmarkByItemId.has(itemId),
-    [isStarredMode, bookmarkByItemId],
+    (itemId: number, link?: string) =>
+      isStarredMode ? true : findBookmark(itemId, link) !== undefined,
+    [isStarredMode, findBookmark],
   );
 
-  const getBookmarkByItemId = useCallback(
-    (itemId: number) => bookmarkByItemId.get(itemId),
-    [bookmarkByItemId],
-  );
+  const getBookmarkByItemId = findBookmark;
 
   return {
     articles,

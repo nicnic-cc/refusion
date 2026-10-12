@@ -7,7 +7,7 @@ import { cn, formatDate } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
-import { parsePositiveIntegerParam } from "@/lib/route-params";
+import { parseArticleIdParam } from "@/lib/route-params";
 import { FilteredTag } from "./filtered-tag";
 
 // Actions sit in the meta row: read stays visible but dimmed, the others appear
@@ -170,7 +170,7 @@ export const ArticleRow = memo(function ArticleRow(
   const isSelected = useSearch({
     strict: false,
     select: (s) =>
-      parsePositiveIntegerParam((s as Record<string, unknown>).article) === id,
+      parseArticleIdParam((s as Record<string, unknown>).article) === id,
   });
   return <ArticleItem {...props} isSelected={isSelected} />;
 });
