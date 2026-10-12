@@ -159,3 +159,14 @@ therefore stay under 3:1 on purpose:
 
 Dark mode: the reading area is the lightest surface, and the sidebar is a step
 darker as a frame, the same as in light mode.
+
+## 10. Feed dialogs
+
+The add and edit feed dialogs follow the Settings dialog (decided 2026-10-12):
+one row per field on a shared two-column grid (`feed-option-row.tsx`), at the
+Settings width, with every per-feed option always visible below a divider. A
+collapsible "Advanced settings" hid options and still left the dialog taller
+than a laptop screen.
+
+Gotcha: `DialogContent` in `components/ui/dialog.tsx` carries `sm:max-w-md`,
+so a plain `max-w-*` on a dialog loses from `sm` up; widen with `sm:max-w-*`.

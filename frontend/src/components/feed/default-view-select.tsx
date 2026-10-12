@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 import type { ArticleView } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { FeedOptionRow } from "@/components/feed/feed-option-row";
 
 export function DefaultViewSelect({
   idPrefix,
@@ -26,16 +27,17 @@ export function DefaultViewSelect({
   const labelId = `${idPrefix}-default-view-label`;
 
   return (
-    <div className="space-y-2">
-      <label className="block text-[13px] font-medium" id={labelId}>
-        {t("feed.add.defaultViewLabel")}
-      </label>
+    <FeedOptionRow
+      label={t("feed.add.defaultViewLabel")}
+      labelId={labelId}
+      description={t("feed.add.defaultViewDescription")}
+    >
       <Select
         items={items}
         value={value}
         onValueChange={(v) => v && onChange(v as ArticleView)}
       >
-        <SelectTrigger className="h-10" aria-labelledby={labelId}>
+        <SelectTrigger className="w-44 gap-2 border-border" aria-labelledby={labelId}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -46,9 +48,6 @@ export function DefaultViewSelect({
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">
-        {t("feed.add.defaultViewDescription")}
-      </p>
-    </div>
+    </FeedOptionRow>
   );
 }

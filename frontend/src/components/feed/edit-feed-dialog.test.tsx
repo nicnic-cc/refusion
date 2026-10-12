@@ -67,7 +67,7 @@ describe("EditFeedDialog proxy", () => {
   // An emptied proxy field must reach the backend as "", not be dropped from the PATCH.
   it("sends proxy: \"\" when the field is cleared", async () => {
     setup(feed);
-    await userEvent.clear(await screen.findByLabelText("HTTP Proxy"));
+    await userEvent.clear(await screen.findByLabelText("HTTP proxy"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(feedAPI.update).toHaveBeenCalledWith(5, { proxy: "" });
   });
@@ -81,7 +81,6 @@ describe("EditFeedDialog proxy", () => {
 });
 
 describe("EditFeedDialog default view", () => {
-  // The advanced section opens on a non-default view so it is not hidden.
   it("sends default_view when another view is chosen", async () => {
     setup({ ...feed, proxy: undefined, default_view: "full" });
     await userEvent.click(await screen.findByRole("combobox", { name: "Open articles as" }));
