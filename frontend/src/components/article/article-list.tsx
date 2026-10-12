@@ -1,11 +1,18 @@
-import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
+import {
+  memo,
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
 import { ArticleFilterSwitch } from "./article-filter-switch";
-import { ArticleItem } from "./article-item";
+import { ArticleRow } from "./article-item";
 import { ShowFilteredToggle } from "./show-filtered-toggle";
 import { ArticleListFooter } from "./article-list-footer";
 import { ScrollBox } from "@/components/scroll-box";
@@ -41,10 +48,64 @@ import {
   useArticlePinsStore,
   useReadStatePins,
 } from "@/store";
-import type { Item } from "@/lib/api";
+import type { Bookmark, Item } from "@/lib/api";
 
 const SCROLL_LOOKAHEAD_VIEWPORTS = 2;
 const PREFETCH_ROWS = 3;
+
+interface FeedDisplay {
+  name: string;
+  faviconUrl: string;
+}
+
+interface ArticleRowsProps {
+  articles: Item[];
+  feedDisplay: Map<number, FeedDisplay>;
+  unknownFeedName: string;
+  freshAfter: number | null;
+  isItemStarred: (itemId: number) => boolean;
+  getBookmarkByItemId: (itemId: number) => Bookmark | undefined;
+  onSelectArticle: (articleId: number | null) => void;
+  onToggleRead: (article: Item) => Promise<void>;
+  onToggleStar: (article: Item) => Promise<void>;
+}
+
+// Takes no selection prop, so a j press (selection only) skips every row here;
+// each row follows its own selection.
+const ArticleRows = memo(function ArticleRows({
+  articles,
+  feedDisplay,
+  unknownFeedName,
+  freshAfter,
+  isItemStarred,
+  getBookmarkByItemId,
+  onSelectArticle,
+  onToggleRead,
+  onToggleStar,
+}: ArticleRowsProps) {
+  return articles.map((article) => {
+    const feed = feedDisplay.get(article.feed_id);
+
+    return (
+      <ArticleRow
+        key={article.id}
+        article={article}
+        onSelectArticle={onSelectArticle}
+        onToggleRead={onToggleRead}
+        onToggleStar={onToggleStar}
+        canToggleRead={article.id > 0}
+        isFresh={freshAfter !== null && article.id > freshAfter}
+        isStarred={isItemStarred(article.id)}
+        feedName={
+          feed?.name ??
+          getBookmarkByItemId(article.id)?.feed_name ??
+          unknownFeedName
+        }
+        feedFaviconUrl={feed?.faviconUrl ?? null}
+      />
+    );
+  });
+});
 
 export function ArticleList() {
   const { t } = useI18n();
@@ -60,6 +121,8 @@ export function ArticleList() {
 
   const {
     articles,
+    articleIds,
+    indexById,
     hasMore,
     isLoading,
     isLoadingMore,
@@ -100,7 +163,6 @@ export function ArticleList() {
     };
   }, [pinsKey, clearPins]);
 
-  const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
     enabled: selectedArticleId === null,
   });
@@ -164,7 +226,7 @@ export function ArticleList() {
   useEffect(() => {
     const pending = pendingAdvanceRef.current;
     if (pending === null) return;
-    const index = articles.findIndex((a) => a.id === pending);
+    const index = indexById.get(pending) ?? -1;
     const isLast = index === articles.length - 1;
     if (
       selectedArticleId !== pending ||
@@ -179,13 +241,15 @@ export function ArticleList() {
     }
   }, [
     articles,
+    indexById,
     selectedArticleId,
     hasMore,
     isFetchNextPageError,
     setSelectedArticle,
   ]);
 
-  const selectedIndex = articles.findIndex((a) => a.id === selectedArticleId);
+  const selectedIndex =
+    selectedArticleId === null ? -1 : (indexById.get(selectedArticleId) ?? -1);
   const selectionNearEnd =
     selectedIndex >= 0 && selectedIndex >= articles.length - PREFETCH_ROWS;
 
@@ -257,20 +321,37 @@ export function ArticleList() {
     scrollRef,
   });
 
-  const unreadCount = articles.filter((a) => a.unread).length;
+  // Memoized: a selection change re-renders this component but not these passes.
+  const unreadCount = useMemo(
+    () => articles.filter((a) => a.unread).length,
+    [articles],
+  );
   // Unread rows not loaded yet still count, so the button stays usable.
-  const scopeUnreadCount =
-    articleFilter === "starred"
-      ? 0
-      : feeds
-          .filter((f) =>
-            selectedFeedId
-              ? f.id === selectedFeedId
-              : selectedGroupId
-                ? f.group_id === selectedGroupId
-                : true,
-          )
-          .reduce((sum, f) => sum + f.unread_count, 0);
+  const scopeUnreadCount = useMemo(
+    () =>
+      articleFilter === "starred"
+        ? 0
+        : feeds
+            .filter((f) =>
+              selectedFeedId
+                ? f.id === selectedFeedId
+                : selectedGroupId
+                  ? f.group_id === selectedGroupId
+                  : true,
+            )
+            .reduce((sum, f) => sum + f.unread_count, 0),
+    [feeds, articleFilter, selectedFeedId, selectedGroupId],
+  );
+  const feedDisplay = useMemo(
+    () =>
+      new Map(
+        feeds.map((f) => [
+          f.id,
+          { name: f.name, faviconUrl: getFaviconUrl(f.link, f.site_url) },
+        ]),
+      ),
+    [feeds],
+  );
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const isListLoading = isLoading || (articles.length === 0 && hasMore);
   const showSkeleton = useDelayedFlag(isListLoading, 300);
@@ -424,28 +505,17 @@ export function ArticleList() {
             )
           ) : (
             <>
-              {articles.map((article) => {
-                const feed = getFeedById(article.feed_id);
-                const bookmark = getBookmarkByItemId(article.id);
-
-                return (
-                  <ArticleItem
-                    key={article.id}
-                    article={article}
-                    isSelected={selectedArticleId === article.id}
-                    onSelectArticle={handleSelectArticle}
-                    onToggleRead={handleToggleRead}
-                    onToggleStar={handleToggleStar}
-                    canToggleRead={article.id > 0}
-                    isFresh={freshAfter !== null && article.id > freshAfter}
-                    isStarred={isItemStarred(article.id)}
-                    feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
-                    feedFaviconUrl={
-                      feed ? getFaviconUrl(feed.link, feed.site_url) : null
-                    }
-                  />
-                );
-              })}
+              <ArticleRows
+                articles={articles}
+                feedDisplay={feedDisplay}
+                unknownFeedName={t("common.unknown")}
+                freshAfter={freshAfter}
+                isItemStarred={isItemStarred}
+                getBookmarkByItemId={getBookmarkByItemId}
+                onSelectArticle={handleSelectArticle}
+                onToggleRead={handleToggleRead}
+                onToggleStar={handleToggleStar}
+              />
               <div ref={footerRef}>
                 <ArticleListFooter
                   hasMore={hasMore}

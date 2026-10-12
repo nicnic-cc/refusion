@@ -33,12 +33,18 @@ export function useArticleViewState() {
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
 
-  const { articles, isStarredMode, isItemStarred, getBookmarkByItemId } =
-    useArticleList({
-      feedId: selectedFeedId,
-      groupId: selectedGroupId,
-      articleFilter,
-    });
+  const {
+    articles,
+    articleIds,
+    indexById,
+    isStarredMode,
+    isItemStarred,
+    getBookmarkByItemId,
+  } = useArticleList({
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
 
   const markRead = useMarkItemsRead();
   const markUnread = useMarkItemsUnread();
@@ -51,11 +57,10 @@ export function useArticleViewState() {
     articleFilter,
   });
 
-  const articleIds = articles.map((a) => a.id);
-
-  const storeArticle = selectedArticleId
-    ? (articles.find((i) => i.id === selectedArticleId) ?? null)
-    : null;
+  const storeArticle =
+    selectedArticleId !== null
+      ? (articles[indexById.get(selectedArticleId) ?? -1] ?? null)
+      : null;
 
   const shouldFetchArticle =
     selectedArticleId !== null &&
