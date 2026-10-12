@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import { usePullStatus, useStartPull } from "@/queries/pull";
 
 // Spells out the feed's last check under its URL, with a manual "Check now".
+// Renders as a grid row in the dialog form (col-start-2).
 // It checks the saved feed: unsaved edits in the dialog are not used.
 export function FeedCheckStatus({ feed }: { feed: Feed }) {
   const { t } = useI18n();
@@ -33,8 +34,15 @@ export function FeedCheckStatus({ feed }: { feed: Feed }) {
   }
 
   return (
-    <div className="flex items-start justify-between gap-3 text-xs">
-      <div className="min-w-0 pt-0.5">{status}</div>
+    <div className="col-start-2 -mt-2 flex items-center gap-2 text-xs">
+      {status && (
+        <>
+          <div className="min-w-0">{status}</div>
+          <span aria-hidden className="text-muted-foreground">
+            ·
+          </span>
+        </>
+      )}
       <Button
         variant="link"
         size="xs"

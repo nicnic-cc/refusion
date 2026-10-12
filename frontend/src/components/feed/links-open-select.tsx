@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
+import { FeedOptionRow } from "@/components/feed/feed-option-row";
 
 export function LinksOpenSelect({
   idPrefix,
@@ -24,16 +25,17 @@ export function LinksOpenSelect({
   const labelId = `${idPrefix}-links-open-label`;
 
   return (
-    <div className="space-y-2">
-      <label className="block text-[13px] font-medium" id={labelId}>
-        {t("feed.add.linksOpenLabel")}
-      </label>
+    <FeedOptionRow
+      label={t("feed.add.linksOpenLabel")}
+      labelId={labelId}
+      description={t("feed.add.linksOpenDescription")}
+    >
       <Select
         items={items}
         value={value ? "own" : "linked"}
         onValueChange={(v) => v && onChange(v === "own")}
       >
-        <SelectTrigger className="h-10" aria-labelledby={labelId}>
+        <SelectTrigger className="w-44 gap-2 border-border" aria-labelledby={labelId}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -44,9 +46,6 @@ export function LinksOpenSelect({
           ))}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">
-        {t("feed.add.linksOpenDescription")}
-      </p>
-    </div>
+    </FeedOptionRow>
   );
 }

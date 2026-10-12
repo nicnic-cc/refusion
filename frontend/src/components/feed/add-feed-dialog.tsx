@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Plus, Radar, X } from "lucide-react";
+import { Plus, Radar, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useUIStore } from "@/store";
 import { useGroups } from "@/queries/groups";
 import { useCreateFeed } from "@/queries/feeds";
@@ -45,6 +40,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DefaultViewSelect } from "@/components/feed/default-view-select";
 import { LinksOpenSelect } from "@/components/feed/links-open-select";
+import { FeedOptionRow } from "@/components/feed/feed-option-row";
 
 export function AddFeedDialog() {
   const { t } = useI18n();
@@ -66,7 +62,6 @@ export function AddFeedDialog() {
   const [refreshInterval, setRefreshInterval] = useState<string>("");
   const [defaultView, setDefaultView] = useState<ArticleView>("feed");
   const [openPermalink, setOpenPermalink] = useState(false);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
@@ -88,7 +83,6 @@ export function AddFeedDialog() {
     setRefreshInterval("");
     setDefaultView("feed");
     setOpenPermalink(false);
-    setIsAdvancedOpen(false);
     setDetectedFeeds([]);
     setKnownFeeds([]);
     setIsFeedSelectOpen(false);
@@ -249,7 +243,7 @@ export function AddFeedDialog() {
     <>
       <Dialog open={isAddFeedOpen} onOpenChange={setAddFeedOpen}>
         <DialogContent
-          className="flex max-h-[calc(100dvh-2rem)] w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
+          className="flex max-h-[calc(100dvh-2rem)] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
           showCloseButton={false}
         >
           {/* Header */}
@@ -264,71 +258,69 @@ export function AddFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-            {/* URL Section */}
-            <div className="space-y-2">
-              <label htmlFor="add-feed-url" className="block text-[13px] font-medium">
-                {t("feed.add.urlLabel")}
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  id="add-feed-url"
-                  name="feed-url"
-                  type="url"
-                  inputMode="url"
-                  placeholder={t("feed.add.urlPlaceholder")}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="h-10"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <TooltipButton
-                  variant="outline"
-                  size="icon"
-                  label={
-                    isValidating
-                      ? t("feed.add.lookingForFeed")
-                      : t("feed.add.validateTitle")
-                  }
-                  className="h-10 w-10 shrink-0"
-                  onClick={handleValidate}
-                  disabled={isValidating || !url.trim()}
-                >
-                  <Radar
-                    className={cn(
-                      "h-[18px] w-[18px]",
-                      isValidating && "animate-pulse",
-                    )}
-                  />
-                </TooltipButton>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("feed.add.detectHint")}
-              </p>
-            </div>
-
+          <div className="grid min-h-0 flex-1 grid-cols-[14rem_minmax(0,1fr)] items-center gap-x-6 gap-y-4 overflow-y-auto p-5">
             {/* Name Section */}
-            <div className="space-y-2">
-              <label htmlFor="add-feed-name" className="block text-[13px] font-medium">
-                {t("feed.add.nameLabel")}
-              </label>
+            <FeedOptionRow
+              label={t("feed.add.nameLabel")}
+              htmlFor="add-feed-name"
+              fill
+            >
               <Input
                 id="add-feed-name"
                 name="feed-name"
                 placeholder={t("feed.add.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-10"
+                className="h-9 w-full"
                 autoComplete="off"
               />
-            </div>
+            </FeedOptionRow>
+
+            {/* URL Section */}
+            <FeedOptionRow
+              label={t("feed.add.urlLabel")}
+              htmlFor="add-feed-url"
+              description={t("feed.add.detectHint")}
+              fill
+            >
+              <Input
+                id="add-feed-url"
+                name="feed-url"
+                type="url"
+                inputMode="url"
+                placeholder={t("feed.add.urlPlaceholder")}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="h-9 w-full"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <TooltipButton
+                variant="outline"
+                size="icon"
+                label={
+                  isValidating
+                    ? t("feed.add.lookingForFeed")
+                    : t("feed.add.validateTitle")
+                }
+                className="h-9 w-9 shrink-0"
+                onClick={handleValidate}
+                disabled={isValidating || !url.trim()}
+              >
+                <Radar
+                  className={cn(
+                    "h-[18px] w-[18px]",
+                    isValidating && "animate-pulse",
+                  )}
+                />
+              </TooltipButton>
+            </FeedOptionRow>
 
             {/* Group Section */}
-            <div className="space-y-2">
-              <label className="block text-[13px] font-medium" id="add-feed-group-label">
-                {t("feed.add.groupLabel")}
-              </label>
+            <FeedOptionRow
+              label={t("feed.add.groupLabel")}
+              labelId="add-feed-group-label"
+            >
               <Select
                 items={groupItems}
                 value={groupId || null}
@@ -336,7 +328,10 @@ export function AddFeedDialog() {
                   if (v) setGroupId(v);
                 }}
               >
-                <SelectTrigger className="h-10" aria-labelledby="add-feed-group-label">
+                <SelectTrigger
+                  className="w-44 gap-2 border-border"
+                  aria-labelledby="add-feed-group-label"
+                >
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -347,81 +342,68 @@ export function AddFeedDialog() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FeedOptionRow>
 
-            {/* Advanced Section */}
-            <Collapsible
-              open={isAdvancedOpen}
-              onOpenChange={setIsAdvancedOpen}
-              className="border-t pt-4"
+            {/* Divider before the per-feed options */}
+            <div className="col-span-2 border-t" />
+
+            <FeedOptionRow
+              label={t("feed.add.refreshFrequencyLabel")}
+              labelId="add-feed-refresh-label"
             >
-              <CollapsibleTrigger className="flex w-full items-center gap-1.5 text-[13px] font-medium text-muted-foreground">
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 transition-transform",
-                    isAdvancedOpen && "rotate-180",
-                  )}
-                />
-                {t("feed.add.advanced")}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-5 pt-4">
-                <div className="space-y-2">
-                  <label className="block text-[13px] font-medium" id="add-feed-refresh-label">
-                    {t("feed.add.refreshFrequencyLabel")}
-                  </label>
-                  <Select
-                    items={options.map((seconds) => ({
-                      value: seconds.toString(),
-                      label: formatInterval(seconds),
-                    }))}
-                    disabled={appInfoLoading}
-                    value={refreshInterval || String(globalPullInterval)}
-                    onValueChange={(v) => v && setRefreshInterval(v)}
-                  >
-                    <SelectTrigger className="h-10" aria-labelledby="add-feed-refresh-label">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((seconds) => (
-                        <SelectItem key={seconds} value={seconds.toString()}>
-                          {formatInterval(seconds)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DefaultViewSelect
-                  idPrefix="add-feed"
-                  value={defaultView}
-                  onChange={setDefaultView}
-                />
-                <LinksOpenSelect
-                  idPrefix="add-feed"
-                  value={openPermalink}
-                  onChange={setOpenPermalink}
-                />
-                <div className="space-y-2">
-                  <label htmlFor="add-feed-proxy" className="block text-[13px] font-medium">
-                    {t("feed.add.proxyLabel")}
-                  </label>
-                  <Input
-                    id="add-feed-proxy"
-                    name="feed-proxy"
-                    type="url"
-                    inputMode="url"
-                    placeholder={t("feed.add.proxyPlaceholder")}
-                    value={proxy}
-                    onChange={(e) => setProxy(e.target.value)}
-                    className="h-10"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t("feed.add.proxyHint")}
-                  </p>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+              <Select
+                items={options.map((seconds) => ({
+                  value: seconds.toString(),
+                  label: formatInterval(seconds),
+                }))}
+                disabled={appInfoLoading}
+                value={refreshInterval || String(globalPullInterval)}
+                onValueChange={(v) => v && setRefreshInterval(v)}
+              >
+                <SelectTrigger
+                  className="w-44 gap-2 border-border"
+                  aria-labelledby="add-feed-refresh-label"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((seconds) => (
+                    <SelectItem key={seconds} value={seconds.toString()}>
+                      {formatInterval(seconds)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FeedOptionRow>
+            <DefaultViewSelect
+              idPrefix="add-feed"
+              value={defaultView}
+              onChange={setDefaultView}
+            />
+            <LinksOpenSelect
+              idPrefix="add-feed"
+              value={openPermalink}
+              onChange={setOpenPermalink}
+            />
+            <FeedOptionRow
+              label={t("feed.add.proxyLabel")}
+              htmlFor="add-feed-proxy"
+              description={t("feed.add.proxyHint")}
+              fill
+            >
+              <Input
+                id="add-feed-proxy"
+                name="feed-proxy"
+                type="url"
+                inputMode="url"
+                placeholder={t("feed.add.proxyPlaceholder")}
+                value={proxy}
+                onChange={(e) => setProxy(e.target.value)}
+                className="h-9 w-full"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </FeedOptionRow>
           </div>
 
           {/* Footer */}
