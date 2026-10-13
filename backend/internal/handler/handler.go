@@ -169,6 +169,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.GET("/items/:id", h.getItem)
 			auth.GET("/items/:id/full-content", h.getItemFullContent)
 			auth.GET("/items/:id/page", h.getItemPage)
+			auth.POST("/items/:id/page", h.getItemPage)
 			auth.PATCH("/items/-/read", h.markItemsRead)
 			auth.PATCH("/items/-/read-all", h.markScopeRead)
 			auth.PATCH("/items/-/unread", h.markItemsUnread)
@@ -203,7 +204,10 @@ func (h *Handler) configureTrustedProxies(r *gin.Engine) error {
 func (h *Handler) corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := strings.TrimSpace(c.Request.Header.Get("Origin"))
-		if origin != "" {
+		// Same-origin form posts send "Origin: null" under Referrer-Policy: no-referrer;
+		// browsers set Sec-Fetch-Site and pages cannot forge it, and it is not a CORS request.
+		sameOrigin := c.Request.Header.Get("Sec-Fetch-Site") == "same-origin"
+		if origin != "" && !sameOrigin {
 			if !h.isOriginAllowed(origin) {
 				c.AbortWithStatus(http.StatusForbidden)
 				return

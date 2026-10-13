@@ -54,6 +54,7 @@ func newCSSFixture(t *testing.T) *cssFixture {
 
 	r := newTestRouter()
 	r.GET("/items/:id/page", h.getItemPage)
+	r.POST("/items/:id/page", h.getItemPage)
 	r.GET("/feed-css", h.listFeedWebCSS)
 	r.PUT("/feeds/:id/css", h.putFeedWebCSS)
 	r.DELETE("/feeds/:id/css", h.deleteFeedWebCSS)
@@ -94,30 +95,63 @@ func TestItemPageRedirectsWithoutCSSAndCopiesWithIt(t *testing.T) {
 	}
 }
 
-func TestItemPageCSSQueryOverridesStored(t *testing.T) {
+func (f *cssFixture) postDraft(css string) *httptest.ResponseRecorder {
+	return performRequest(f.router, http.MethodPost, f.pageURL, strings.NewReader(url.Values{"css": {css}}.Encode()),
+		map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+}
+
+func TestItemPagePostDraftOverridesStored(t *testing.T) {
 	f := newCSSFixture(t)
 	f.putCSS("#ads{display:none}")
 
-	get := func(css string) *httptest.ResponseRecorder {
-		return performRequest(f.router, http.MethodGet, f.pageURL+"?css="+url.QueryEscape(css), nil, nil)
-	}
-
-	if body := get("p{color:red}").Body.String(); !strings.Contains(body, "p{color:red}") || strings.Contains(body, "#ads{display:none}") {
+	if body := f.postDraft("p{color:red}").Body.String(); !strings.Contains(body, "p{color:red}") || strings.Contains(body, "#ads{display:none}") {
 		t.Fatalf("draft not used: %s", body)
 	}
-	w := get("")
+	w := f.postDraft("")
 	if w.Code != http.StatusOK || strings.Contains(w.Body.String(), "<style>") || !strings.Contains(w.Body.String(), "recipe") {
 		t.Fatalf("empty draft: status %d, body %s", w.Code, w.Body.String())
 	}
-	if code := get(strings.Repeat("a", store.MaxFeedWebCSSBytes+1)).Code; code != http.StatusBadRequest {
+}
+
+// A draft above the 8 KB a proxy allows in a request line must still reach the copy.
+func TestItemPagePostLargeDraftIsInjected(t *testing.T) {
+	f := newCSSFixture(t)
+	draft := "p{color:red}" + strings.Repeat("/* x */", 2000)
+	if len(draft) <= 8<<10 || len(draft) > store.MaxFeedWebCSSBytes {
+		t.Fatalf("test draft size %d out of range", len(draft))
+	}
+	w := f.postDraft(draft)
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), draft) {
+		t.Fatalf("status %d, draft not injected", w.Code)
+	}
+}
+
+func TestItemPagePostOversizedDraftRejected(t *testing.T) {
+	f := newCSSFixture(t)
+	if code := f.postDraft(strings.Repeat("a", store.MaxFeedWebCSSBytes+1)).Code; code != http.StatusBadRequest {
 		t.Fatalf("oversized draft = %d", code)
 	}
 }
 
-func TestItemPageDraftWorksWithoutStoredCSS(t *testing.T) {
+func TestItemPageGetIgnoresCSSQuery(t *testing.T) {
 	f := newCSSFixture(t)
-	w := performRequest(f.router, http.MethodGet, f.pageURL+"?css=", nil, nil)
-	if w.Code != http.StatusOK {
+
+	// No stored CSS: the draft in the URL must not force a copy.
+	w := performRequest(f.router, http.MethodGet, f.pageURL+"?css="+url.QueryEscape("p{color:red}"), nil, nil)
+	if w.Code != http.StatusFound {
+		t.Fatalf("without stored css: status %d, want redirect", w.Code)
+	}
+
+	f.putCSS("#ads{display:none}")
+	body := performRequest(f.router, http.MethodGet, f.pageURL+"?css="+url.QueryEscape("p{color:red}"), nil, nil).Body.String()
+	if !strings.Contains(body, "#ads{display:none}") || strings.Contains(body, "p{color:red}") {
+		t.Fatalf("stored css not used alone: %s", body)
+	}
+}
+
+func TestItemPagePostEmptyDraftWorksWithoutStoredCSS(t *testing.T) {
+	f := newCSSFixture(t)
+	if w := f.postDraft(""); w.Code != http.StatusOK {
 		t.Fatalf("empty draft on a frameable site: status %d, want a copy", w.Code)
 	}
 }

@@ -42,6 +42,12 @@ The iframe always loads our own route (`GET /items/:id/page`,
 - A feed with custom CSS (`feed_web_css`) is always copied, since a
   redirected page can't be changed. The copy's meta CSP tags are dropped so
   they can't block the injected style.
+- The CSS editor's preview POSTs its unsaved draft (`css` form field) to the
+  same route from a hidden form targeting the preview iframe, not `?css=`:
+  encoded CSS in a URL hits proxy request-line limits (nginx: 8 KB). GET
+  uses stored CSS only. Under the app's `no-referrer` policy that form POST
+  carries `Origin: null`, so `corsMiddleware` lets `Sec-Fetch-Site:
+  same-origin` past the `FUSION_CORS_ALLOWED_ORIGINS` check.
 - Accepted cost: script-heavy sites may break in the opaque origin.
 
 ## Item permalink
