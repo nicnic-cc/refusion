@@ -48,13 +48,15 @@ type ItemsMutationContext = {
   settled: boolean;
   // Details still loading when the mark started: their response may predate it.
   loadingDetails: Set<number>;
+  // Row id -> feed of each row counted in feedDeltas.
+  countedRows: Map<number, number>;
 };
 
-// Per row: the newest mark that touched it and the value the server holds, so a
-// failed mark reverts a row only if no newer mark touched it, and to that value.
+// Per row: the marks still pending (seq -> target) and the value the server
+// holds, so a failed mark reverts a row only if no newer mark touched it, and to
+// the newest older pending target, else the confirmed value.
 type RowMarks = {
-  newest: number;
-  pending: number;
+  pending: Map<number, boolean>;
   confirmed: boolean;
   confirmedSeq: number;
 };
@@ -169,6 +171,7 @@ function createItemsMutationContext(targetUnread: boolean): ItemsMutationContext
     touched: new Set(),
     settled: false,
     loadingDetails: new Set(),
+    countedRows: new Map(),
   };
 }
 
@@ -186,15 +189,13 @@ function touchRow(
   if (!entry) {
     if (!flipped) return;
     entry = {
-      newest: 0,
-      pending: 0,
+      pending: new Map(),
       confirmed: !context.targetUnread,
       confirmedSeq: 0,
     };
     marks.set(id, entry);
   }
-  entry.newest = Math.max(entry.newest, context.seq);
-  entry.pending++;
+  entry.pending.set(context.seq, context.targetUnread);
   context.touched.add(id);
 }
 
@@ -214,18 +215,25 @@ function trackRows(qc: QueryClient, context: ItemsMutationContext, ids: number[]
   for (const id of ids) touchRow(qc, context, id, flipped.has(id));
 }
 
-function releaseRows(qc: QueryClient, context: ItemsMutationContext, ok: boolean) {
+// okUpTo: rows with an id up to it count as written even when ok is false.
+function releaseRows(
+  qc: QueryClient,
+  context: ItemsMutationContext,
+  ok: boolean,
+  okUpTo = -Infinity,
+) {
   context.settled = true;
   const marks = rowMarks(qc);
   for (const id of context.touched) {
     const entry = marks.get(id);
     if (!entry) continue;
     // The server holds the value of the newest successful mark.
-    if (ok && context.seq > entry.confirmedSeq) {
+    if ((ok || id <= okUpTo) && context.seq > entry.confirmedSeq) {
       entry.confirmed = context.targetUnread;
       entry.confirmedSeq = context.seq;
     }
-    if (--entry.pending <= 0) marks.delete(id);
+    entry.pending.delete(context.seq);
+    if (entry.pending.size === 0) marks.delete(id);
   }
 }
 
@@ -233,7 +241,17 @@ function releaseRows(qc: QueryClient, context: ItemsMutationContext, ok: boolean
 function revertValue(qc: QueryClient, context: ItemsMutationContext, id: number) {
   const entry = rowMarks(qc).get(id);
   if (!entry || !context.touched.has(id)) return !context.targetUnread;
-  return entry.newest === context.seq ? entry.confirmed : undefined;
+  if (entry.confirmedSeq > context.seq) return undefined;
+  let to = entry.confirmed;
+  let olderSeq = 0;
+  for (const [seq, target] of entry.pending) {
+    if (seq > context.seq) return undefined;
+    if (seq < context.seq && seq > olderSeq) {
+      olderSeq = seq;
+      to = target;
+    }
+  }
+  return to;
 }
 
 function loadingDetailIds(qc: QueryClient, ids: number[]) {
@@ -291,7 +309,6 @@ function applyOptimisticItemReadState(
 ) {
   const { targetUnread, feedDeltas: feedDeltaMap } = context;
   const idSet = new Set(ids);
-  const countedIds = new Set<number>();
   const updatedItemsById = new Map<number, Item>();
 
   // setQueryData marks a query fresh even for an unchanged result, which would
@@ -312,8 +329,8 @@ function applyOptimisticItemReadState(
 
         // Count each item once even when several cached lists hold it;
         // filtered rows are not in the counts.
-        if (!item.filtered && !countedIds.has(item.id)) {
-          countedIds.add(item.id);
+        if (!item.filtered && !context.countedRows.has(item.id)) {
+          context.countedRows.set(item.id, item.feed_id);
           const delta = targetUnread ? 1 : -1;
           feedDeltaMap.set(
             item.feed_id,
@@ -489,13 +506,16 @@ function unflipRows<
   return changed ? { ...old, pages } : undefined;
 }
 
+// keep: rows to leave as they are (the server holds this mutation's value).
 function rollbackItemsMutation(
   qc: QueryClient,
   context: ItemsMutationContext | undefined,
+  keep?: (id: number) => boolean,
 ) {
   if (!context) return;
   const { targetUnread } = context;
-  const revertTo = (id: number) => revertValue(qc, context, id);
+  const revertTo = (id: number) =>
+    keep?.(id) ? undefined : revertValue(qc, context, id);
 
   // Write only the caches that really change; setQueryData on an untouched
   // query would clear its invalidated flag.
@@ -541,10 +561,18 @@ function rollbackItemsMutation(
     }
   }
 
-  if (context.feedDeltas.size > 0 && qc.getQueryData(queryKeys.feeds.list())) {
+  const feedDeltas = new Map(context.feedDeltas);
+  if (keep) {
+    for (const [id, feedId] of context.countedRows) {
+      if (keep(id)) {
+        feedDeltas.set(feedId, (feedDeltas.get(feedId) ?? 0) - (targetUnread ? 1 : -1));
+      }
+    }
+  }
+  if (feedDeltas.size > 0 && qc.getQueryData(queryKeys.feeds.list())) {
     qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
       old?.map((feed) => {
-        const delta = context.feedDeltas.get(feed.id) ?? 0;
+        const delta = feedDeltas.get(feed.id) ?? 0;
         if (delta === 0) return feed;
         return { ...feed, unread_count: Math.max(0, feed.unread_count - delta) };
       }),
@@ -662,6 +690,10 @@ export function loadedUnreadIdsForFeeds(qc: QueryClient, feedIds: number[]) {
   return [...ids];
 }
 
+// Scope marks whose PATCH went through; if the by-id follow-up then fails, the
+// rows up to max_id stay read. A set keeps the original error for the toast.
+const scopeApplied = new WeakSet<object>();
+
 /**
  * Marks a whole feed, group or everything read on the server. Only the loaded
  * rows flip optimistically; caches holding the rest are marked stale.
@@ -675,6 +707,7 @@ export function useMarkScopeRead() {
       loadedIds: number[];
     }) => {
       await itemAPI.markScopeRead(vars.request);
+      scopeApplied.add(vars);
       // Later pages are not bounded by max_id; the scope mark skips those rows.
       // A by-id mark would also change filtered rows, which the scope mark
       // never touches, so they are left out.
@@ -709,14 +742,24 @@ export function useMarkScopeRead() {
       );
       return context;
     },
-    onError: (_error, _vars, context) => {
+    onError: (_error, vars, context) => {
       if (context) context.failed = true;
-      rollbackItemsMutation(qc, context);
+      const maxId = vars.request.max_id;
+      rollbackItemsMutation(
+        qc,
+        context,
+        scopeApplied.has(vars) ? (id) => id <= maxId : undefined,
+      );
     },
     // Not awaited, so the mutation settles when the mark request does.
-    onSettled: (_data, error, _vars, context) => {
+    onSettled: (_data, error, vars, context) => {
       if (context) {
-        releaseRows(qc, context, !error);
+        releaseRows(
+          qc,
+          context,
+          !error,
+          scopeApplied.has(vars) ? vars.request.max_id : undefined,
+        );
         refetchLoadingDetails(qc, context);
       }
       // No refetch of the open list: it would drop the rows pinned for undo.
