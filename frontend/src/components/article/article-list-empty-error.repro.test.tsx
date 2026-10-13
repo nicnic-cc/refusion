@@ -24,6 +24,10 @@ const { setSelectedArticle, fetchNextPage, noop, state } = vi.hoisted(() => ({
 state.articles = [make(1), make(2), make(3)];
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
+vi.mock("@/lib/deferred-scope-read", () => ({
+  useDeferredScopeRead: () => vi.fn(),
+  undoDeferredRead: vi.fn(),
+}));
 vi.mock("@/queries/pull", () => ({ useStartPull: () => ({ mutate: vi.fn() }) }));
 vi.mock("@/hooks/use-url-state", () => ({
   useUrlState: () => ({

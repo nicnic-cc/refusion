@@ -162,6 +162,8 @@ export const zhMessages: PartialMessages = {
   "feed.markRead.done.other": "已将 {feed} 中的 {count} 篇文章标为已读",
   "feed.markRead.failed": "将订阅标为已读失败",
   "feed.markRead.undo": "撤销",
+  "feed.markRead.scope.all": "全部订阅",
+  "feed.markRead.scope.starred": "已收藏",
   "feedCss.row.label": "网页 CSS",
   "feedCss.row.description": "在网页视图中调整此订阅文章的样式。",
   "feedCss.button.add": "设置",

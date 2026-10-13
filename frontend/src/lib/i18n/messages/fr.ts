@@ -162,6 +162,8 @@ export const frMessages: PartialMessages = {
   "feed.markRead.done.other": "{count} articles de {feed} marqués comme lus",
   "feed.markRead.failed": "Échec du marquage du flux comme lu",
   "feed.markRead.undo": "Annuler",
+  "feed.markRead.scope.all": "Tous les flux",
+  "feed.markRead.scope.starred": "Favoris",
   "feedCss.row.label": "CSS de la page web",
   "feedCss.row.description": "Change le style des articles de ce flux dans la vue page web.",
   "feedCss.button.add": "Configurer",

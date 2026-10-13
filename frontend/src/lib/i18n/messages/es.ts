@@ -162,6 +162,8 @@ export const esMessages: PartialMessages = {
   "feed.markRead.done.other": "{count} artículos de {feed} marcados como leídos",
   "feed.markRead.failed": "No se pudo marcar el feed como leído",
   "feed.markRead.undo": "Deshacer",
+  "feed.markRead.scope.all": "Todos los feeds",
+  "feed.markRead.scope.starred": "Destacados",
   "feedCss.row.label": "CSS de la página web",
   "feedCss.row.description": "Cambia el estilo de los artículos de este feed en la vista de página web.",
   "feedCss.button.add": "Configurar",

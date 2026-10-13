@@ -162,6 +162,8 @@ export const ruMessages: PartialMessages = {
   "feed.markRead.done.other": "Отмечено прочитанным в «{feed}»: {count}",
   "feed.markRead.failed": "Не удалось отметить ленту прочитанной",
   "feed.markRead.undo": "Отменить",
+  "feed.markRead.scope.all": "Все ленты",
+  "feed.markRead.scope.starred": "Избранные",
   "feedCss.row.label": "CSS веб-страницы",
   "feedCss.row.description": "Меняет оформление статей этой ленты в режиме веб-страницы.",
   "feedCss.button.add": "Настроить",

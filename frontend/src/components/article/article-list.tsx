@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCheck, Settings } from "lucide-react";
+import { CheckCheck, Settings, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
@@ -33,11 +33,12 @@ import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreferencesStore } from "@/store/preferences";
+import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
 import {
-  useMarkItemsRead,
-  useMarkItemsUnread,
-  useMarkScopeRead,
-} from "@/queries/items";
+  undoDeferredRead,
+  useDeferredScopeRead,
+} from "@/lib/deferred-scope-read";
+import { pendingScope, useIsScopePending } from "@/store/pending-feed-reads";
 import { useFeedLookup } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
@@ -147,7 +148,7 @@ export function ArticleList() {
   const setEditFeedOpen = useUIStore((s) => s.setEditFeedOpen);
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
-  const markScopeRead = useMarkScopeRead();
+  const startDeferredRead = useDeferredScopeRead();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
 
@@ -487,35 +488,54 @@ export function ArticleList() {
 
   const handleSelectArticle = useStableCallback(setSelectedArticle);
 
-  const handleMarkAllAsRead = async () => {
+  const markScope =
+    articleFilter === "starred"
+      ? pendingScope.starred
+      : selectedFeedId
+        ? pendingScope.feed(selectedFeedId)
+        : selectedGroupId
+          ? pendingScope.group(selectedGroupId)
+          : pendingScope.all;
+  const markPending = useIsScopePending(markScope);
+
+  const handleMarkAllAsRead = () => {
+    if (markPending) {
+      undoDeferredRead(markScope);
+      return;
+    }
     const unreadIds = articles
       .filter((a) => a.unread && a.id > 0)
       .map((a) => a.id);
-
-    try {
-      // Pin before the request, as handleToggleRead does: the optimistic
-      // flip would otherwise empty the unread view and trigger a refill.
-      pinRead(unreadIds);
-      // Starred lists bookmarks, not a feed scope: only loaded rows apply.
-      if (articleFilter === "starred" || snapshotId === null) {
-        if (unreadIds.length === 0) return;
-        await markItemsRead.mutateAsync(unreadIds);
-      } else {
-        await markScopeRead.mutateAsync({
-          request: {
-            max_id: snapshotId,
-            ...(selectedFeedId ? { feed_id: selectedFeedId } : {}),
-            ...(selectedGroupId ? { group_id: selectedGroupId } : {}),
+    // Starred lists bookmarks, not a feed scope: only loaded rows apply.
+    const snapshot = articleFilter === "starred" ? null : snapshotId;
+    const byId = snapshot === null;
+    if (byId && unreadIds.length === 0) return;
+    startDeferredRead({
+      scope: markScope,
+      name:
+        articleFilter === "starred"
+          ? t("feed.markRead.scope.starred")
+          : selectedFeedId || selectedGroupId
+            ? title
+            : t("feed.markRead.scope.all"),
+      count: byId
+        ? unreadIds.length
+        : Math.max(scopeUnreadCount, unreadIds.length),
+      mark: snapshot === null
+        ? { ids: unreadIds }
+        : {
+            request: {
+              max_id: snapshot,
+              ...(selectedFeedId ? { feed_id: selectedFeedId } : {}),
+              ...(selectedGroupId ? { group_id: selectedGroupId } : {}),
+            },
+            loadedIds: () => unreadIds,
           },
-          loadedIds: unreadIds,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to mark all as read:", error);
-    }
+    });
   };
 
-  const markAllReadDisabled = unreadCount === 0 && scopeUnreadCount === 0;
+  const markAllReadDisabled =
+    !markPending && unreadCount === 0 && scopeUnreadCount === 0;
   useMarkAllReadShortcut(handleMarkAllAsRead, markAllReadDisabled);
 
   return (
@@ -542,12 +562,18 @@ export function ArticleList() {
             </TooltipButton>
           )}
           <TooltipButton
-            label={t("article.list.markAllRead")}
+            label={t(
+              markPending ? "feed.markRead.undo" : "article.list.markAllRead",
+            )}
             shortcut="Shift+A"
             onClick={handleMarkAllAsRead}
             disabled={markAllReadDisabled}
           >
-            <CheckCheck className="h-4 w-4" />
+            {markPending ? (
+              <Undo2 className="h-4 w-4" />
+            ) : (
+              <CheckCheck className="h-4 w-4" />
+            )}
           </TooltipButton>
         </div>
       </ContentHeader>
