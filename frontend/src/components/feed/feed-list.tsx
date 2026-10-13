@@ -122,10 +122,11 @@ export function FeedList() {
     () =>
       sidebarGroups.filter(
         (g) =>
+          articleFilter === "all" ||
           g.id === selectedGroupId ||
           (visibleFeedsByGroup.get(g.id)?.length ?? 0) > 0,
       ),
-    [sidebarGroups, visibleFeedsByGroup, selectedGroupId],
+    [articleFilter, sidebarGroups, visibleFeedsByGroup, selectedGroupId],
   );
 
   const totalUnread = getTotalUnreadCount();
