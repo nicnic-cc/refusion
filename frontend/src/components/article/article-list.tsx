@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCheck } from "lucide-react";
+import { CheckCheck, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TooltipButton } from "@/components/common/tooltip-button";
@@ -48,6 +48,7 @@ import {
   articleListKey,
   useArticlePinsStore,
   useReadStatePins,
+  useUIStore,
 } from "@/store";
 import { apiErrorMessage, type Bookmark, type Item } from "@/lib/api";
 
@@ -143,6 +144,7 @@ export function ArticleList() {
 
   const { data: groups = [] } = useGroups();
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
+  const setEditFeedOpen = useUIStore((s) => s.setEditFeedOpen);
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
   const markScopeRead = useMarkScopeRead();
@@ -528,6 +530,17 @@ export function ArticleList() {
             feedId={selectedFeedId}
             disabled={articleFilter === "starred"}
           />
+          {selectedFeedId && getFeedById(selectedFeedId) && (
+            <TooltipButton
+              label={t("feeds.tooltip.editFeed")}
+              onClick={() => {
+                const feed = getFeedById(selectedFeedId);
+                if (feed) setEditFeedOpen(true, feed);
+              }}
+            >
+              <Settings className="h-4 w-4" />
+            </TooltipButton>
+          )}
           <TooltipButton
             label={t("article.list.markAllRead")}
             shortcut="Shift+A"
