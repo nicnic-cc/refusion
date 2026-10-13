@@ -174,7 +174,13 @@ export function ImportOpmlDialog() {
   };
 
   return (
-    <Dialog open={isImportOpmlOpen} onOpenChange={setImportOpmlOpen}>
+    <Dialog
+      open={isImportOpmlOpen}
+      onOpenChange={(open) => {
+        if (open) setImportOpmlOpen(true);
+        else handleClose();
+      }}
+    >
       <DialogContent
         className="flex w-full max-w-[480px] flex-col gap-0 overflow-hidden p-0"
         showCloseButton={false}
