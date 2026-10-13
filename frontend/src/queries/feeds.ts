@@ -70,7 +70,7 @@ export function useUnreadCounts() {
 // Feed/group-filtered starred lists never go stale on their own (staleTime
 // Infinity), so a feed changing group must invalidate them. The unfiltered
 // lookup pages through every bookmark and doesn't depend on group membership.
-function invalidateFilteredBookmarkLists(qc: QueryClient) {
+export function invalidateFilteredBookmarkLists(qc: QueryClient) {
   return qc.invalidateQueries({
     queryKey: queryKeys.bookmarks.lists(),
     predicate: (query) => {
