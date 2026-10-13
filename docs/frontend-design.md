@@ -42,6 +42,13 @@ the view was entered, so reading or marking all read doesn't pull rows away.
 This keeps list context stable while opening/closing article detail. `g u` /
 `g a` / `g s` switch the filter of the current view, `g h` / `g f` jump to all feeds / feed management; all are navigation sugar over the same URLs.
 
+Opening a feed from an article (its feed link) opens that feed's folder in the
+sidebar and scrolls to the feed; other folders stay as they are (decided
+2026-10-13, a trial: collapsing the others was dropped). Feed settings sit
+behind a gear in the article list header, shown only while one feed is
+selected; the sidebar row's hover slot went to "mark all read" instead.
+Manage feeds and the edit button in search stay as other ways in.
+
 ## 4. Layout system
 
 ### Desktop
@@ -117,6 +124,29 @@ Known edge: marking an item unread from the all view does not insert it into an 
 Star/bookmark changes are deliberately the opposite pattern: un-starring removes the row from the starred view immediately (optimistic removal from every bookmark list cache, then invalidation to reconcile — see `useDeleteBookmark`), because a bookmark toggle is its own undo and needs no lingering row. Only read-state changes defer list membership.
 
 Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
+
+### Mark all read: a 5 s undo window instead of a confirm dialog
+
+Every "mark all read" (the sidebar feed and folder rows, the list header
+button and `Shift+A`, Starred included) waits 5 s before it is sent, with Undo
+in a toast that names the scope (decided 2026-10-13). There is no confirm
+dialog and no countdown. The state lives in `store/pending-feed-reads.ts`.
+
+- While pending, the covered feeds' counts drop out of the feed, folder and All
+  counts at once, so the sidebar already shows the outcome.
+- Undo sits on the row of the scope that started the mark (and the header
+  button and `Shift+A` toggle to Undo). Feeds covered by a folder or All mark
+  go blank instead of each offering Undo.
+- At commit, the open unread list keeps the marked rows pinned grayed, as for
+  a single read toggle above.
+- A mark still pending when the tab closes is sent anyway (keepalive request
+  on `pagehide`), with no chance to undo it.
+- Sidebar marks have no list snapshot; see `max_id` in
+  [api-conventions.md](api-conventions.md).
+
+Known edge: a folder mark flips only loaded rows of the feeds the sidebar
+shows; rows of hidden feeds in an open list stay unread until it refetches.
+The server marks the whole folder either way.
 
 ## 6. Search and bookmarks
 
