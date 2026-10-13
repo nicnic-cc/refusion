@@ -21,7 +21,6 @@ memory = '256mb'
 
 [env]
 FUSION_PASSWORD = "{YOUR_PASSWORD}"
-FUSION_HOST = "127.0.0.1"
 FUSION_DB_PATH = "/data/fusion.db"
 
 [mounts]
