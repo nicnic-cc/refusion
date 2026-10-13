@@ -138,7 +138,8 @@ dialog and no countdown. The state lives in `store/pending-feed-reads.ts`.
   button and `Shift+A` toggle to Undo). Feeds covered by a folder or All mark
   go blank instead of each offering Undo.
 - At commit, the open unread list keeps the marked rows pinned grayed, as for
-  a single read toggle above.
+  a single read toggle above. The toast closes and the scope's feed counts are
+  set to 0 until the server counts arrive.
 - A mark still pending when the tab closes is sent anyway (keepalive request
   on `pagehide`), with no chance to undo it.
 - Sidebar marks have no list snapshot; see `max_id` in

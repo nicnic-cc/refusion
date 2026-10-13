@@ -1,16 +1,23 @@
 import { toast } from "sonner";
 import { Undo2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { parseFilter } from "@/hooks/use-url-state";
 import { API_BASE } from "@/lib/api/client";
-import { apiErrorMessage, type MarkScopeReadRequest } from "@/lib/api";
+import {
+  apiErrorMessage,
+  type Feed,
+  type MarkScopeReadRequest,
+} from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { parsePositiveIntegerParam } from "@/lib/route-params";
+import { queryKeys } from "@/queries/keys";
 import { useMarkItemsRead, useMarkScopeRead } from "@/queries/items";
 import { articleListKey, useArticlePinsStore } from "@/store/article-pins";
 import {
   UNDO_WINDOW_MS,
+  isFeedCovered,
   usePendingFeedReadsStore,
 } from "@/store/pending-feed-reads";
 
@@ -73,6 +80,7 @@ interface DeferredRead {
 export function useDeferredScopeRead() {
   const { t } = useI18n();
   const router = useRouter();
+  const qc = useQueryClient();
   const { mutateAsync: markScopeRead } = useMarkScopeRead();
   const { mutateAsync: markItemsRead } = useMarkItemsRead();
 
@@ -87,9 +95,22 @@ export function useDeferredScopeRead() {
     const fail = (error: unknown) => {
       toast.error(apiErrorMessage(error, failedMessage));
     };
+    // Pending ends at commit, and optimistic deltas only cover loaded rows, so
+    // the covered feeds show 0 until the refetch after the request settles.
+    const zeroCoveredFeeds = () => {
+      void qc.cancelQueries({ queryKey: queryKeys.feeds.all });
+      const covered = { [scope]: true } as const;
+      qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
+        old?.map((f) =>
+          isFeedCovered(covered, f) ? { ...f, unread_count: 0 } : f,
+        ),
+      );
+    };
 
     usePendingFeedReadsStore.getState().schedule(scope, {
       commit: () => {
+        // sonner pauses its own timer on hover, so Undo could outlive the window.
+        toast.dismiss(toastId(scope));
         if ("ids" in mark) {
           pin(mark.ids);
           markItemsRead(mark.ids).catch(fail);
@@ -97,6 +118,7 @@ export function useDeferredScopeRead() {
         }
         const loadedIds = mark.loadedIds();
         pin(loadedIds);
+        zeroCoveredFeeds();
         markScopeRead({ request: mark.request, loadedIds }).catch(fail);
       },
       flush: () => {
