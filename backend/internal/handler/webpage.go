@@ -103,7 +103,8 @@ func (h *Handler) getItemPage(c *gin.Context) {
 // GET uses the feed's stored CSS. hasCSS means the page must be served as a copy.
 func (h *Handler) webPageCSS(c *gin.Context, feedID int64) (css string, hasCSS, ok bool) {
 	if c.Request.Method == http.MethodPost {
-		draft := c.PostForm("css")
+		// Browsers send form newlines as CRLF; count and inject them as LF like the saved CSS.
+		draft := strings.ReplaceAll(c.PostForm("css"), "\r\n", "\n")
 		if len(draft) > store.MaxFeedWebCSSBytes {
 			badRequestError(c, "css too large")
 			return "", false, false

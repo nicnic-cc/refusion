@@ -133,6 +133,22 @@ func TestItemPagePostOversizedDraftRejected(t *testing.T) {
 	}
 }
 
+// Browsers send form newlines as CRLF, so a draft within the cap in LF form must still pass.
+func TestItemPagePostDraftCapCountsLFNotCRLF(t *testing.T) {
+	f := newCSSFixture(t)
+	lf := strings.Repeat("a{}\n", store.MaxFeedWebCSSBytes/4)
+	crlf := strings.ReplaceAll(lf, "\n", "\r\n")
+	if len(lf) > store.MaxFeedWebCSSBytes || len(crlf) <= store.MaxFeedWebCSSBytes {
+		t.Fatalf("test sizes lf=%d crlf=%d out of range", len(lf), len(crlf))
+	}
+	if w := f.postDraft(crlf); w.Code != http.StatusOK {
+		t.Fatalf("crlf draft within cap in lf form = %d, want 200", w.Code)
+	}
+	if code := f.postDraft(strings.ReplaceAll(lf+"a{}\n", "\n", "\r\n")).Code; code != http.StatusBadRequest {
+		t.Fatalf("draft over cap in lf form = %d, want 400", code)
+	}
+}
+
 func TestItemPageGetIgnoresCSSQuery(t *testing.T) {
 	f := newCSSFixture(t)
 
