@@ -57,16 +57,18 @@ This keeps list context stable while opening/closing article detail. `g u` /
 - Modals/drawers share the same UI flow as desktop
 
 The reading view is an infinite list with per-card read/star quick actions
-(its all/unread/starred switch sits in the sidebar header, see section 3); the article drawer shows sanitized full
-content (`lib/content.ts`) with source link and prev/next navigation; feed
+(its all/unread/starred switch sits in the sidebar header, see section 3); the
+open article (drawer or pane) shows the sanitized feed text (`lib/content.ts`),
+the full article or the web page ([article-views.md](article-views.md)), with
+prev/next in the top bar on desktop and in the footer on mobile; feed
 management (`/feeds`) hosts grouped feed/group CRUD, refresh-all, reorder
 mode, the per-feed and global filters, and OPML import/export. Component names map to these areas directly — browse
 `frontend/src/components/` for the implementation.
 
 Icon controls get the styled tooltip (`components/common/tooltip-button.tsx`,
 or `with-tooltip.tsx` to keep a control's own markup), never a native
-`title=`, which looks out of place and shows late. Done on `/feeds` and the
-sidebar so far.
+`title=`, which looks out of place and shows late. Iframes keep `title=`,
+since screen readers use it to name the frame.
 
 Every feed has a folder: "no folder" means the backend's fallback group
 (`DEFAULT_GROUP_ID` in `lib/groups.ts`), which the sidebar hides while
@@ -130,7 +132,7 @@ Before filing "marked-read items still show up in the unread list" as a bug, che
 
 ## 7. Keyboard interactions
 
-The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, filter switches and jumps (`g u` / `g a` / `g s` / `g h` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
+The app is keyboard-first. Shortcut categories: search/dialog toggles, article navigation (next/previous), sidebar tree navigation (Shift chords, which article keys ignore), read/star toggles, article view toggles (`w` full article, `shift+w` web page), filter switches and jumps (`g u` / `g a` / `g s` / `g h` / `g f`), and `?` for in-app help. The authoritative binding list lives in the shortcuts help dialog and its source; avoid duplicating it here so docs and code do not drift.
 
 ## 8. Authentication UX
 

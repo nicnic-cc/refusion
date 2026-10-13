@@ -4,7 +4,7 @@
     <img src="./assets/logo/refusion-logo.svg" alt="refusion" height="72" />
   </picture>
 </p>
-<p align="center">A lightweight, self-hosted RSS reader.</p>
+<p align="center">A fast, keyboard-first, self-hosted RSS reader.</p>
 
 refusion is a web app for reading RSS and Atom feeds on your own server. It is a fork of [Fusion](https://github.com/0x2E/fusion), reshaped around how I read.
 
@@ -101,12 +101,14 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks, search, keyboard shortcuts, the Fever API and the PWA. refusion adds:
 
-- the Panes layout, full article text, the web page view and YouTube playback
-- per-feed settings for which view articles open in, for links to the feed's own page, and custom CSS for the web page view
-- pull to refresh with progress per feed, and the new-articles pill
-- feed and global filters
-- reorder mode, search excerpts and the text settings
-- sidebar keyboard navigation, taken from the still-open upstream PR [#264](https://github.com/0x2E/fusion/pull/264)
+- Panes layout, full article text, the web page view and YouTube playback
+- Per-feed settings for which view articles open in, for links to the feed's own page, and custom CSS for the web page view
+- Pull to refresh with progress per feed, and the new-articles pill
+- Feed and global filters
+- Finding feeds from a GitHub repo, a GitHub user or a subreddit
+- Stars that show on the same article in every feed it was posted to
+- Reorder mode, search excerpts and the text settings
+- Sidebar keyboard navigation, taken from the still-open upstream PR [#264](https://github.com/0x2E/fusion/pull/264)
 
 Upstream changes are merged in.
 

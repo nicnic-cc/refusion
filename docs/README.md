@@ -28,6 +28,8 @@
   and cascade design
 - `frontend-design.md`: frontend interaction model, URL state, data-flow
   and read-state undo design
+- `article-views.md` (fork): feed text, full article and web page views,
+  the per-feed default view, web page sandboxing and item permalinks
 - `fetch-progress.md` (fork): pull to refresh, check progress, the new
   articles pill and per-feed check state
 - `feed-filter.md` (fork): the per-feed and global article filters, why
