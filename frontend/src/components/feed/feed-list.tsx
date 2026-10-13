@@ -15,6 +15,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { sidebarNodeKey, useSidebarNavStore, type SidebarNode } from "@/store";
 import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
+import { usePendingFeedReadsStore } from "@/store/pending-feed-reads";
 import { FeedGroup } from "./feed-group";
 
 const EMPTY_IDS: ReadonlySet<number> = new Set();
@@ -51,15 +52,20 @@ export function FeedList() {
     () => new Map(sidebarGroups.map((g) => [g.id, getFeedsByGroup(g.id)])),
     [sidebarGroups, getFeedsByGroup],
   );
+  // Feeds waiting out an undo window already count as read.
+  const pendingReads = usePendingFeedReadsStore((s) => s.pending);
   const unreadByGroup = useMemo(
     () =>
       new Map(
         [...feedsByGroup].map(([id, groupFeeds]) => [
           id,
-          groupFeeds.reduce((sum, f) => sum + (f.unread_count || 0), 0),
+          groupFeeds.reduce(
+            (sum, f) => sum + (pendingReads[f.id] ? 0 : f.unread_count || 0),
+            0,
+          ),
         ]),
       ),
-    [feedsByGroup],
+    [feedsByGroup, pendingReads],
   );
 
   const starredFeedIds = useMemo(
@@ -129,7 +135,10 @@ export function FeedList() {
     [articleFilter, sidebarGroups, visibleFeedsByGroup, selectedGroupId],
   );
 
-  const totalUnread = getTotalUnreadCount();
+  const totalUnread = feeds.reduce(
+    (sum, f) => (pendingReads[f.id] ? sum - (f.unread_count ?? 0) : sum),
+    getTotalUnreadCount(),
+  );
   const starredCount = starredTotal;
 
   const allCount =
