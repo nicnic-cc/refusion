@@ -427,3 +427,43 @@ func TestBookmarkExists(t *testing.T) {
 		t.Error("expected bookmark not to exist")
 	}
 }
+
+func TestListBookmarksPermalink(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Group")
+	feed := mustCreateFeed(t, store, group.ID, "Feed", "https://example.com/f", "https://example.com", "")
+	linked := mustCreateItem(t, store, feed.ID, "guid-1", "Linked", "https://example.com/l", "Content", 100)
+	plain := mustCreateItem(t, store, feed.ID, "guid-2", "Plain", "https://example.com/p", "Content", 100)
+	if _, err := store.db.Exec(
+		`UPDATE items SET permalink = :permalink WHERE id = :id`,
+		sql.Named("permalink", "https://example.com/l/page"),
+		sql.Named("id", linked.ID),
+	); err != nil {
+		t.Fatalf("set permalink: %v", err)
+	}
+
+	withPermalink := mustCreateBookmark(t, store, &linked.ID, &feed.ID, linked.Link, linked.Title, linked.Content, linked.PubDate, feed.Name)
+	withoutPermalink := mustCreateBookmark(t, store, &plain.ID, &feed.ID, plain.Link, plain.Title, plain.Content, plain.PubDate, feed.Name)
+	orphan := mustCreateBookmark(t, store, nil, nil, "https://example.com/o", "Orphan", "Content", 100, "Gone")
+
+	list, err := store.ListBookmarks(ListBookmarksParams{Limit: 10})
+	if err != nil {
+		t.Fatalf("ListBookmarks() failed: %v", err)
+	}
+	got := map[int64]*string{}
+	for _, b := range list {
+		got[b.ID] = b.Permalink
+	}
+
+	if p := got[withPermalink.ID]; p == nil || *p != "https://example.com/l/page" {
+		t.Errorf("item-linked bookmark permalink = %v, want the item's permalink", p)
+	}
+	if p := got[withoutPermalink.ID]; p != nil {
+		t.Errorf("bookmark of item without permalink = %q, want nil", *p)
+	}
+	if p := got[orphan.ID]; p != nil {
+		t.Errorf("orphan bookmark permalink = %q, want nil", *p)
+	}
+}

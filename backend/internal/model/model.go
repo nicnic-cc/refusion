@@ -121,6 +121,9 @@ type Bookmark struct {
 	// itself always survives such deletions (it is a content snapshot).
 	FeedID *int64 `json:"feed_id"`
 	// Unread mirrors the linked item's unread state (false for orphans).
-	Unread    bool  `json:"unread"`
-	CreatedAt int64 `json:"created_at"`
+	Unread bool `json:"unread"`
+	// Permalink is the linked item's permalink (live, not snapshotted); nil for
+	// orphans and items without one.
+	Permalink *string `json:"permalink"`
+	CreatedAt int64   `json:"created_at"`
 }
