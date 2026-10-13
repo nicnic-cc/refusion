@@ -194,13 +194,14 @@ export function useArticleViewState() {
         console.error("Failed to load full article:", error);
         if (latestRequestIdRef.current !== id) return;
         toast.error(t("article.toast.fullTextFailed"));
-        // Leave the empty full view so a later w retries; never override a
-        // choice made for another article.
+        // Only a different pick for this same article is kept. A choice keyed
+        // to another article must not block the fallback, or this one stays in
+        // "full" with no text (endless spinner).
         const fallback = toggledView("full", "full", defaultView);
         setChoice((current) =>
-          current === null || (current.id === id && current.view === "full")
-            ? { id, view: fallback }
-            : current,
+          current !== null && current.id === id && current.view !== "full"
+            ? current
+            : { id, view: fallback },
         );
       });
   };
