@@ -540,7 +540,7 @@ export function ArticleList() {
 
   return (
     <div className="flex h-full flex-col">
-      <ContentHeader className="pl-4 pr-2 sm:pl-6 sm:pr-2">
+      <ContentHeader>
         <div className="flex min-w-0 items-center gap-1">
           <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
