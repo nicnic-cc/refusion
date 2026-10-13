@@ -130,7 +130,7 @@ export const frMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "Sélectionnez un groupe...",
   "feed.add.nameLabel": "Nom du flux",
   "feed.add.namePlaceholder": "Entrez le nom du flux...",
-  "feed.add.proxyHint": "Vide, le proxy système est utilisé.",
+  "feed.add.proxyHint": "Vide, la connexion est directe.",
   "feed.add.proxyLabel": "Proxy HTTP",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Ajouter un flux",
@@ -149,6 +149,7 @@ export const frMessages: PartialMessages = {
   "feed.add.validateTitle": "Vérifier l'URL du flux",
   "feed.add.lookingForFeed": "Recherche du flux...",
   "feed.edit.checkNow": "Vérifier maintenant",
+  "feed.edit.checkNowPaused": "Les flux en pause ne sont pas vérifiés",
   "feed.edit.lastChecked": "Dernière vérification : {when}",
   "feed.edit.deleteConfirm.description":
     'Voulez-vous vraiment vous désabonner de "{name}" ? Tous les articles de ce flux seront supprimés.',

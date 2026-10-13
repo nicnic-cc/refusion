@@ -130,7 +130,7 @@ export const svMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "Välj en grupp...",
   "feed.add.nameLabel": "Flödesnamn",
   "feed.add.namePlaceholder": "Ange flödesnamn...",
-  "feed.add.proxyHint": "Tomt använder systemproxyn.",
+  "feed.add.proxyHint": "Tomt ansluter direkt.",
   "feed.add.proxyLabel": "HTTP-proxy",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Lägg till flöde",
@@ -149,6 +149,7 @@ export const svMessages: PartialMessages = {
   "feed.add.validateTitle": "Verifiera flödes-URL",
   "feed.add.lookingForFeed": "Söker efter flödet...",
   "feed.edit.checkNow": "Kontrollera nu",
+  "feed.edit.checkNowPaused": "Pausade flöden kontrolleras inte",
   "feed.edit.lastChecked": "Senast kontrollerad: {when}",
   "feed.edit.deleteConfirm.description":
     'Är du säker på att du vill avsluta prenumerationen på "{name}"? Alla artiklar från detta flöde kommer att raderas.',

@@ -128,7 +128,7 @@ export const enMessages = {
   "feed.add.groupPlaceholder": "Select a group...",
   "feed.add.nameLabel": "Feed name",
   "feed.add.namePlaceholder": "Enter feed name...",
-  "feed.add.proxyHint": "Empty uses the system proxy.",
+  "feed.add.proxyHint": "Empty connects directly.",
   "feed.add.proxyLabel": "HTTP proxy",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Add Feed",
@@ -147,6 +147,7 @@ export const enMessages = {
   "feed.add.validateTitle": "Validate feed URL",
   "feed.add.lookingForFeed": "Looking for the feed...",
   "feed.edit.checkNow": "Check now",
+  "feed.edit.checkNowPaused": "Paused feeds are not checked",
   "feed.edit.lastChecked": "Last checked {when}",
   "feed.edit.deleteConfirm.description":
     'Are you sure you want to unsubscribe from "{name}"? All items from this feed will be deleted.',
