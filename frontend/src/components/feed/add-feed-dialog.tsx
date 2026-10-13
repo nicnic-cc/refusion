@@ -137,7 +137,10 @@ export function AddFeedDialog() {
   const handleValidate = async () => {
     if (!url.trim()) return;
 
-    const run = ++detectRun.current;
+    // Latest action wins; clearing the busy flags keeps a superseded Add from
+    // leaving the form stuck disabled.
+    cancelPendingDetect();
+    const run = detectRun.current;
     setIsValidating(true);
     try {
       const response = await feedAPI.validate(validateRequest(url.trim()));
