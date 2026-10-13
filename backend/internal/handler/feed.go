@@ -374,7 +374,7 @@ func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (str
 		return "", err
 	}
 
-	body, err := fetchCapped(ctx, client, target, allowPrivateFeeds)
+	body, _, err := fetchCapped(ctx, client, target, allowPrivateFeeds)
 	if err != nil {
 		return "", err
 	}
