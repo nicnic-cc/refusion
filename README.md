@@ -14,7 +14,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 ## At a glance
 
-- **Reading:** two layouts (drawer and panes), full article text or the original page on demand, YouTube in the article view
+- **Reading:** two layouts (drawer and panes), full article text or the original page on demand, your own CSS for a feed's pages, YouTube in the article view
 - **New articles:** automatic checks and pull to refresh, with progress per feed
 - **Filters:** hide (or show only) articles per feed or everywhere, with a live preview
 - **Organising:** folders in your own order, mark all as read, OPML import and export
@@ -34,11 +34,17 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 - **Full article and web page:** press `w` to fetch the whole article from the site, or `shift+w` to show the original page.
   - Per feed, "Open articles as" picks which view an article starts in; turning a view off returns to that default.
   - For link blogs and aggregators, "Links open: Feed's own page" opens the item's page on the feed's site (the post or the discussion) instead of the linked site.
+- **Web page CSS:** restyle a feed's pages in the web page view with your own CSS, for example to hide banners and sidebars or set a calmer font. The editor in the feed's settings shows a live preview of the feed's newest article.
+  - With CSS set, the page is always shown as a copy fetched by the server, so a site that leans heavily on scripts may not work there. Deleting the CSS brings back the original page.
 - **YouTube:** videos play inside the article view.
 - **Text settings:** font and text size in the article view, and relative ("3 hours ago") or absolute dates.
 
 <p align="center">
-  <img src="./assets/screenshots/feed-edit.png" alt="Edit feed dialog with the Open articles as and Links open options" width="100%" />
+  <img src="./assets/screenshots/feed-edit.png" alt="Edit feed dialog with the Open articles as, Links open and Web page CSS options" width="100%" />
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/feed-css.png" alt="Web page CSS dialog: CSS on the left, a live preview of the cleaned-up article on the right" width="100%" />
 </p>
 
 ### New articles
@@ -96,7 +102,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks, search, keyboard shortcuts, the Fever API and the PWA. refusion adds:
 
 - the Panes layout, full article text, the web page view and YouTube playback
-- per-feed settings for which view articles open in, and for links to the feed's own page
+- per-feed settings for which view articles open in, for links to the feed's own page, and custom CSS for the web page view
 - pull to refresh with progress per feed, and the new-articles pill
 - feed and global filters
 - reorder mode, search excerpts and the text settings
