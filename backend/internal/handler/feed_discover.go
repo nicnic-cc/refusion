@@ -35,34 +35,35 @@ var wellKnownFeedPaths = []string{
 
 // fetchCapped GETs rawURL with the guarded client and reads at most
 // maxDiscoveryBytes. The URL check up front rejects internal literals early;
-// the client re-checks at dial time and on redirects.
-func fetchCapped(ctx context.Context, client *http.Client, rawURL string, allowPrivate bool) ([]byte, error) {
+// the client re-checks at dial time and on redirects. It also returns the final
+// URL after redirects, the base for resolving relative links.
+func fetchCapped(ctx context.Context, client *http.Client, rawURL string, allowPrivate bool) ([]byte, string, error) {
 	if err := httpc.ValidateRequestURL(ctx, rawURL, allowPrivate); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	httpc.SetDefaultHeaders(req)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("bad status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxDiscoveryBytes+1))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if len(body) > maxDiscoveryBytes {
-		return nil, errBodyTooLarge
+		return nil, "", errBodyTooLarge
 	}
-	return body, nil
+	return body, resp.Request.URL.String(), nil
 }
 
 type feedDiscoverer struct {
@@ -195,7 +196,7 @@ func redditFeeds(u *url.URL) []feedfinder.Feed {
 	switch mode {
 	case "r":
 		if len(parts) >= 4 && strings.HasPrefix(parts[3], "comments") {
-			return []feedfinder.Feed{{Title: "post", Link: u.String() + ".rss"}}
+			return []feedfinder.Feed{{Title: "post", Link: (&url.URL{Scheme: u.Scheme, Host: u.Host, Path: u.Path}).String() + ".rss"}}
 		}
 		feeds := make([]feedfinder.Feed, 0, 4)
 		for _, sort := range []string{"hot", "new", "top", "rising"} {
@@ -239,7 +240,7 @@ func (d *feedDiscoverer) youtubeFeeds(ctx context.Context) []feedfinder.Feed {
 	if !strings.HasPrefix(d.target.Path, "/@") {
 		return nil
 	}
-	content, err := fetchCapped(ctx, d.client, d.target.String(), d.allowPrivate)
+	content, _, err := fetchCapped(ctx, d.client, d.target.String(), d.allowPrivate)
 	if err != nil {
 		return nil
 	}
@@ -251,28 +252,28 @@ func (d *feedDiscoverer) youtubeFeeds(ctx context.Context) []feedfinder.Feed {
 }
 
 func (d *feedDiscoverer) fromPage(ctx context.Context) []feedfinder.Feed {
-	content, err := fetchCapped(ctx, d.client, d.target.String(), d.allowPrivate)
+	content, finalURL, err := fetchCapped(ctx, d.client, d.target.String(), d.allowPrivate)
 	if err != nil {
 		return nil
 	}
 
-	if feeds := d.parseHTML(ctx, content); len(feeds) != 0 {
+	if feeds := d.parseHTML(ctx, content, finalURL); len(feeds) != 0 {
 		for i := range feeds {
-			feeds[i].Link = resolveLink(d.target.String(), feeds[i].Link)
+			feeds[i].Link = resolveLink(finalURL, feeds[i].Link)
 		}
 		return feeds
 	}
 
 	if feed, ok := parseFeedContent(content); ok {
 		if feed.Link == "" {
-			feed.Link = d.target.String()
+			feed.Link = finalURL
 		}
 		return []feedfinder.Feed{feed}
 	}
 	return nil
 }
 
-func (d *feedDiscoverer) parseHTML(ctx context.Context, content []byte) []feedfinder.Feed {
+func (d *feedDiscoverer) parseHTML(ctx context.Context, content []byte, baseURL string) []feedfinder.Feed {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
 	if err != nil {
 		return nil
@@ -301,7 +302,7 @@ func (d *feedDiscoverer) parseHTML(ctx context.Context, content []byte) []feedfi
 		}
 	})
 	for link := range suspected {
-		abs := resolveLink(d.target.String(), link)
+		abs := resolveLink(baseURL, link)
 		if feed, ok := d.probe(ctx, abs); ok {
 			feed.Link = abs
 			feeds = append(feeds, feed)
@@ -326,7 +327,7 @@ func (d *feedDiscoverer) fromWellKnown(ctx context.Context, baseURL string) []fe
 }
 
 func (d *feedDiscoverer) probe(ctx context.Context, rawURL string) (feedfinder.Feed, bool) {
-	content, err := fetchCapped(ctx, d.client, rawURL, d.allowPrivate)
+	content, _, err := fetchCapped(ctx, d.client, rawURL, d.allowPrivate)
 	if err != nil {
 		return feedfinder.Feed{}, false
 	}
