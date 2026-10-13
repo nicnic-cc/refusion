@@ -20,7 +20,13 @@ import { useI18n } from "@/lib/i18n";
 import { toggledView } from "@/lib/article-view";
 import { articleOpenLink } from "@/lib/article-link";
 import { toSafeExternalUrl } from "@/lib/safe-url";
-import { useReadStatePins, usePreferencesStore } from "@/store";
+import {
+  sidebarNodeKey,
+  useReadStatePins,
+  usePreferencesStore,
+  useSidebarNavStore,
+} from "@/store";
+import { useCollapsedGroupsStore } from "@/store/collapsed-groups";
 import { autoMarkReadDelayMs } from "@/store/preferences";
 
 export function useArticleViewState() {
@@ -229,7 +235,21 @@ export function useArticleViewState() {
 
   const handleOpenFeed = () => {
     if (!article || article.feed_id <= 0) return;
-    setSelectedFeed(article.feed_id);
+    const feedId = article.feed_id;
+    const feed = getFeedById(feedId);
+    if (feed) {
+      useCollapsedGroupsStore.getState().setGroupOpen(feed.group_id, true);
+    }
+    useSidebarNavStore.getState().setFocusedKey(sidebarNodeKey.feed(feedId));
+    setSelectedFeed(feedId);
+    // The row only exists once React has re-rendered and the folder has opened.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        document
+          .querySelector(`[data-sidebar-key="${sidebarNodeKey.feed(feedId)}"]`)
+          ?.scrollIntoView({ block: "nearest" }),
+      ),
+    );
   };
 
   const { goToNext, goToPrevious, hasNext, hasPrevious } =
