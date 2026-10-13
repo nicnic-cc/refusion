@@ -155,19 +155,19 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
         </span>
       </button>
       {pending ? (
-        <div className="ml-2 flex h-6 w-6 shrink-0 items-center justify-end">
+        <div className="ml-2 flex h-6 w-7 shrink-0 items-center justify-end">
           <Button
             variant="ghost"
             size="icon-xs"
-            className="inline-flex justify-end hover:bg-transparent dark:hover:bg-transparent"
+            className="inline-flex h-6 w-7 justify-end hover:bg-transparent dark:hover:bg-transparent"
             onClick={handleUndo}
             aria-label={t("feed.markRead.undo")}
           >
-            <Undo2 className="text-primary" />
+            <Undo2 className="size-3.5 text-primary" />
           </Button>
         </div>
       ) : (
-        <div className="ml-2 flex h-6 w-6 shrink-0 items-center justify-end">
+        <div className="ml-2 flex h-6 w-7 shrink-0 items-center justify-end">
           <span className="text-xs text-muted-foreground md:group-hover:hidden md:group-focus-within:hidden">
             {feed.unread_count > 0 ? feed.unread_count : ""}
           </span>
@@ -175,11 +175,11 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
             <Button
               variant="ghost"
               size="icon-xs"
-              className="inline-flex justify-end hover:bg-transparent dark:hover:bg-transparent md:hidden md:group-hover:inline-flex md:group-focus-within:inline-flex"
+              className="inline-flex h-6 w-7 justify-end hover:bg-transparent dark:hover:bg-transparent md:hidden md:group-hover:inline-flex md:group-focus-within:inline-flex"
               onClick={handleMarkRead}
               aria-label={t("article.list.markAllRead")}
             >
-              <CheckCheck className="text-muted-foreground group-hover/button:text-foreground" />
+              <CheckCheck className="size-3.5 text-muted-foreground group-hover/button:text-foreground" />
             </Button>
           )}
         </div>
