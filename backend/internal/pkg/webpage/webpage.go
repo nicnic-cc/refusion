@@ -97,7 +97,7 @@ var (
 // InjectBase puts a <base> tag first in the document so relative URLs resolve
 // against the original site and links open in a new tab.
 func InjectBase(doc []byte, baseURL string) []byte {
-	tag := `<base href="` + html.EscapeString(baseURL) + `" target="_blank">`
+	tag := `<base href="` + html.EscapeString(baseURL) + `" target="_blank" />`
 
 	loc := headTag.FindIndex(doc)
 	if loc == nil {
