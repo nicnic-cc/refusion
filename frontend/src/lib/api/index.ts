@@ -23,6 +23,7 @@ import type {
   MarkScopeReadRequest,
   ListItemsParams,
   FeedFilter,
+  FeedWebCSS,
   FilterRule,
   FilterPreview,
   HiddenCounts,
@@ -125,6 +126,19 @@ export const feedFilterAPI = {
     ),
 };
 
+// Per-feed web page CSS. save() answers undefined (204) for blank CSS, which
+// the server treats as a delete.
+export const feedWebCSSAPI = {
+  list: () => api.get<ListResponse<FeedWebCSS>>("/feed-css"),
+
+  save: (feedId: number, css: string) =>
+    api.put<APIResponse<FeedWebCSS> | undefined>(`/feeds/${feedId}/css`, {
+      css,
+    }),
+
+  delete: (feedId: number) => api.delete<void>(`/feeds/${feedId}/css`),
+};
+
 export const hiddenCountsAPI = {
   get: () =>
     api.get<APIResponse<Record<string, HiddenCounts>>>("/filters/hidden-counts"),
@@ -175,7 +189,11 @@ export const itemAPI = {
     api.get<APIResponse<FullContent>>(`/items/${id}/full-content`),
 
   // Iframe source, not a fetch: the browser sends the session cookie itself.
-  pageUrl: (id: number) => `${API_BASE}/items/${id}/page`,
+  // A css draft (even "") overrides the feed's stored CSS, for previews.
+  pageUrl: (id: number, cssDraft?: string) =>
+    `${API_BASE}/items/${id}/page${
+      cssDraft === undefined ? "" : `?css=${encodeURIComponent(cssDraft)}`
+    }`,
 
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),

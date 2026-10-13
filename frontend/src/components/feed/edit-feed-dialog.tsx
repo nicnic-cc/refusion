@@ -41,6 +41,7 @@ import {
 import { DefaultViewSelect } from "@/components/feed/default-view-select";
 import { LinksOpenSelect } from "@/components/feed/links-open-select";
 import { FeedOptionRow } from "@/components/feed/feed-option-row";
+import { FeedCssRow } from "@/components/feed/feed-css-row";
 
 export function EditFeedDialog() {
   const { t } = useI18n();
@@ -371,6 +372,7 @@ export function EditFeedDialog() {
                 spellCheck={false}
               />
             </FeedOptionRow>
+            {editingFeed && <FeedCssRow feed={editingFeed} />}
           </div>
 
           {/* Footer */}

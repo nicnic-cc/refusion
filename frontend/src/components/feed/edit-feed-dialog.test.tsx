@@ -22,6 +22,7 @@ vi.mock("@/lib/api", async (orig) => ({
   },
   groupAPI: { list: vi.fn(async () => ({ data: [{ id: 1, name: "News" }] })) },
   appAPI: { getInfo: vi.fn(async () => ({ data: {} })) },
+  feedWebCSSAPI: { list: vi.fn(async () => ({ data: [] })) },
 }));
 
 const feed = {
