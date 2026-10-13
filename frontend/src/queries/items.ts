@@ -644,6 +644,23 @@ function loadedFilteredIds(qc: QueryClient) {
   return ids;
 }
 
+/** Unread ids of one feed held in any loaded item list, for scope marks. */
+export function loadedUnreadIdsForFeed(qc: QueryClient, feedId: number) {
+  const ids = new Set<number>();
+  for (const [, data] of qc.getQueriesData<ItemsInfiniteData>({
+    queryKey: queryKeys.items.lists(),
+  })) {
+    for (const page of data?.pages ?? []) {
+      for (const item of page.data) {
+        if (item.feed_id === feedId && item.unread && item.id > 0) {
+          ids.add(item.id);
+        }
+      }
+    }
+  }
+  return [...ids];
+}
+
 /**
  * Marks a whole feed, group or everything read on the server. Only the loaded
  * rows flip optimistically; caches holding the rest are marked stale.

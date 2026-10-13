@@ -39,7 +39,9 @@ disagree, the code wins — fix the page.
 - `GET /api/items` adds `snapshot_id`: the server's max item id, read before
   the list query. "Mark all read" sends it as `max_id`, so items saved after
   the list was read are not marked. This relies on item ids never being
-  reused (see `items` in [backend-design.md](backend-design.md)).
+  reused (see `items` in [backend-design.md](backend-design.md)). The
+  sidebar's per-feed mark has no list snapshot, so it sends
+  `Number.MAX_SAFE_INTEGER`: everything up to the moment it commits.
 
 ## Cursor pagination
 
