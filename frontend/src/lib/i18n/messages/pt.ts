@@ -162,6 +162,8 @@ export const ptMessages: PartialMessages = {
   "feed.markRead.done.other": "{count} artigos em {feed} marcados como lidos",
   "feed.markRead.failed": "Falha ao marcar o feed como lido",
   "feed.markRead.undo": "Desfazer",
+  "feed.markRead.scope.all": "Todos os feeds",
+  "feed.markRead.scope.starred": "Favoritos",
   "feedCss.row.label": "CSS da página web",
   "feedCss.row.description": "Altera o estilo dos artigos deste feed na vista de página web.",
   "feedCss.button.add": "Configurar",

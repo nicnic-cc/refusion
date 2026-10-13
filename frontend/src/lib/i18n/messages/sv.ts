@@ -162,6 +162,8 @@ export const svMessages: PartialMessages = {
   "feed.markRead.done.other": "{count} artiklar i {feed} markerade som lästa",
   "feed.markRead.failed": "Det gick inte att markera flödet som läst",
   "feed.markRead.undo": "Ångra",
+  "feed.markRead.scope.all": "Alla flöden",
+  "feed.markRead.scope.starred": "Stjärnmärkta",
   "feedCss.row.label": "Webbsides-CSS",
   "feedCss.row.description": "Ändrar utseendet på det här flödets artiklar i webbsidevyn.",
   "feedCss.button.add": "Ställ in",

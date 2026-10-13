@@ -1,9 +1,10 @@
 import { create } from "zustand";
 
 /**
- * Feeds whose "mark all read" waits out an undo window. Timers live outside
- * the state so only the pending flags trigger renders. Not persisted: a mark
- * still waiting when the tab closes is sent by its flush on pagehide.
+ * Scopes whose "mark all read" waits out an undo window, keyed "feed:<id>",
+ * "group:<id>", "all" or "starred". Timers live outside the state so only the
+ * pending flags trigger renders. Not persisted: a mark still waiting when the
+ * tab closes is sent by its flush on pagehide.
  */
 export const UNDO_WINDOW_MS = 5000;
 
@@ -12,39 +13,46 @@ interface PendingMark {
   flush: () => void;
 }
 
-const marks = new Map<number, PendingMark>();
+export const pendingScope = {
+  feed: (id: number) => `feed:${id}`,
+  group: (id: number) => `group:${id}`,
+  all: "all",
+  starred: "starred",
+};
+
+const marks = new Map<string, PendingMark>();
 let pagehideBound = false;
 
 interface PendingFeedReadsState {
-  pending: Record<number, true>;
+  pending: Record<string, true>;
   schedule: (
-    feedId: number,
+    scope: string,
     actions: { commit: () => void; flush: () => void },
   ) => void;
-  cancel: (feedId: number) => void;
+  cancel: (scope: string) => void;
 }
 
 export const usePendingFeedReadsStore = create<PendingFeedReadsState>()(
   (set, get) => ({
     pending: {},
-    schedule: (feedId, { commit, flush }) => {
-      clearTimeout(marks.get(feedId)?.timer);
-      marks.set(feedId, {
+    schedule: (scope, { commit, flush }) => {
+      clearTimeout(marks.get(scope)?.timer);
+      marks.set(scope, {
         timer: setTimeout(() => {
-          get().cancel(feedId);
+          get().cancel(scope);
           commit();
         }, UNDO_WINDOW_MS),
         flush,
       });
-      set((s) => ({ pending: { ...s.pending, [feedId]: true } }));
+      set((s) => ({ pending: { ...s.pending, [scope]: true } }));
       bindPagehide(get);
     },
-    cancel: (feedId) => {
-      clearTimeout(marks.get(feedId)?.timer);
-      marks.delete(feedId);
+    cancel: (scope) => {
+      clearTimeout(marks.get(scope)?.timer);
+      marks.delete(scope);
       set((s) => {
         const rest = { ...s.pending };
-        delete rest[feedId];
+        delete rest[scope];
         return { pending: rest };
       });
     },
@@ -58,10 +66,25 @@ function bindPagehide(get: () => PendingFeedReadsState) {
   pagehideBound = true;
   window.addEventListener("pagehide", () => {
     const flushes = [...marks.values()].map((m) => m.flush);
-    for (const feedId of [...marks.keys()]) get().cancel(feedId);
+    for (const scope of [...marks.keys()]) get().cancel(scope);
     for (const flush of flushes) flush();
   });
 }
 
-export const useIsFeedReadPending = (feedId: number) =>
-  usePendingFeedReadsStore((s) => s.pending[feedId] === true);
+export const useIsScopePending = (scope: string) =>
+  usePendingFeedReadsStore((s) => s.pending[scope] === true);
+
+/** True when a pending mark of the feed itself, its group or all covers it. */
+export function isFeedCovered(
+  pending: Record<string, true>,
+  feed: { id: number; group_id: number },
+) {
+  return (
+    pending[pendingScope.all] === true ||
+    pending[pendingScope.feed(feed.id)] === true ||
+    pending[pendingScope.group(feed.group_id)] === true
+  );
+}
+
+export const useIsFeedCovered = (feed: { id: number; group_id: number }) =>
+  usePendingFeedReadsStore((s) => isFeedCovered(s.pending, feed));

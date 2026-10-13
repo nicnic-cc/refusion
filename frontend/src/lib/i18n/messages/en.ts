@@ -160,6 +160,8 @@ export const enMessages = {
   "feed.markRead.done.other": "Marked {count} articles in {feed} as read",
   "feed.markRead.failed": "Failed to mark feed as read",
   "feed.markRead.undo": "Undo",
+  "feed.markRead.scope.all": "All feeds",
+  "feed.markRead.scope.starred": "Starred",
   "feedCss.row.label": "Web page CSS",
   "feedCss.row.description": "Restyle this feed's articles in the web page view.",
   "feedCss.button.add": "Set up",

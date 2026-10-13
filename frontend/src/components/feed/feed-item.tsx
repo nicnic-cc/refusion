@@ -1,47 +1,24 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
-import {
-  parseFilter,
-  useIsFeedSelected,
-  useUrlActions,
-} from "@/hooks/use-url-state";
-import { parsePositiveIntegerParam } from "@/lib/route-params";
-import { articleListKey, useArticlePinsStore } from "@/store/article-pins";
+import { useIsFeedSelected, useUrlActions } from "@/hooks/use-url-state";
 import { sidebarNodeKey, useSidebarNavStore } from "@/store";
-import { API_BASE } from "@/lib/api/client";
-import { apiErrorMessage, type Feed } from "@/lib/api";
+import type { Feed } from "@/lib/api";
 import { FeedRowIcon } from "@/components/feed/feed-row-icon";
 import { CheckCheck, Undo2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { usePrefetchList } from "@/hooks/use-prefetch-list";
-import { loadedUnreadIdsForFeed, useMarkScopeRead } from "@/queries/items";
+import { loadedUnreadIdsForFeed } from "@/queries/items";
 import {
-  UNDO_WINDOW_MS,
-  useIsFeedReadPending,
-  usePendingFeedReadsStore,
+  pendingScope,
+  useIsFeedCovered,
+  useIsScopePending,
 } from "@/store/pending-feed-reads";
-
-// Read at commit time, when the row may be unmounted and the user elsewhere.
-// Only the unread view pins; other views have nothing to keep on screen.
-function openUnreadListKey(router: ReturnType<typeof useRouter>) {
-  const matches = router.state.matches;
-  const params = (matches[matches.length - 1]?.params ?? {}) as {
-    filter?: string;
-    feedId?: string;
-    groupId?: string;
-  };
-  const filter = parseFilter(params.filter);
-  if (filter !== "unread") return null;
-  return articleListKey(
-    parsePositiveIntegerParam(params.feedId),
-    parsePositiveIntegerParam(params.groupId),
-    filter,
-  );
-}
+import {
+  undoDeferredRead,
+  useDeferredScopeRead,
+} from "@/lib/deferred-scope-read";
 
 interface FeedItemProps {
   feed: Feed;
@@ -53,8 +30,6 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
   const { setSelectedFeed } = useUrlActions();
   const prefetchList = usePrefetchList();
   const qc = useQueryClient();
-  const markScopeRead = useMarkScopeRead();
-  const router = useRouter();
 
   const feedKey = sidebarNodeKey.feed(feed.id);
   const isFocused = useSidebarNavStore(
@@ -62,72 +37,24 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
   );
   const setFocusedKey = useSidebarNavStore((s) => s.setFocusedKey);
 
-  const pending = useIsFeedReadPending(feed.id);
-  const { schedule, cancel } = usePendingFeedReadsStore.getState();
-  const toastId = `feed-read-${feed.id}`;
+  const covered = useIsFeedCovered(feed);
+  const pending = useIsScopePending(pendingScope.feed(feed.id));
+  const startDeferredRead = useDeferredScopeRead();
 
   const handleMarkRead = () => {
-    const count = feed.unread_count;
-    // Everything the commit needs is captured here: the row may be unmounted
-    // by then, and mutateAsync still settles, unlike per-call mutate callbacks.
-    const { mutateAsync } = markScopeRead;
-    const failedMessage = t("feed.markRead.failed");
-    const request = {
-      // The sidebar has no list snapshot, so this means everything up to now.
-      max_id: Number.MAX_SAFE_INTEGER,
-      feed_id: feed.id,
-    };
-    schedule(feed.id, {
-      commit: () => {
-        const loadedIds = loadedUnreadIdsForFeed(qc, feed.id);
-        const listKey = openUnreadListKey(router);
-        if (listKey !== null) {
-          useArticlePinsStore.getState().pinItems(listKey, loadedIds);
-        }
-        mutateAsync({ request, loadedIds }).catch((error) => {
-          toast.error(apiErrorMessage(error, failedMessage));
-        });
-      },
-      flush: () => {
-        // Same request as api.patch; keepalive lets it outlive the page.
-        void fetch(`${API_BASE}/items/-/read-all`, {
-          method: "PATCH",
-          keepalive: true,
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(request),
-        }).catch(() => {});
+    startDeferredRead({
+      scope: pendingScope.feed(feed.id),
+      name: feed.name,
+      count: feed.unread_count,
+      mark: {
+        // The sidebar has no list snapshot, so this means everything up to now.
+        request: { max_id: Number.MAX_SAFE_INTEGER, feed_id: feed.id },
+        loadedIds: () => loadedUnreadIdsForFeed(qc, feed.id),
       },
     });
-    toast(
-      t(count === 1 ? "feed.markRead.done.one" : "feed.markRead.done.other", {
-        count,
-        feed: feed.name,
-      }),
-      {
-        id: toastId,
-        duration: UNDO_WINDOW_MS,
-        // An element replaces sonner's own action button, which fills itself
-        // with the text colour (white in dark mode).
-        action: (
-          <Button
-            variant="ghost"
-            size="xs"
-            className="ml-auto shrink-0"
-            onClick={handleUndo}
-          >
-            <Undo2 />
-            {t("feed.markRead.undo")}
-          </Button>
-        ),
-      },
-    );
   };
 
-  const handleUndo = () => {
-    cancel(feed.id);
-    toast.dismiss(toastId);
-  };
+  const handleUndo = () => undoDeferredRead(pendingScope.feed(feed.id));
 
   return (
     <div
@@ -166,6 +93,8 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
             <Undo2 className="size-3.5 text-primary" />
           </Button>
         </div>
+      ) : covered ? (
+        <div className="ml-2 h-6 w-7 shrink-0" />
       ) : (
         <div className="ml-2 flex h-6 w-7 shrink-0 items-center justify-end">
           <span className="text-xs text-muted-foreground md:group-hover:hidden md:group-focus-within:hidden">
