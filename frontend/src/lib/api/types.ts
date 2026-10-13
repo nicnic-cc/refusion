@@ -260,6 +260,14 @@ export interface FeedFilter extends FilterRule {
   updated_at: number;
 }
 
+// GET /feed-css lists these. PUT /feeds/:id/css answers one, or 204 (and
+// deletes) when the css is empty or whitespace. Max 32 KiB.
+export interface FeedWebCSS {
+  feed_id: number;
+  css: string;
+  updated_at: number;
+}
+
 // GET /filters/hidden-counts, keyed by feed id; only feeds hiding something.
 // feed: hidden by the feed's own filter; global: by the global filter alone.
 export interface HiddenCounts {
