@@ -70,8 +70,9 @@ export function AddFeedDialog() {
   // these URLs skips a second validate round trip.
   const [knownFeeds, setKnownFeeds] = useState<DiscoveredFeed[]>([]);
   const [isFeedSelectOpen, setIsFeedSelectOpen] = useState(false);
-  // Bumped when a pending Detect becomes irrelevant (dialog closed, URL edited)
-  // so its late response is dropped instead of opening the picker.
+  // Bumped when a pending Detect or Add becomes irrelevant (dialog closed, URL
+  // edited) so its late response is dropped instead of opening the picker or
+  // creating a feed.
   const detectRun = useRef(0);
   const groupItems = groups.map((group) => ({
     value: group.id.toString(),
@@ -81,6 +82,8 @@ export function AddFeedDialog() {
   const cancelPendingDetect = () => {
     detectRun.current += 1;
     setIsValidating(false);
+    setIsSubmitting(false);
+    setIsLookingUp(false);
   };
 
   const resetForm = () => {
@@ -167,6 +170,9 @@ export function AddFeedDialog() {
       return;
     }
 
+    // Supersedes a pending Detect too, so only the latest action may touch state.
+    cancelPendingDetect();
+    const run = detectRun.current;
     setIsSubmitting(true);
     try {
       // Validate before creating so an unreachable or malformed URL fails
@@ -183,8 +189,9 @@ export function AddFeedDialog() {
           const check = await feedAPI.validate(validateRequest(url.trim()));
           feeds = check.data?.feeds ?? [];
         } finally {
-          setIsLookingUp(false);
+          if (run === detectRun.current) setIsLookingUp(false);
         }
+        if (run !== detectRun.current) return;
       }
       if (feeds.length === 0) {
         toast.error(t("feed.toast.invalidFeed"));
@@ -250,11 +257,14 @@ export function AddFeedDialog() {
 
       await createFeed.mutateAsync(request);
       toast.success(t("feed.toast.added"));
-      handleClose();
+      // The feed exists either way; only a still-current dialog is closed.
+      if (run === detectRun.current) handleClose();
     } catch (error) {
-      toast.error(apiErrorMessage(error, t("feed.toast.addFailed")));
+      if (run === detectRun.current) {
+        toast.error(apiErrorMessage(error, t("feed.toast.addFailed")));
+      }
     } finally {
-      setIsSubmitting(false);
+      if (run === detectRun.current) setIsSubmitting(false);
     }
   };
 
