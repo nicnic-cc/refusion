@@ -21,6 +21,7 @@ import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { YoutubeEmbed } from "@/components/article/youtube-embed";
+import { WebPageFrame } from "@/components/article/web-page-frame";
 import { youtubeVideo } from "@/lib/youtube";
 import { ArticleAppearance } from "@/components/article/article-appearance";
 import { useArticleAppearanceStyles } from "@/hooks/use-article-appearance-styles";
@@ -215,13 +216,11 @@ export function ArticleView({
 
       {/* Content. Keyed so each article opens at the top; the subtree holds no state worth keeping. */}
       {showingWebPage && webPageUrl ? (
-        <iframe
-          key={article.id}
+        <WebPageFrame
+          articleId={article.id}
+          feedId={article.feed_id}
           src={webPageUrl}
           title={article.title}
-          className="min-h-0 w-full flex-1 border-0 bg-white"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
-          referrerPolicy="no-referrer"
         />
       ) : (
         <ScrollBox key={article.id} className="min-h-0 flex-1">
