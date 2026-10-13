@@ -144,10 +144,6 @@ dialog and no countdown. The state lives in `store/pending-feed-reads.ts`.
 - Sidebar marks have no list snapshot; see `max_id` in
   [api-conventions.md](api-conventions.md).
 
-Known edge: a folder mark flips only loaded rows of the feeds the sidebar
-shows; rows of hidden feeds in an open list stay unread until it refetches.
-The server marks the whole folder either way.
-
 ## 6. Search and bookmarks
 
 - Unified search (`GET /api/search`) returns feeds and items in one
