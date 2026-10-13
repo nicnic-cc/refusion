@@ -139,7 +139,7 @@ A few things here work the way [yarr](https://github.com/nkanaev/yarr) does them
 
 ### Installation
 
-See [`docs/install.md`](./docs/install.md). refusion has no releases or Docker images yet; to build it yourself, see [Development](#development).
+Run the Docker image or a release binary; see [`docs/install.md`](./docs/install.md) for both, plus HTTPS, backups and moving over from Fusion. To build it yourself, see [Development](#development).
 
 ### Configuration
 
