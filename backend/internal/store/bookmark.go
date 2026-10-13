@@ -25,7 +25,7 @@ type ListBookmarksParams struct {
 func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, error) {
 	query := `
 		SELECT b.id, b.item_id, b.link, b.title, b.content, b.pub_date, b.feed_name, b.feed_id, b.created_at,
-		       COALESCE(i.unread, 0) AS unread
+		       COALESCE(i.unread, 0) AS unread, i.permalink
 		FROM bookmarks b
 	`
 	args := []any{}
@@ -34,7 +34,8 @@ func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, er
 	if params.GroupID != nil {
 		query += ` INNER JOIN feeds ON feeds.id = b.feed_id`
 	}
-	// Unread state comes from the linked item; orphaned bookmarks read as 0.
+	// Unread state and permalink come from the linked item; orphaned bookmarks
+	// read as 0 / NULL.
 	query += ` LEFT JOIN items i ON i.id = b.item_id`
 
 	query += ` WHERE 1=1`
@@ -72,10 +73,12 @@ func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, er
 	for rows.Next() {
 		b := &model.Bookmark{}
 		var unread int
-		if err := rows.Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread); err != nil {
+		var permalink sql.NullString
+		if err := rows.Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread, &permalink); err != nil {
 			return nil, err
 		}
 		b.Unread = intToBool(unread)
+		b.Permalink = nullStringPtr(permalink)
 		bookmarks = append(bookmarks, b)
 	}
 	return bookmarks, rows.Err()
@@ -84,13 +87,14 @@ func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, er
 func (s *Store) GetBookmark(id int64) (*model.Bookmark, error) {
 	b := &model.Bookmark{}
 	var unread int
+	var permalink sql.NullString
 	err := s.db.QueryRow(`
 		SELECT b.id, b.item_id, b.link, b.title, b.content, b.pub_date, b.feed_name, b.feed_id, b.created_at,
-		       COALESCE(i.unread, 0) AS unread
+		       COALESCE(i.unread, 0) AS unread, i.permalink
 		FROM bookmarks b
 		LEFT JOIN items i ON i.id = b.item_id
 		WHERE b.id = :id
-	`, sql.Named("id", id)).Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread)
+	`, sql.Named("id", id)).Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread, &permalink)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: bookmark", ErrNotFound)
@@ -98,6 +102,7 @@ func (s *Store) GetBookmark(id int64) (*model.Bookmark, error) {
 		return nil, fmt.Errorf("get bookmark: %w", err)
 	}
 	b.Unread = intToBool(unread)
+	b.Permalink = nullStringPtr(permalink)
 	return b, nil
 }
 

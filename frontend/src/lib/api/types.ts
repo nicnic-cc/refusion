@@ -75,6 +75,8 @@ export interface Bookmark {
   feed_name: string;
   feed_id: number | null;
   unread: boolean;
+  // Live permalink of the linked item; null for orphans.
+  permalink: string | null;
   created_at: number;
 }
 
