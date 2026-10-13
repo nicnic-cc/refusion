@@ -189,11 +189,8 @@ export const itemAPI = {
     api.get<APIResponse<FullContent>>(`/items/${id}/full-content`),
 
   // Iframe source, not a fetch: the browser sends the session cookie itself.
-  // A css draft (even "") overrides the feed's stored CSS, for previews.
-  pageUrl: (id: number, cssDraft?: string) =>
-    `${API_BASE}/items/${id}/page${
-      cssDraft === undefined ? "" : `?css=${encodeURIComponent(cssDraft)}`
-    }`,
+  // Stored CSS only; the CSS preview POSTs its draft to this same URL.
+  pageUrl: (id: number) => `${API_BASE}/items/${id}/page`,
 
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),

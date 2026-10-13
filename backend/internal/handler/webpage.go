@@ -23,7 +23,7 @@ const webPageUnavailable = `<!doctype html><meta charset="utf-8"><title>Unavaila
 // framing are redirected to directly. Others are copied with framing headers
 // dropped; the CSP sandbox gives the copy an opaque origin, so its scripts
 // cannot use our session cookie against the API. A feed with custom CSS (or a
-// ?css= preview draft) is always copied so the style can be injected.
+// POSTed preview draft) is always copied so the style can be injected.
 func (h *Handler) getItemPage(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -98,11 +98,12 @@ func (h *Handler) getItemPage(c *gin.Context) {
 	c.Data(http.StatusOK, page.ContentType, page.Body)
 }
 
-// webPageCSS picks the CSS for the copy: the ?css= draft when present (even
-// empty, which forces a plain copy for previews), else the feed's stored CSS.
-// hasCSS means the page must be served as a copy.
+// webPageCSS picks the CSS for the copy: a POST's css form field is the preview
+// draft (even empty: plain copy), in the body since a URL hits proxy line limits;
+// GET uses the feed's stored CSS. hasCSS means the page must be served as a copy.
 func (h *Handler) webPageCSS(c *gin.Context, feedID int64) (css string, hasCSS, ok bool) {
-	if draft, present := c.GetQuery("css"); present {
+	if c.Request.Method == http.MethodPost {
+		draft := c.PostForm("css")
 		if len(draft) > store.MaxFeedWebCSSBytes {
 			badRequestError(c, "css too large")
 			return "", false, false

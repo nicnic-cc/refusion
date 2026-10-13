@@ -13,6 +13,7 @@ func TestCORSMiddleware(t *testing.T) {
 		name            string
 		method          string
 		origin          string
+		secFetchSite    string
 		allowedOrigins  []string
 		wantStatus      int
 		wantAllowOrigin string
@@ -40,6 +41,29 @@ func TestCORSMiddleware(t *testing.T) {
 			wantStatus:      http.StatusOK,
 			wantAllowOrigin: "https://any.example.com",
 		},
+		{
+			name:           "allows opaque origin on same-origin request",
+			method:         http.MethodPost,
+			origin:         "null",
+			secFetchSite:   "same-origin",
+			allowedOrigins: []string{"https://app.example.com"},
+			wantStatus:     http.StatusOK,
+		},
+		{
+			name:           "rejects opaque origin without fetch metadata",
+			method:         http.MethodPost,
+			origin:         "null",
+			allowedOrigins: []string{"https://app.example.com"},
+			wantStatus:     http.StatusForbidden,
+		},
+		{
+			name:           "rejects disallowed origin on cross-site request",
+			method:         http.MethodPost,
+			origin:         "https://evil.example.com",
+			secFetchSite:   "cross-site",
+			allowedOrigins: []string{"https://app.example.com"},
+			wantStatus:     http.StatusForbidden,
+		},
 	}
 
 	for _, tt := range tests {
@@ -48,14 +72,12 @@ func TestCORSMiddleware(t *testing.T) {
 
 			r := newTestRouter()
 			r.Use(h.corsMiddleware())
-			r.GET("/api/test", func(c *gin.Context) { c.Status(http.StatusOK) })
-			w := performRequest(
-				r,
-				tt.method,
-				"/api/test",
-				nil,
-				map[string]string{"Origin": tt.origin},
-			)
+			r.Any("/api/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+			headers := map[string]string{"Origin": tt.origin}
+			if tt.secFetchSite != "" {
+				headers["Sec-Fetch-Site"] = tt.secFetchSite
+			}
+			w := performRequest(r, tt.method, "/api/test", nil, headers)
 
 			if w.Code != tt.wantStatus {
 				t.Fatalf("expected status %d, got %d", tt.wantStatus, w.Code)

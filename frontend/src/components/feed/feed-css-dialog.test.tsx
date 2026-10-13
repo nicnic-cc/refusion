@@ -30,7 +30,11 @@ beforeAll(() => {
   };
 });
 
+let submit: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
+  // jsdom does not implement form submission.
+  submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
   vi.mocked(itemAPI.list).mockResolvedValue({
     data: [{ id: 42, title: "Newest post" }],
   } as Awaited<ReturnType<typeof itemAPI.list>>);
@@ -38,6 +42,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  submit.mockRestore();
 });
 
 function setup(css?: FeedWebCSS) {
@@ -74,21 +79,24 @@ describe("FeedCssDialog", () => {
     await waitFor(() => expect(feedWebCSSAPI.delete).toHaveBeenCalledWith(5));
   });
 
-  // The preview must show the unsaved draft, URL-encoded, once typing stops.
-  it("points the preview at the newest item with the encoded draft", async () => {
+  // The preview must POST the unsaved draft to the iframe once typing stops.
+  it("posts the draft for the newest item into the preview iframe", async () => {
     setup(stored);
     const frame = await screen.findByTitle("Newest post");
-    expect(frame.getAttribute("src")).toContain("/items/42/page?css=.ad");
+    const form = frame.parentElement!.querySelector("form")!;
+    const draftField = () => form.elements.namedItem("css") as HTMLInputElement;
+    expect(form.method).toBe("post");
+    expect(form.getAttribute("action")).toMatch(/\/items\/42\/page$/);
+    expect(form.target).toBe(frame.getAttribute("name"));
+    expect(frame.getAttribute("src")).toBeNull();
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(draftField().value).toBe(".ad{display:none}");
+
     fireEvent.change(screen.getByRole("textbox", { name: "CSS" }), {
       target: { value: "a { color: red }" },
     });
-    await waitFor(
-      () =>
-        expect(screen.getByTitle("Newest post").getAttribute("src")).toContain(
-          `?css=${encodeURIComponent("a { color: red }")}`,
-        ),
-      { timeout: 2000 },
-    );
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(2), { timeout: 2000 });
+    expect(draftField().value).toBe("a { color: red }");
     expect(itemAPI.list).toHaveBeenCalledWith(
       expect.objectContaining({ feed_id: 5, limit: 1, include_filtered: true }),
     );

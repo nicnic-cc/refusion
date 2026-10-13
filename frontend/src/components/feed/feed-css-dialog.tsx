@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import {
 } from "@/queries/feed-web-css";
 
 const PREVIEW_DEBOUNCE_MS = 750;
-// Mirrors the server's cap (store.MaxFeedWebCSSBytes), which also guards ?css=.
+// Mirrors the server's cap (store.MaxFeedWebCSSBytes), which also guards the POSTed draft.
 const MAX_CSS_BYTES = 32 << 10;
 
 interface FeedCssDialogProps {
@@ -86,11 +86,23 @@ function FeedCssForm({
   }, [draft, overCap]);
 
   const item = newest.data;
-  const src = item ? itemAPI.pageUrl(item.id, previewCss) : null;
-  const frameKey = `${reloadNonce}:${src}`;
-  const loading = src !== null && loadedKey !== frameKey;
+  const frameKey = item ? `${reloadNonce}:${item.id}:${previewCss}` : null;
+  const frameName = `feed-css-preview-${feed.id}`;
+  const formRef = useRef<HTMLFormElement>(null);
+  // Set once the form is submitted, so the blank document an iframe starts
+  // with is not mistaken for the loaded preview.
+  const submittedKey = useRef<string | null>(null);
+  const loading = frameKey !== null && loadedKey !== frameKey;
 
-  // A new nonce remounts the iframe, so Reload works with an unchanged src.
+  // The draft goes in a POST body (a URL would hit proxy request-line limits)
+  // targeting the freshly mounted iframe by name.
+  useEffect(() => {
+    if (frameKey === null) return;
+    submittedKey.current = frameKey;
+    formRef.current?.submit();
+  }, [frameKey]);
+
+  // A new nonce remounts the iframe, so Reload works with an unchanged draft.
   const reload = () => {
     setPreviewCss(draft);
     setReloadNonce((n) => n + 1);
@@ -179,12 +191,25 @@ function FeedCssForm({
               {t("feedCss.reload")}
             </Button>
           </div>
-          {src && item ? (
+          {item && (
+            <form
+              ref={formRef}
+              method="post"
+              action={itemAPI.pageUrl(item.id)}
+              target={frameName}
+              hidden
+            >
+              <input type="hidden" name="css" value={previewCss} />
+            </form>
+          )}
+          {frameKey && item ? (
             <iframe
               key={frameKey}
-              src={src}
+              name={frameName}
               title={item.title}
-              onLoad={() => setLoadedKey(frameKey)}
+              onLoad={() => {
+                if (submittedKey.current === frameKey) setLoadedKey(frameKey);
+              }}
               className={cn(
                 "min-h-0 w-full flex-1 border-0 bg-white transition-opacity",
                 loading && "opacity-60",
