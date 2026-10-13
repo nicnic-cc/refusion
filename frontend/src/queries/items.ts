@@ -145,8 +145,8 @@ function snapshotItemsMutationState(
 }
 
 // Cancels only what the optimistic update overwrites. Kept: a next-page load
-// (appends, replaces nothing) and a list without data (a cancel would leave it
-// pending and idle, never refetched).
+// (appends, replaces nothing) and a list or detail without data (a cancel would
+// leave it pending and idle, never refetched).
 function cancelOptimisticTargets(qc: QueryClient, ids: number[]) {
   const idSet = new Set(ids);
   return Promise.all([
@@ -157,7 +157,8 @@ function cancelOptimisticTargets(qc: QueryClient, ids: number[]) {
     }),
     qc.cancelQueries({
       queryKey: queryKeys.items.details(),
-      predicate: (query) => idSet.has(query.queryKey[2] as number),
+      predicate: (query) =>
+        idSet.has(query.queryKey[2] as number) && query.state.data !== undefined,
     }),
     qc.cancelQueries({ queryKey: queryKeys.feeds.all }),
   ]);
