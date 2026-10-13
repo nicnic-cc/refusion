@@ -2,10 +2,13 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export class APIError extends Error {
   status: number;
+  // True only when `message` came from the server's JSON `error` field.
+  hasServerMessage: boolean;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, hasServerMessage = false) {
     super(message);
     this.status = status;
+    this.hasServerMessage = hasServerMessage;
     this.name = "APIError";
   }
 }
@@ -13,9 +16,27 @@ export class APIError extends Error {
 // Server messages for 4xx (e.g. "feed link already exists") are written for
 // users; anything else gets the caller's generic string.
 export function apiErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof APIError && error.status >= 400 && error.status < 500
+  return error instanceof APIError &&
+    error.hasServerMessage &&
+    error.status >= 400 &&
+    error.status < 500
     ? error.message
     : fallback;
+}
+
+// Non-JSON bodies (e.g. a proxy's HTML page) and JSON without a string
+// `error` yield no message.
+async function serverErrorMessage(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    if (typeof body === "object" && body !== null && "error" in body) {
+      const message = body.error;
+      if (typeof message === "string" && message !== "") return message;
+    }
+  } catch {
+    // not JSON
+  }
+  return null;
 }
 
 // Callback for handling 401 errors
@@ -55,12 +76,11 @@ async function request<T>(
       onUnauthorized();
     }
 
-    const error = await response
-      .json()
-      .catch(() => ({ error: "Unknown error" }));
+    const serverMessage = await serverErrorMessage(response);
     throw new APIError(
       response.status,
-      error.error || `HTTP ${response.status}`,
+      serverMessage ?? `HTTP ${response.status}`,
+      serverMessage !== null,
     );
   }
 
