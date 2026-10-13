@@ -206,6 +206,7 @@ export function ArticleView({
           <Button
             variant="ghost"
             size="icon-sm"
+            className="-mr-2"
             onClick={close}
             aria-label={t("common.cancel")}
           >
