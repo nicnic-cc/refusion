@@ -6,10 +6,12 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  hashKey,
   type InfiniteData,
 } from "@tanstack/react-query";
 import {
   itemAPI,
+  type Bookmark,
   type Feed,
   type Item,
   type ListItemsParams,
@@ -27,13 +29,17 @@ import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
 type ItemsInfiniteData = InfiniteData<ItemListResponse, string | null>;
+// What one mutation changed, so its rollback undoes only that against the
+// current cache; a whole-cache snapshot would also undo an overlapping mutation.
 type ItemsMutationContext = {
-  prevItemLists: Array<[readonly unknown[], ItemsInfiniteData | undefined]>;
-  prevItemDetails: Array<readonly [number, Item | undefined]>;
-  prevFeeds: Feed[] | undefined;
-  prevBookmarkLists: Array<
-    [readonly unknown[], BookmarksInfiniteData | undefined]
-  >;
+  targetUnread: boolean;
+  // Ids flipped per cache, keyed by query hash.
+  flippedLists: Map<string, Set<number>>;
+  flippedBookmarkLists: Map<string, Set<number>>;
+  flippedDetails: Set<number>;
+  // Details that did not exist before the optimistic step.
+  createdDetails: Set<number>;
+  feedDeltas: Map<number, number>;
   // Set by onError so a late re-apply does not undo the rollback.
   failed: boolean;
 };
@@ -124,22 +130,14 @@ export function useItem(itemId: number | null, enabled = true) {
   });
 }
 
-function snapshotItemsMutationState(
-  qc: QueryClient,
-  ids: number[],
-): ItemsMutationContext {
+function createItemsMutationContext(targetUnread: boolean): ItemsMutationContext {
   return {
-    prevItemLists: qc.getQueriesData<ItemsInfiniteData>({
-      queryKey: queryKeys.items.lists(),
-    }),
-    prevItemDetails: ids.map(
-      (id) =>
-        [id, qc.getQueryData<Item>(queryKeys.items.detail(id))] as const,
-    ),
-    prevFeeds: qc.getQueryData<Feed[]>(queryKeys.feeds.list()),
-    prevBookmarkLists: qc.getQueriesData<BookmarksInfiniteData>({
-      queryKey: queryKeys.bookmarks.lists(),
-    }),
+    targetUnread,
+    flippedLists: new Map(),
+    flippedBookmarkLists: new Map(),
+    flippedDetails: new Set(),
+    createdDetails: new Set(),
+    feedDeltas: new Map(),
     failed: false,
   };
 }
@@ -167,13 +165,12 @@ function cancelOptimisticTargets(qc: QueryClient, ids: number[]) {
 function applyOptimisticItemReadState(
   qc: QueryClient,
   ids: number[],
-  targetUnread: boolean,
-  prevFeeds: Feed[] | undefined,
+  context: ItemsMutationContext,
   // The server's scope mark skips filtered rows; per-id marks do not.
   skipFiltered = false,
 ) {
+  const { targetUnread, feedDeltas: feedDeltaMap } = context;
   const idSet = new Set(ids);
-  const feedDeltaMap = new Map<number, number>();
   const countedIds = new Set<number>();
   const updatedItemsById = new Map<number, Item>();
 
@@ -184,6 +181,7 @@ function applyOptimisticItemReadState(
   })) {
     if (!old) continue;
     let changed = false;
+    const flipped = new Set<number>();
     const pages = old.pages.map((page) => {
       let pageChanged = false;
       const data = page.data.map((item) => {
@@ -205,6 +203,7 @@ function applyOptimisticItemReadState(
 
         const updatedItem = { ...item, unread: targetUnread };
         updatedItemsById.set(item.id, updatedItem);
+        flipped.add(item.id);
         pageChanged = true;
         return updatedItem;
       });
@@ -212,7 +211,10 @@ function applyOptimisticItemReadState(
       changed = true;
       return { ...page, data };
     });
-    if (changed) qc.setQueryData<ItemsInfiniteData>(key, { ...old, pages });
+    if (changed) {
+      context.flippedLists.set(hashKey(key), flipped);
+      qc.setQueryData<ItemsInfiniteData>(key, { ...old, pages });
+    }
   }
 
   for (const id of ids) {
@@ -220,13 +222,17 @@ function applyOptimisticItemReadState(
     const old = qc.getQueryData<Item>(detailKey);
     if (!old) {
       const optimisticItem = updatedItemsById.get(id);
-      if (optimisticItem) qc.setQueryData<Item>(detailKey, optimisticItem);
+      if (optimisticItem) {
+        context.createdDetails.add(id);
+        qc.setQueryData<Item>(detailKey, optimisticItem);
+      }
     } else if (old.unread !== targetUnread && !(skipFiltered && old.filtered)) {
+      context.flippedDetails.add(id);
       qc.setQueryData<Item>(detailKey, { ...old, unread: targetUnread });
     }
   }
 
-  if (prevFeeds && feedDeltaMap.size > 0) {
+  if (feedDeltaMap.size > 0 && qc.getQueryData(queryKeys.feeds.list())) {
     qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
       old?.map((feed) => {
         const delta = feedDeltaMap.get(feed.id) ?? 0;
@@ -247,6 +253,7 @@ function applyOptimisticItemReadState(
   })) {
     if (!old) continue;
     let changed = false;
+    const flipped = new Set<number>();
     const pages = old.pages.map((page) => {
       let pageChanged = false;
       const newData = page.data.map((bookmark) => {
@@ -255,6 +262,7 @@ function applyOptimisticItemReadState(
           idSet.has(bookmark.item_id) &&
           bookmark.unread !== targetUnread
         ) {
+          flipped.add(bookmark.item_id);
           pageChanged = true;
           return { ...bookmark, unread: targetUnread };
         }
@@ -264,7 +272,10 @@ function applyOptimisticItemReadState(
       changed = true;
       return { ...page, data: newData };
     });
-    if (changed) qc.setQueryData<BookmarksInfiniteData>(key, { ...old, pages });
+    if (changed) {
+      context.flippedBookmarkLists.set(hashKey(key), flipped);
+      qc.setQueryData<BookmarksInfiniteData>(key, { ...old, pages });
+    }
   }
 }
 
@@ -289,6 +300,7 @@ function reapplyAfterNextPageLoads(
   for (const query of inFlight) {
     const reapply = () => {
       if (context.failed) return;
+      const flipped = new Set<number>();
       qc.setQueryData<ItemsInfiniteData>(query.queryKey, (old) => {
         if (!old) return old;
         let changed = false;
@@ -305,6 +317,7 @@ function reapplyAfterNextPageLoads(
             ) {
               return item;
             }
+            flipped.add(item.id);
             pageChanged = true;
             return { ...item, unread: targetUnread };
           });
@@ -314,9 +327,42 @@ function reapplyAfterNextPageLoads(
         });
         return changed ? { ...old, pages } : old;
       });
+      // Rows flipped here are this mutation's too: a rollback must undo them.
+      if (flipped.size === 0) return;
+      const hash = hashKey(query.queryKey);
+      const known = context.flippedLists.get(hash) ?? new Set<number>();
+      for (const id of flipped) known.add(id);
+      context.flippedLists.set(hash, known);
     };
     void query.promise?.then(reapply, reapply);
   }
+}
+
+// Flips back only the listed rows that still hold this mutation's value; rows
+// another mutation changed since, or that were never flipped, stay as they are.
+function unflipRows<
+  R extends { unread: boolean },
+  D extends { pages: Array<{ data: R[] }> },
+>(
+  old: D,
+  ids: Set<number>,
+  targetUnread: boolean,
+  idOf: (row: R) => number | null,
+): D | undefined {
+  let changed = false;
+  const pages = old.pages.map((page) => {
+    let pageChanged = false;
+    const data = page.data.map((row) => {
+      const id = idOf(row);
+      if (id === null || !ids.has(id) || row.unread !== targetUnread) return row;
+      pageChanged = true;
+      return { ...row, unread: !targetUnread };
+    });
+    if (!pageChanged) return page;
+    changed = true;
+    return { ...page, data };
+  });
+  return changed ? { ...old, pages } : undefined;
 }
 
 function rollbackItemsMutation(
@@ -324,43 +370,71 @@ function rollbackItemsMutation(
   context: ItemsMutationContext | undefined,
 ) {
   if (!context) return;
+  const { targetUnread } = context;
 
-  // Restore only what the optimistic step replaced; setQueryData on an
-  // untouched query would clear its invalidated flag.
-  for (const [key, data] of context.prevItemLists) {
-    if (qc.getQueryData(key) !== data) qc.setQueryData(key, data);
+  // Write only the caches that really change; setQueryData on an untouched
+  // query would clear its invalidated flag.
+  for (const [key, old] of qc.getQueriesData<ItemsInfiniteData>({
+    queryKey: queryKeys.items.lists(),
+  })) {
+    const ids = context.flippedLists.get(hashKey(key));
+    if (!old || !ids) continue;
+    const next = unflipRows<Item, ItemsInfiniteData>(
+      old,
+      ids,
+      targetUnread,
+      (item) => item.id,
+    );
+    if (next) qc.setQueryData<ItemsInfiniteData>(key, next);
   }
 
-  for (const [id, data] of context.prevItemDetails) {
+  for (const id of context.flippedDetails) {
     const key = queryKeys.items.detail(id);
-    if (data === undefined) {
-      // The optimistic step created this entry. Removing a watched entry does
-      // not re-render its view, so flip the flag back there instead.
-      const current = qc.getQueryData<Item>(key);
-      if (!current) continue;
-      const watched = qc
-        .getQueryCache()
-        .find({ queryKey: key, exact: true })
-        ?.getObserversCount();
-      if (watched) {
-        qc.setQueryData<Item>(key, { ...current, unread: !current.unread });
-      } else {
-        qc.removeQueries({ queryKey: key, exact: true });
-      }
-    } else if (qc.getQueryData(key) !== data) {
-      qc.setQueryData(key, data);
+    const current = qc.getQueryData<Item>(key);
+    if (current?.unread === targetUnread) {
+      qc.setQueryData<Item>(key, { ...current, unread: !targetUnread });
     }
   }
 
-  if (
-    context.prevFeeds &&
-    qc.getQueryData(queryKeys.feeds.list()) !== context.prevFeeds
-  ) {
-    qc.setQueryData(queryKeys.feeds.list(), context.prevFeeds);
+  for (const id of context.createdDetails) {
+    const key = queryKeys.items.detail(id);
+    const current = qc.getQueryData<Item>(key);
+    if (!current) continue;
+    // Removing a watched entry does not re-render its view, so flip the flag
+    // back there instead.
+    const watched = qc
+      .getQueryCache()
+      .find({ queryKey: key, exact: true })
+      ?.getObserversCount();
+    if (!watched) {
+      qc.removeQueries({ queryKey: key, exact: true });
+    } else if (current.unread === targetUnread) {
+      qc.setQueryData<Item>(key, { ...current, unread: !targetUnread });
+    }
   }
 
-  for (const [key, data] of context.prevBookmarkLists) {
-    if (qc.getQueryData(key) !== data) qc.setQueryData(key, data);
+  if (context.feedDeltas.size > 0 && qc.getQueryData(queryKeys.feeds.list())) {
+    qc.setQueryData(queryKeys.feeds.list(), (old: Feed[] | undefined) =>
+      old?.map((feed) => {
+        const delta = context.feedDeltas.get(feed.id) ?? 0;
+        if (delta === 0) return feed;
+        return { ...feed, unread_count: Math.max(0, feed.unread_count - delta) };
+      }),
+    );
+  }
+
+  for (const [key, old] of qc.getQueriesData<BookmarksInfiniteData>({
+    queryKey: queryKeys.bookmarks.lists(),
+  })) {
+    const ids = context.flippedBookmarkLists.get(hashKey(key));
+    if (!old || !ids) continue;
+    const next = unflipRows<Bookmark, BookmarksInfiniteData>(
+      old,
+      ids,
+      targetUnread,
+      (bookmark) => bookmark.item_id,
+    );
+    if (next) qc.setQueryData<BookmarksInfiniteData>(key, next);
   }
 }
 
@@ -397,8 +471,8 @@ function useSetItemsReadState(targetUnread: boolean) {
     onMutate: async (ids) => {
       await cancelOptimisticTargets(qc, ids);
 
-      const context = snapshotItemsMutationState(qc, ids);
-      applyOptimisticItemReadState(qc, ids, targetUnread, context.prevFeeds);
+      const context = createItemsMutationContext(targetUnread);
+      applyOptimisticItemReadState(qc, ids, context);
       reapplyAfterNextPageLoads(qc, ids, targetUnread, false, context);
       return context;
     },
@@ -462,8 +536,8 @@ export function useMarkScopeRead() {
     onMutate: async ({ request, loadedIds }) => {
       await cancelOptimisticTargets(qc, loadedIds);
 
-      const context = snapshotItemsMutationState(qc, loadedIds);
-      applyOptimisticItemReadState(qc, loadedIds, false, context.prevFeeds, true);
+      const context = createItemsMutationContext(false);
+      applyOptimisticItemReadState(qc, loadedIds, context, true);
       reapplyAfterNextPageLoads(
         qc,
         loadedIds,
