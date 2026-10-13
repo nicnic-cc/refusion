@@ -10,13 +10,13 @@
 
 - This project is an open-source, lightweight RSS reader and aggregator.
 - Prioritize simplicity and maintainability over complexity.
-- HTTP API facts live in code: routes in `backend/internal/handler/handler.go` (`SetupRouter`), response shapes in `backend/internal/model/model.go` and request bodies in the handler files (both mirrored by `frontend/src/lib/api/types.ts`); cross-cutting conventions in `docs/api-conventions.md`.
+- HTTP API facts live in code: routes in `backend/internal/handler/handler.go` (`SetupRouter`), response shapes in `backend/internal/model/model.go` and request bodies in the handler files (both mirrored by `frontend/src/lib/api/types.ts`); cross-cutting conventions in `.agents/notes/api-conventions.md`.
 
 ## Code Standards
 
 - Follow best practices without over-engineering.
 - Default to no backward-compatibility work unless explicitly requested; if a change may break data formats, public APIs, or migrations, clearly state the impact.
-- Docs answer why, code says what: never copy facts that live in a file (versions, routes, dependencies, env defaults) into documentation — link to the source instead. See `docs/README.md`.
+- Docs answer why, code says what: never copy facts that live in a file (versions, routes, dependencies, env defaults) into documentation — link to the source instead. See `.agents/notes/README.md`.
 - Write self-explanatory code with clear naming.
 - Add comments in English only when they provide non-obvious value:
   - **DO write comments for:**

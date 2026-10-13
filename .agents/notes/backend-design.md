@@ -92,7 +92,7 @@ atomically swaps files, then records baseline version `1`.
 
 The endpoint inventory is the route registration in
 `internal/handler/handler.go` (`SetupRouter`); cross-cutting conventions
-(envelopes, cursors, errors, status codes) are in `docs/api-conventions.md`.
+(envelopes, cursors, errors, status codes) are in `.agents/notes/api-conventions.md`.
 This section only records history.
 
 ### Breaking API change (feed runtime fields)
@@ -113,7 +113,7 @@ refresh). The sleep is capped at `FUSION_PULL_INTERVAL`, so a stale
 `next_check_at` delays re-evaluation by at most one global interval. Tuning
 knobs (`FUSION_PULL_INTERVAL`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_TIMEOUT`,
 `FUSION_PULL_MAX_BACKOFF`) and their defaults are listed in
-[`.env.example`](../.env.example) — the behavioral rules below are what the
+[`.env.example`](../../.env.example) — the behavioral rules below are what the
 knobs mean.
 
 ### Per-feed interval override
@@ -224,11 +224,11 @@ How the pull finds an item's own page on the feed's site: see
 
 Logging is structured (`log/slog`) with level and format controlled by
 `FUSION_LOG_LEVEL` / `FUSION_LOG_FORMAT`; the full environment variable
-reference is [`.env.example`](../.env.example).
+reference is [`.env.example`](../../.env.example).
 
 ## 10. Release verification
 
-The standard checklist is [CONTRIBUTING.md](../CONTRIBUTING.md) (or
+The standard checklist is [dev.md](../dev.md) (or
 `./scripts.sh test`). Release-only extras:
 
 - Migration sanity check: start the app on an empty DB and confirm the
