@@ -41,9 +41,8 @@ const PENDING_RETRY_MS = 500;
  * - "Still unread?" is read from refs at fire time, so a manual mark-read
  *   before the deadline makes firing a no-op.
  * - A pending read/unread mutation retries after a beat instead of
- *   consuming the visit: two overlapping snapshot/rollback mutations clobber
- *   each other's cache writes, and dropping the shot would let one slow
- *   request skip every article opened while it was in flight.
+ *   consuming the visit: dropping the shot would let one slow request skip
+ *   every article opened while it was in flight.
  * - `onMarkRead` must land `mutate` and `pinRead` in the same synchronous
  *   turn, or the unread list drops the row before the pin keeps it visible.
  * - Time spent with the document hidden does not count: a phone "misclick"
