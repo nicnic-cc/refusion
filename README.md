@@ -44,7 +44,11 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 </p>
 
 <p align="center">
-  <img src="./assets/screenshots/feed-css.png" alt="Web page CSS dialog: CSS on the left, a live preview of the cleaned-up article on the right" width="100%" />
+  <img src="./assets/screenshots/feed-css.png" alt="Web page CSS dialog: CSS on the left, a live preview of a restyled Hacker News thread on the right" width="100%" />
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/web.png" alt="A Hacker News thread in the web page view, restyled with web page CSS to match the app" width="100%" />
 </p>
 
 ### New articles
