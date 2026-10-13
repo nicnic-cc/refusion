@@ -211,7 +211,8 @@ the feed sets `open_permalink`. Decisions (2026-10-12):
   (`pull/permalink.go`).
 - No links taken from the content: they picked tag or about pages.
 - gofeed v1.4.0 drops RSS `<comments>` and Atom `rel="related"` links from its
-  universal item, so both are added back by translator wrappers.
+  universal item, so both are added back by translator wrappers. Atom
+  `rel="self"` entry links (the entry's own feed URL) are removed there.
 - The insert keeps `ON CONFLICT DO NOTHING` (its row count is the new-items
   count); items stored earlier get their permalink by a separate `UPDATE`.
 

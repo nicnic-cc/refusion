@@ -2,6 +2,7 @@ package pull
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/mmcdole/gofeed"
@@ -13,7 +14,8 @@ import (
 const commentsKey = "refusion:comments"
 
 // newFeedParser returns a gofeed parser that also keeps the item fields a
-// permalink can come from: RSS <comments> and Atom rel="related" links.
+// permalink can come from: RSS <comments> and Atom rel="related" links, minus
+// Atom rel="self" links.
 func newFeedParser() *gofeed.Parser {
 	fp := gofeed.NewParser()
 	fp.RSSTranslator = rssCommentsTranslator{}
@@ -57,8 +59,12 @@ func (atomRelatedTranslator) Translate(feed any) (*gofeed.Feed, error) {
 	}
 	for i, entry := range src.Entries {
 		for _, l := range entry.Links {
-			if l.Rel == "related" {
+			switch l.Rel {
+			case "related":
 				out.Items[i].Links = append(out.Items[i].Links, l.Href)
+			case "self":
+				// The entry's own feed document, not its page.
+				out.Items[i].Links = slices.DeleteFunc(out.Items[i].Links, func(h string) bool { return h == l.Href })
 			}
 		}
 	}
