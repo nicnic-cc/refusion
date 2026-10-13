@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Radar, X } from "lucide-react";
 import {
   Dialog,
@@ -70,12 +70,21 @@ export function AddFeedDialog() {
   // these URLs skips a second validate round trip.
   const [knownFeeds, setKnownFeeds] = useState<DiscoveredFeed[]>([]);
   const [isFeedSelectOpen, setIsFeedSelectOpen] = useState(false);
+  // Bumped when a pending Detect becomes irrelevant (dialog closed, URL edited)
+  // so its late response is dropped instead of opening the picker.
+  const detectRun = useRef(0);
   const groupItems = groups.map((group) => ({
     value: group.id.toString(),
     label: group.name,
   }));
 
+  const cancelPendingDetect = () => {
+    detectRun.current += 1;
+    setIsValidating(false);
+  };
+
   const resetForm = () => {
+    cancelPendingDetect();
     setUrl("");
     setName("");
     setGroupId("");
@@ -91,6 +100,14 @@ export function AddFeedDialog() {
   const handleClose = () => {
     setAddFeedOpen(false);
     resetForm();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setAddFeedOpen(true);
+    } else {
+      handleClose();
+    }
   };
 
   const handleSelectDetectedFeed = (feed: DiscoveredFeed) => {
@@ -117,9 +134,11 @@ export function AddFeedDialog() {
   const handleValidate = async () => {
     if (!url.trim()) return;
 
+    const run = ++detectRun.current;
     setIsValidating(true);
     try {
       const response = await feedAPI.validate(validateRequest(url.trim()));
+      if (run !== detectRun.current) return;
       const feeds = response.data?.feeds ?? [];
       setKnownFeeds((prev) => [...prev, ...feeds]);
 
@@ -136,9 +155,9 @@ export function AddFeedDialog() {
       setDetectedFeeds(feeds);
       setIsFeedSelectOpen(true);
     } catch {
-      toast.error(t("feed.toast.detectFailed"));
+      if (run === detectRun.current) toast.error(t("feed.toast.detectFailed"));
     } finally {
-      setIsValidating(false);
+      if (run === detectRun.current) setIsValidating(false);
     }
   };
 
@@ -241,7 +260,7 @@ export function AddFeedDialog() {
 
   return (
     <>
-      <Dialog open={isAddFeedOpen} onOpenChange={setAddFeedOpen}>
+      <Dialog open={isAddFeedOpen} onOpenChange={handleOpenChange}>
         <DialogContent
           className="flex max-h-[calc(100dvh-2rem)] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
           showCloseButton={false}
@@ -290,7 +309,10 @@ export function AddFeedDialog() {
                 inputMode="url"
                 placeholder={t("feed.add.urlPlaceholder")}
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => {
+                  cancelPendingDetect();
+                  setUrl(e.target.value);
+                }}
                 className="h-9 w-full"
                 autoComplete="off"
                 spellCheck={false}

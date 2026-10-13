@@ -25,14 +25,18 @@ export function AddGroupDialog() {
 
   const [name, setName] = useState("");
 
+  const handleClose = () => {
+    setAddGroupOpen(false);
+    setName("");
+  };
+
   const handleCreate = async () => {
     const trimmed = name.trim();
     if (!trimmed || createGroup.isPending) return;
 
     try {
       await createGroup.mutateAsync(trimmed);
-      setName("");
-      setAddGroupOpen(false);
+      handleClose();
       toast.success(t("group.toast.created"));
     } catch (error) {
       toast.error(apiErrorMessage(error, t("group.toast.createFailed")));
@@ -43,8 +47,8 @@ export function AddGroupDialog() {
     <Dialog
       open={isAddGroupOpen}
       onOpenChange={(open) => {
-        setAddGroupOpen(open);
-        if (!open) setName("");
+        if (open) setAddGroupOpen(true);
+        else handleClose();
       }}
     >
       <DialogContent className="sm:max-w-[400px]">
@@ -77,7 +81,7 @@ export function AddGroupDialog() {
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setAddGroupOpen(false)}
+            onClick={handleClose}
             disabled={createGroup.isPending}
           >
             {t("common.cancel")}
