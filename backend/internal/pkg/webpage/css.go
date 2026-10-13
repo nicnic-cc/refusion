@@ -3,6 +3,7 @@ package webpage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"mime"
 	"net/http"
 	"regexp"
@@ -24,10 +25,10 @@ var (
 )
 
 // InjectStyle adds css as a <style> block before the last </body>, else before
-// the last </html>, else at the end. "</" is escaped so the css cannot close
-// the style element.
+// the last </html>, else at the end. The css goes through escapeCSS so it
+// cannot close the style element or break XHTML or the page charset.
 func InjectStyle(doc []byte, css string) []byte {
-	tag := []byte("<style>" + strings.ReplaceAll(css, "</", `<\/`) + "</style>")
+	tag := []byte("<style>" + escapeCSS(css) + "</style>")
 
 	at := len(doc)
 	if loc := lastMatch(bodyClose, doc); loc != nil {
@@ -40,6 +41,20 @@ func InjectStyle(doc []byte, css string) []byte {
 	out = append(out, doc[:at]...)
 	out = append(out, tag...)
 	return append(out, doc[at:]...)
+}
+
+// escapeCSS turns '&', '<' and non-ASCII runes into CSS hex escapes: same
+// meaning in CSS, but valid XML and safe in any page charset.
+func escapeCSS(css string) string {
+	var b strings.Builder
+	for _, r := range css {
+		if r == '&' || r == '<' || r >= 0x80 {
+			fmt.Fprintf(&b, `\%x `, r)
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 func lastMatch(re *regexp.Regexp, doc []byte) []int {

@@ -27,7 +27,7 @@ func TestInjectStyle(t *testing.T) {
 
 	t.Run("closing tags in css are escaped", func(t *testing.T) {
 		got := string(InjectStyle([]byte(`<body></body>`), `a{content:"</style><script>x</script>"}`))
-		if strings.Contains(got, "</style><script>") || !strings.Contains(got, `<\/style>`) {
+		if strings.Contains(got, "</style><script>") || !strings.Contains(got, `\3c /style>`) {
 			t.Fatalf("got %q", got)
 		}
 	})

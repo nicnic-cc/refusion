@@ -34,7 +34,7 @@ func TestFrameable(t *testing.T) {
 }
 
 func TestInjectBase(t *testing.T) {
-	const tag = `<base href="https://a.example/p?x=1&amp;y=2" target="_blank">`
+	const tag = `<base href="https://a.example/p?x=1&amp;y=2" target="_blank" />`
 	const u = "https://a.example/p?x=1&y=2"
 	tests := []struct{ name, in, want string }{
 		{"head with attrs", `<html><HEAD lang="x"><title>t</title></head>`, `<html><HEAD lang="x">` + tag + `<title>t</title></head>`},
