@@ -57,8 +57,7 @@ func Fetch(ctx context.Context, client *http.Client, pageURL string) (Page, erro
 	if err != nil {
 		return Page{}, err
 	}
-	page.Body = InjectBase(body, page.FinalURL.String())
-	page.ContentType = htmlContentType(resp.Header.Get("Content-Type"))
+	page.ContentType, page.Body = copyAs(resp.Header.Get("Content-Type"), body, page.FinalURL.String())
 	return page, nil
 }
 
@@ -88,6 +87,7 @@ func Frameable(h http.Header) bool {
 var (
 	headTag = regexp.MustCompile(`(?i)<head(?:\s[^>]*)?>`)
 	htmlTag = regexp.MustCompile(`(?i)<html(?:\s[^>]*)?>`)
+	doctype = regexp.MustCompile(`(?i)^(?:\x{FEFF})?\s*<!doctype[^>]*>`)
 )
 
 // InjectBase puts a <base> tag first in the document so relative URLs resolve
@@ -102,6 +102,8 @@ func InjectBase(doc []byte, baseURL string) []byte {
 	at := 0
 	if loc != nil {
 		at = loc[1]
+	} else if d := doctype.FindIndex(doc); d != nil {
+		at = d[1] // a doctype must stay first or the page drops into quirks mode
 	}
 
 	out := make([]byte, 0, len(doc)+len(tag))
@@ -110,10 +112,19 @@ func InjectBase(doc []byte, baseURL string) []byte {
 	return append(out, doc[at:]...)
 }
 
-// htmlContentType keeps upstream's header when it is HTML, to preserve the charset.
-func htmlContentType(upstream string) string {
-	if mediaType, _, err := mime.ParseMediaType(upstream); err == nil && mediaType == "text/html" {
-		return upstream
+// copyAs returns the media type and body to serve for a copied response. Only
+// HTML gets a <base>; other types pass through unchanged. A missing or
+// unparseable type is sniffed; the CSP sandbox guards whatever it yields.
+func copyAs(upstream string, body []byte, baseURL string) (string, []byte) {
+	mediaType, _, err := mime.ParseMediaType(upstream)
+	if err != nil {
+		upstream = http.DetectContentType(body)
+		mediaType, _, _ = mime.ParseMediaType(upstream)
 	}
-	return "text/html; charset=utf-8"
+	switch {
+	case mediaType == "text/html" || mediaType == "application/xhtml+xml":
+		return upstream, InjectBase(body, baseURL)
+	default:
+		return upstream, body
+	}
 }

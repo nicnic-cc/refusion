@@ -101,8 +101,8 @@ func TestFetchRedirectVersusCopy(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if page.Embeddable || page.ContentType != "text/html; charset=utf-8" {
-			t.Fatalf("expected copy served as utf-8 html, got %+v", page)
+		if page.Embeddable || page.ContentType != "text/plain" {
+			t.Fatalf("expected copy keeping its text/plain type, got %+v", page)
 		}
 	})
 
