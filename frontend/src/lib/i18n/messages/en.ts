@@ -334,6 +334,7 @@ export const enMessages = {
   "feedFilter.toast.deleted": "Filter deleted",
   "feedFilter.toast.deleteFailed": "Failed to delete filter",
   "feedFilter.toast.toggleFailed": "Failed to switch filter",
+  "feedFilter.error.requestFailed": "The filter request failed. Try again.",
   "globalFilter.title": "Global filter",
   "globalFilter.description": "Hides matching articles in every feed.",
   "globalFilter.applying": "Applying...",

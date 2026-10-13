@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { feedFilterAPI, globalFilterAPI } from "@/lib/api";
+import { apiErrorMessage, feedFilterAPI, globalFilterAPI } from "@/lib/api";
 import type {
   Feed,
   FeedFilter,
@@ -198,11 +198,12 @@ function FilterForm({
         })
         .catch((err: unknown) => {
           if (controller.signal.aborted) return;
-          const message = err instanceof Error ? err.message : String(err);
           setPreview((prev) => ({
             ...prev,
             key: ruleKey,
-            error: parseConditionError(message),
+            error: parseConditionError(
+              apiErrorMessage(err, t("feedFilter.error.requestFailed")),
+            ),
           }));
         });
     }, PREVIEW_DEBOUNCE_MS);
@@ -210,7 +211,7 @@ function FilterForm({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [ready, rule, ruleKey, feedId]);
+  }, [ready, rule, ruleKey, feedId, t]);
 
   const previewCurrent = preview.key === ruleKey;
   const loading = ready && !previewCurrent;
@@ -242,7 +243,9 @@ function FilterForm({
       onClose();
     } catch (err) {
       setSaveError(
-        parseConditionError(err instanceof Error ? err.message : String(err)),
+        parseConditionError(
+          apiErrorMessage(err, t("feedFilter.error.requestFailed")),
+        ),
       );
     }
   };
