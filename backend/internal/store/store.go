@@ -41,7 +41,10 @@ func New(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("prepare legacy database: %w", err)
 	}
 
-	db, err := sql.Open("sqlite", dbPath)
+	// Every transaction here writes. A deferred one can take a read snapshot
+	// first (FTS5 trigger setup does), and its later write upgrade gets
+	// SQLITE_BUSY at once, skipping busy_timeout; IMMEDIATE takes the lock at BEGIN.
+	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
