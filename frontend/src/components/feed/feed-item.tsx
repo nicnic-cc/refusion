@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { usePrefetchList } from "@/hooks/use-prefetch-list";
-import { loadedUnreadIdsForFeed } from "@/queries/items";
+import { loadedUnreadIdsForFeeds } from "@/queries/items";
 import {
   pendingScope,
   useIsFeedCovered,
@@ -49,7 +49,7 @@ export const FeedItem = memo(function FeedItem({ feed }: FeedItemProps) {
       mark: {
         // The sidebar has no list snapshot, so this means everything up to now.
         request: { max_id: Number.MAX_SAFE_INTEGER, feed_id: feed.id },
-        loadedIds: () => loadedUnreadIdsForFeed(qc, feed.id),
+        loadedIds: () => loadedUnreadIdsForFeeds(qc, [feed.id]),
       },
     });
   };

@@ -644,15 +644,16 @@ function loadedFilteredIds(qc: QueryClient) {
   return ids;
 }
 
-/** Unread ids of one feed held in any loaded item list, for scope marks. */
-export function loadedUnreadIdsForFeed(qc: QueryClient, feedId: number) {
+/** Unread ids of the given feeds held in any loaded item list, for scope marks. */
+export function loadedUnreadIdsForFeeds(qc: QueryClient, feedIds: number[]) {
+  const feeds = new Set(feedIds);
   const ids = new Set<number>();
   for (const [, data] of qc.getQueriesData<ItemsInfiniteData>({
     queryKey: queryKeys.items.lists(),
   })) {
     for (const page of data?.pages ?? []) {
       for (const item of page.data) {
-        if (item.feed_id === feedId && item.unread && item.id > 0) {
+        if (feeds.has(item.feed_id) && item.unread && item.id > 0) {
           ids.add(item.id);
         }
       }
