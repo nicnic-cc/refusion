@@ -111,7 +111,7 @@ export interface ListResponse<T> {
   total: number;
 }
 
-// Item and bookmark lists: cursor-paginated (see docs/api-conventions.md)
+// Item and bookmark lists: cursor-paginated (see .agents/notes/api-conventions.md)
 export interface PaginatedListResponse<T> {
   data: T[];
   total: number;

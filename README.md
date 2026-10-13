@@ -37,6 +37,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 - **Web page CSS:** restyle a feed's pages in the web page view with your own CSS, for example to hide banners and sidebars or set a calmer font. The editor in the feed's settings shows a live preview of the feed's newest article.
   - With CSS set, the page is always shown as a copy fetched by the server, so a site that leans heavily on scripts may not work there. Deleting the CSS brings back the original page.
 - **YouTube:** videos play inside the article view.
+- **Mark as read:** when an article opens, after a few seconds, or never.
 - **Text settings:** font and text size in the article view, and relative ("3 hours ago") or absolute dates.
 
 <p align="center">
@@ -56,7 +57,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 - **Pull to refresh:** pull down on the sidebar or the list, or press `r` for the current view and `shift+r` for every feed.
 - **Progress:** each feed shows a spinner while it is checked, and a warning with the error when a check fails.
 - **New-articles pill:** articles that arrive while you read are counted at the top of the list, which stays where it is. Click the pill to load them.
-- **Schedule:** feeds are checked in the background, and each feed can have its own interval.
+- **Schedule:** feeds are checked in the background.
 
 ### Filters
 
@@ -81,6 +82,8 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 - **Reorder mode:** move folders and feeds up and down on the feeds page. The sidebar follows.
 - **Mark all as read:** covers a whole feed or folder, including articles not loaded yet. Press `shift+a` or the checkmark.
 - **OPML:** import and export your subscriptions.
+- **Manage feeds** (`g f`): find a feed by name or URL, list only failing or paused ones, refresh all.
+- **Per feed:** pause it, check it now, set its own interval or an HTTP proxy.
 
 ### Search and shortcuts
 
@@ -88,15 +91,20 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
   <img src="./assets/screenshots/search.png" alt="Search results with excerpts and the matched words in bold" width="100%" />
 </p>
 
-- **Search:** covers feeds and article text, with an excerpt and the matched words in bold.
+- **Search:** covers feeds and article text. Words match as prefixes (`kern` finds "kernel") and all must match; excerpts show the hits in bold.
 - **Stars:** starred articles are saved as copies, so they survive when the feed or article is deleted.
-- **Shortcuts:** Google Reader style (`j`/`k`, `m`, `s`, `g u`), and Inoreader style for the sidebar (`shift+n`/`shift+p`, `shift+x`). Press `?` for the full list.
+- **Shortcuts:** Google Reader style (`j`/`k`, `m`, `s`, `g u`), and Inoreader style for the sidebar (`shift+n`/`shift+p`, `shift+x`).
+
+<p align="center">
+  <img src="./assets/screenshots/shortcuts.png" alt="The keyboard shortcuts dialog" width="100%" />
+  <br /><em>Full list in the app: press <code>?</code></em>
+</p>
 
 ### Self-hosting and apps
 
 - **Deployment:** a single binary with one SQLite file.
-- **Fever API:** connect Reeder, Unread, FeedMe and other apps. See [`docs/fever-api.md`](./docs/fever-api.md).
-- **PWA:** install it on a phone or desktop.
+- **Fever API:** connect Reeder, Unread, FeedMe and other apps. See [`docs/apps.md`](./docs/apps.md).
+- **PWA:** install it on a phone or desktop (needs HTTPS).
 - **Sign-in:** a password, or OIDC.
 - **Synced settings:** preferences follow you between devices. The reading layout stays per device.
 - **Languages:** English, Chinese, German, French, Spanish, Russian, Portuguese and Swedish.
@@ -131,20 +139,18 @@ A few things here work the way [yarr](https://github.com/nkanaev/yarr) does them
 
 ### Installation
 
-TBD: refusion has no releases or Docker images yet. To build it yourself, see [Development](#development).
+See [`docs/install.md`](./docs/install.md). refusion has no releases or Docker images yet; to build it yourself, see [Development](#development).
 
 ### Configuration
 
 Settings are environment variables, listed with their defaults in [`.env.example`](./.env.example). They keep upstream's `FUSION_` prefix. Most setups only need `FUSION_PASSWORD`.
 
-## Documentation
-
-Design notes and API conventions are in [`docs/`](./docs/README.md).
-
 ## Development
 
 - Go and Node.js versions are pinned in [`backend/go.mod`](./backend/go.mod) and [`frontend/package.json`](./frontend/package.json); you also need pnpm.
-- Build and test commands are in [`scripts.sh`](./scripts.sh), e.g. `./scripts.sh build`. Local setup: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- Build and test commands are in [`scripts.sh`](./scripts.sh), e.g. `./scripts.sh build`.
+
+[Issues](https://github.com/nicnic-cc/refusion/issues) are welcome; I'm not taking pull requests.
 
 ## Credits
 
@@ -153,4 +159,4 @@ Design notes and API conventions are in [`docs/`](./docs/README.md).
 - Feed parsing by [gofeed](https://github.com/mmcdole/gofeed)
 
 > [!NOTE]
-> **Built with AI help.** Most of what refusion adds to Fusion was written by coding agents, then reviewed, tried in the app and kept or thrown out by me. It's a personal tool shaped around how I read, not a polished product. The reader itself stays AI-free: no summaries, no recommendations, just your feeds.
+> **Built with AI help.** Most of what refusion adds to Fusion was written by coding agents, then reviewed, tried in the app and kept or thrown out by me. It's a personal tool shaped around how I read, not a polished product. The reader itself has no AI in it, so no summaries or recommendations.

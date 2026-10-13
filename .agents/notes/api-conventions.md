@@ -12,7 +12,7 @@ disagree, the code wins — fix the page.
 ## Base path and authentication
 
 - All endpoints are under `/api`. Two exceptions: the Fever compatibility
-  API (`/fever*`, see `docs/fever-api.md`) and a bare `GET /oidc/callback`
+  API (`/fever*`, see `.agents/notes/fever-api.md`) and a bare `GET /oidc/callback`
   registered only when OIDC is configured, for deployments whose redirect
   URI omits `/api`.
 - Authentication is a session cookie named `session` (`POST /api/sessions`
