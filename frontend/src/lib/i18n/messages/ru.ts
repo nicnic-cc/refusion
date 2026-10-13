@@ -130,7 +130,7 @@ export const ruMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "Выберите группу...",
   "feed.add.nameLabel": "Название ленты",
   "feed.add.namePlaceholder": "Введите название ленты...",
-  "feed.add.proxyHint": "Пусто — системный прокси.",
+  "feed.add.proxyHint": "Пусто — прямое подключение.",
   "feed.add.proxyLabel": "HTTP-прокси",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Добавить ленту",
@@ -149,6 +149,7 @@ export const ruMessages: PartialMessages = {
   "feed.add.validateTitle": "Проверить URL ленты",
   "feed.add.lookingForFeed": "Поиск ленты...",
   "feed.edit.checkNow": "Проверить сейчас",
+  "feed.edit.checkNowPaused": "Приостановленные ленты не проверяются",
   "feed.edit.lastChecked": "Последняя проверка: {when}",
   "feed.edit.deleteConfirm.description":
     "Вы уверены, что хотите отписаться от \"{name}\"? Все статьи этой ленты будут удалены.",

@@ -130,7 +130,7 @@ export const deMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "Gruppe auswählen...",
   "feed.add.nameLabel": "Feed-Name",
   "feed.add.namePlaceholder": "Feed-Namen eingeben...",
-  "feed.add.proxyHint": "Leer verwendet den System-Proxy.",
+  "feed.add.proxyHint": "Leer verbindet direkt.",
   "feed.add.proxyLabel": "HTTP-Proxy",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Feed hinzufügen",
@@ -149,6 +149,7 @@ export const deMessages: PartialMessages = {
   "feed.add.validateTitle": "Feed-URL prüfen",
   "feed.add.lookingForFeed": "Feed wird gesucht...",
   "feed.edit.checkNow": "Jetzt prüfen",
+  "feed.edit.checkNowPaused": "Pausierte Feeds werden nicht geprüft",
   "feed.edit.lastChecked": "Zuletzt geprüft: {when}",
   "feed.edit.deleteConfirm.description":
     'Möchtest du "{name}" wirklich abbestellen? Alle Artikel dieses Feeds werden gelöscht.',

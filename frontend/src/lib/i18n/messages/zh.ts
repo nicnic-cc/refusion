@@ -130,7 +130,7 @@ export const zhMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "选择分组...",
   "feed.add.nameLabel": "订阅名称",
   "feed.add.namePlaceholder": "输入订阅名称...",
-  "feed.add.proxyHint": "留空则使用系统代理。",
+  "feed.add.proxyHint": "留空则直接连接。",
   "feed.add.proxyLabel": "HTTP 代理",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "添加订阅",
@@ -149,6 +149,7 @@ export const zhMessages: PartialMessages = {
   "feed.add.validateTitle": "验证订阅地址",
   "feed.add.lookingForFeed": "正在查找订阅源...",
   "feed.edit.checkNow": "立即检查",
+  "feed.edit.checkNowPaused": "已暂停的订阅源不会被检查",
   "feed.edit.lastChecked": "上次检查：{when}",
   "feed.edit.deleteConfirm.description":
     "确定要取消订阅“{name}”吗？该订阅的所有文章将被删除。",

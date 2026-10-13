@@ -1,3 +1,4 @@
+import { WithTooltip } from "@/components/common/with-tooltip";
 import { Button } from "@/components/ui/button";
 import type { Feed } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -33,6 +34,19 @@ export function FeedCheckStatus({ feed }: { feed: Feed }) {
     );
   }
 
+  // startPull skips suspended feeds, so the click would do nothing.
+  const checkNowButton = (
+    <Button
+      variant="link"
+      size="xs"
+      className="h-auto shrink-0 p-0"
+      disabled={isChecking || feed.suspended}
+      onClick={() => startPull.mutate({ scope: { feed_id: feed.id } })}
+    >
+      {t("feed.edit.checkNow")}
+    </Button>
+  );
+
   return (
     <div className="col-start-2 -mt-2 flex items-center gap-2 text-xs">
       {status && (
@@ -43,15 +57,17 @@ export function FeedCheckStatus({ feed }: { feed: Feed }) {
           </span>
         </>
       )}
-      <Button
-        variant="link"
-        size="xs"
-        className="h-auto shrink-0 p-0"
-        disabled={isChecking}
-        onClick={() => startPull.mutate({ scope: { feed_id: feed.id } })}
-      >
-        {t("feed.edit.checkNow")}
-      </Button>
+      {feed.suspended ? (
+        // A disabled button gets no pointer events, so the wrapper holds the tooltip.
+        <WithTooltip
+          label={t("feed.edit.checkNowPaused")}
+          render={<span className="inline-flex" />}
+        >
+          {checkNowButton}
+        </WithTooltip>
+      ) : (
+        checkNowButton
+      )}
     </div>
   );
 }

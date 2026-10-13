@@ -130,7 +130,7 @@ export const ptMessages: PartialMessages = {
   "feed.add.groupPlaceholder": "Selecione um grupo...",
   "feed.add.nameLabel": "Nome do feed",
   "feed.add.namePlaceholder": "Digite o nome do feed...",
-  "feed.add.proxyHint": "Vazio usa o proxy do sistema.",
+  "feed.add.proxyHint": "Vazio conecta diretamente.",
   "feed.add.proxyLabel": "Proxy HTTP",
   "feed.add.proxyPlaceholder": "http://proxy.example.com:8080",
   "feed.add.title": "Adicionar feed",
@@ -149,6 +149,7 @@ export const ptMessages: PartialMessages = {
   "feed.add.validateTitle": "Validar URL do feed",
   "feed.add.lookingForFeed": "Procurando o feed...",
   "feed.edit.checkNow": "Verificar agora",
+  "feed.edit.checkNowPaused": "Feeds pausados não são verificados",
   "feed.edit.lastChecked": "Última verificação: {when}",
   "feed.edit.deleteConfirm.description":
     'Tem certeza de que deseja cancelar a inscrição de "{name}"? Todos os artigos deste feed serão excluídos.',

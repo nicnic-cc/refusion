@@ -50,6 +50,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.mocked(feedAPI.list).mockResolvedValue({ data: [] } as never);
   urlState.selectedFeedId = null;
   urlState.selectTopLevelFilter.mockClear();
   useUIStore.setState({ isEditFeedOpen: false, editingFeed: null });
@@ -98,6 +99,24 @@ describe("EditFeedDialog links open", () => {
     await userEvent.click(await screen.findByRole("option", { name: "Feed's own page" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(feedAPI.update).toHaveBeenCalledWith(5, { open_permalink: true });
+  });
+});
+
+describe("EditFeedDialog check now", () => {
+  // startPull skips suspended feeds, so the button must not offer a no-op click.
+  it("disables Check now for a suspended feed", async () => {
+    const paused = { ...feed, suspended: true };
+    vi.mocked(feedAPI.list).mockResolvedValue({ data: [paused] } as never);
+    setup(paused);
+    const button = await screen.findByRole("button", { name: "Check now" });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("keeps Check now enabled for an active feed", async () => {
+    vi.mocked(feedAPI.list).mockResolvedValue({ data: [feed] } as never);
+    setup(feed);
+    const button = await screen.findByRole("button", { name: "Check now" });
+    expect((button as HTMLButtonElement).disabled).toBe(false);
   });
 });
 
