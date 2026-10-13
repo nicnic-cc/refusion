@@ -203,20 +203,8 @@ flowchart TD
 
 ### Item permalink
 
-Link blogs and aggregators point an item's main link at another site; the
-item's own page on the feed's site (`items.permalink`) is opened instead when
-the feed sets `open_permalink`. Decisions (2026-10-12):
-
-- Generic, no per-site rules. Only looked for when the main link's host
-  differs from the feed's site host; the first candidate on that host (or a
-  subdomain) wins: RSS `<comments>`, item links, a URL GUID
-  (`pull/permalink.go`).
-- No links taken from the content: they picked tag or about pages.
-- gofeed v1.4.0 drops RSS `<comments>` and Atom `rel="related"` links from its
-  universal item, so both are added back by translator wrappers. Atom
-  `rel="self"` entry links (the entry's own feed URL) are removed there.
-- The insert keeps `ON CONFLICT DO NOTHING` (its row count is the new-items
-  count); items stored earlier get their permalink by a separate `UPDATE`.
+How the pull finds an item's own page on the feed's site: see
+[article-views.md](article-views.md#item-permalink).
 
 ## 9. Security model
 
@@ -224,18 +212,15 @@ the feed sets `open_permalink`. Decisions (2026-10-12):
 - Login attempt rate limit (`FUSION_LOGIN_*`)
 - Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS
 - Optional OIDC SSO (`FUSION_OIDC_*`)
-- URL validation + private-network blocking by default for feed fetches
+- URL validation + private-network blocking by default for feed fetches.
+  The outbound client (`internal/pkg/httpc/client.go`) checks the resolved
+  address again at connect time (DNS rebinding) and on every redirect, and
+  caps redirects; a configured proxy is trusted. Feed bodies are capped in
+  `pull/parser.go`.
 - CORS allowlist via `FUSION_CORS_ALLOWED_ORIGINS`
 - Trusted proxy list via `FUSION_TRUSTED_PROXIES`
-- Web page view (`getItemPage`): the iframe always loads our route. A page
-  that allows framing and is https gets a redirect (real site, full
-  fidelity). Anything else is served as a copy with a CSP `sandbox` header
-  (no `allow-same-origin`), so its scripts run in an opaque origin and
-  cannot call our API with the session cookie. Plain http is copied too,
-  since framing it would be mixed content.
-  A feed with custom CSS is always copied, since a redirected page can't be
-  changed. Accepted cost: script-heavy sites may break in the opaque origin.
-  The copy's meta CSP tags are dropped so they can't block the injected style.
+- Web page view: pages run sandboxed in an opaque origin, see
+  [article-views.md](article-views.md#web-page).
 
 Logging is structured (`log/slog`) with level and format controlled by
 `FUSION_LOG_LEVEL` / `FUSION_LOG_FORMAT`; the full environment variable
