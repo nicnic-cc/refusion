@@ -42,7 +42,33 @@ type ItemsMutationContext = {
   feedDeltas: Map<number, number>;
   // Set by onError so a late re-apply does not undo the rollback.
   failed: boolean;
+  seq: number;
+  // Rows registered in the per-row tracker below; released on settle.
+  touched: Set<number>;
+  settled: boolean;
+  // Details still loading when the mark started: their response may predate it.
+  loadingDetails: Set<number>;
 };
+
+// Per row: the newest mark that touched it and the value the server holds, so a
+// failed mark reverts a row only if no newer mark touched it, and to that value.
+type RowMarks = {
+  newest: number;
+  pending: number;
+  confirmed: boolean;
+  confirmedSeq: number;
+};
+const rowMarksByClient = new WeakMap<QueryClient, Map<number, RowMarks>>();
+let markSeq = 0;
+
+function rowMarks(qc: QueryClient) {
+  let marks = rowMarksByClient.get(qc);
+  if (!marks) {
+    marks = new Map();
+    rowMarksByClient.set(qc, marks);
+  }
+  return marks;
+}
 
 function buildListItemsParams(
   filters: NormalizedItemFilters,
@@ -139,7 +165,101 @@ function createItemsMutationContext(targetUnread: boolean): ItemsMutationContext
     createdDetails: new Set(),
     feedDeltas: new Map(),
     failed: false,
+    seq: ++markSeq,
+    touched: new Set(),
+    settled: false,
+    loadingDetails: new Set(),
   };
+}
+
+// A row without an entry is tracked only if this mark flipped it; its server
+// value is then the one the flip replaced.
+function touchRow(
+  qc: QueryClient,
+  context: ItemsMutationContext,
+  id: number,
+  flipped: boolean,
+) {
+  if (context.settled || context.touched.has(id)) return;
+  const marks = rowMarks(qc);
+  let entry = marks.get(id);
+  if (!entry) {
+    if (!flipped) return;
+    entry = {
+      newest: 0,
+      pending: 0,
+      confirmed: !context.targetUnread,
+      confirmedSeq: 0,
+    };
+    marks.set(id, entry);
+  }
+  entry.newest = Math.max(entry.newest, context.seq);
+  entry.pending++;
+  context.touched.add(id);
+}
+
+function flippedIds(context: ItemsMutationContext) {
+  const ids = new Set([...context.flippedDetails, ...context.createdDetails]);
+  for (const set of [
+    ...context.flippedLists.values(),
+    ...context.flippedBookmarkLists.values(),
+  ]) {
+    for (const id of set) ids.add(id);
+  }
+  return ids;
+}
+
+function trackRows(qc: QueryClient, context: ItemsMutationContext, ids: number[]) {
+  const flipped = flippedIds(context);
+  for (const id of ids) touchRow(qc, context, id, flipped.has(id));
+}
+
+function releaseRows(qc: QueryClient, context: ItemsMutationContext, ok: boolean) {
+  context.settled = true;
+  const marks = rowMarks(qc);
+  for (const id of context.touched) {
+    const entry = marks.get(id);
+    if (!entry) continue;
+    // The server holds the value of the newest successful mark.
+    if (ok && context.seq > entry.confirmedSeq) {
+      entry.confirmed = context.targetUnread;
+      entry.confirmedSeq = context.seq;
+    }
+    if (--entry.pending <= 0) marks.delete(id);
+  }
+}
+
+// The value to restore a row to, or undefined to leave it to a newer mark.
+function revertValue(qc: QueryClient, context: ItemsMutationContext, id: number) {
+  const entry = rowMarks(qc).get(id);
+  if (!entry || !context.touched.has(id)) return !context.targetUnread;
+  return entry.newest === context.seq ? entry.confirmed : undefined;
+}
+
+function loadingDetailIds(qc: QueryClient, ids: number[]) {
+  const idSet = new Set(ids);
+  return new Set(
+    qc
+      .getQueryCache()
+      .findAll({
+        queryKey: queryKeys.items.details(),
+        predicate: (query) =>
+          query.state.fetchStatus === "fetching" &&
+          idSet.has(query.queryKey[2] as number),
+      })
+      .map((query) => query.queryKey[2] as number),
+  );
+}
+
+// A detail GET sent before the mark can answer with the old state after it, and
+// is not cancelled; refetch it once the mark has settled.
+function refetchLoadingDetails(qc: QueryClient, context: ItemsMutationContext) {
+  if (context.loadingDetails.size === 0) return;
+  void qc.invalidateQueries({
+    queryKey: queryKeys.items.details(),
+    refetchType: "all",
+    predicate: (query) => context.loadingDetails.has(query.queryKey[2] as number),
+  });
 }
 
 // Cancels only what the optimistic update overwrites. Kept: a next-page load
@@ -333,12 +453,13 @@ function reapplyAfterNextPageLoads(
       const known = context.flippedLists.get(hash) ?? new Set<number>();
       for (const id of flipped) known.add(id);
       context.flippedLists.set(hash, known);
+      for (const id of flipped) touchRow(qc, context, id, true);
     };
     void query.promise?.then(reapply, reapply);
   }
 }
 
-// Flips back only the listed rows that still hold this mutation's value; rows
+// Reverts only the listed rows that still hold this mutation's value; rows
 // another mutation changed since, or that were never flipped, stay as they are.
 function unflipRows<
   R extends { unread: boolean },
@@ -348,6 +469,7 @@ function unflipRows<
   ids: Set<number>,
   targetUnread: boolean,
   idOf: (row: R) => number | null,
+  revertTo: (id: number) => boolean | undefined,
 ): D | undefined {
   let changed = false;
   const pages = old.pages.map((page) => {
@@ -355,8 +477,10 @@ function unflipRows<
     const data = page.data.map((row) => {
       const id = idOf(row);
       if (id === null || !ids.has(id) || row.unread !== targetUnread) return row;
+      const to = revertTo(id);
+      if (to === undefined || to === targetUnread) return row;
       pageChanged = true;
-      return { ...row, unread: !targetUnread };
+      return { ...row, unread: to };
     });
     if (!pageChanged) return page;
     changed = true;
@@ -371,6 +495,7 @@ function rollbackItemsMutation(
 ) {
   if (!context) return;
   const { targetUnread } = context;
+  const revertTo = (id: number) => revertValue(qc, context, id);
 
   // Write only the caches that really change; setQueryData on an untouched
   // query would clear its invalidated flag.
@@ -384,6 +509,7 @@ function rollbackItemsMutation(
       ids,
       targetUnread,
       (item) => item.id,
+      revertTo,
     );
     if (next) qc.setQueryData<ItemsInfiniteData>(key, next);
   }
@@ -391,15 +517,17 @@ function rollbackItemsMutation(
   for (const id of context.flippedDetails) {
     const key = queryKeys.items.detail(id);
     const current = qc.getQueryData<Item>(key);
-    if (current?.unread === targetUnread) {
-      qc.setQueryData<Item>(key, { ...current, unread: !targetUnread });
+    const to = revertTo(id);
+    if (current?.unread === targetUnread && to !== undefined && to !== targetUnread) {
+      qc.setQueryData<Item>(key, { ...current, unread: to });
     }
   }
 
   for (const id of context.createdDetails) {
     const key = queryKeys.items.detail(id);
     const current = qc.getQueryData<Item>(key);
-    if (!current) continue;
+    const to = revertTo(id);
+    if (!current || to === undefined) continue;
     // Removing a watched entry does not re-render its view, so flip the flag
     // back there instead.
     const watched = qc
@@ -408,8 +536,8 @@ function rollbackItemsMutation(
       ?.getObserversCount();
     if (!watched) {
       qc.removeQueries({ queryKey: key, exact: true });
-    } else if (current.unread === targetUnread) {
-      qc.setQueryData<Item>(key, { ...current, unread: !targetUnread });
+    } else if (current.unread === targetUnread && to !== targetUnread) {
+      qc.setQueryData<Item>(key, { ...current, unread: to });
     }
   }
 
@@ -433,6 +561,7 @@ function rollbackItemsMutation(
       ids,
       targetUnread,
       (bookmark) => bookmark.item_id,
+      revertTo,
     );
     if (next) qc.setQueryData<BookmarksInfiniteData>(key, next);
   }
@@ -472,7 +601,9 @@ function useSetItemsReadState(targetUnread: boolean) {
       await cancelOptimisticTargets(qc, ids);
 
       const context = createItemsMutationContext(targetUnread);
+      context.loadingDetails = loadingDetailIds(qc, ids);
       applyOptimisticItemReadState(qc, ids, context);
+      trackRows(qc, context, ids);
       reapplyAfterNextPageLoads(qc, ids, targetUnread, false, context);
       return context;
     },
@@ -482,7 +613,11 @@ function useSetItemsReadState(targetUnread: boolean) {
     },
     // Not awaited: the mutation settles when the mark request does, and the
     // auto-mark-read hook retries while one is pending.
-    onSettled: (_data, _error, ids) => {
+    onSettled: (_data, error, ids, context) => {
+      if (context) {
+        releaseRows(qc, context, !error);
+        refetchLoadingDetails(qc, context);
+      }
       if (targetUnread) invalidateUnreadListsLackingItems(qc, ids);
       void qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
     },
@@ -537,7 +672,15 @@ export function useMarkScopeRead() {
       await cancelOptimisticTargets(qc, loadedIds);
 
       const context = createItemsMutationContext(false);
+      context.loadingDetails = loadingDetailIds(qc, loadedIds);
       applyOptimisticItemReadState(qc, loadedIds, context, true);
+      // The scope mark never touches filtered rows.
+      const filtered = loadedFilteredIds(qc);
+      trackRows(
+        qc,
+        context,
+        loadedIds.filter((id) => !filtered.has(id)),
+      );
       reapplyAfterNextPageLoads(
         qc,
         loadedIds,
@@ -553,7 +696,11 @@ export function useMarkScopeRead() {
       rollbackItemsMutation(qc, context);
     },
     // Not awaited, so the mutation settles when the mark request does.
-    onSettled: () => {
+    onSettled: (_data, error, _vars, context) => {
+      if (context) {
+        releaseRows(qc, context, !error);
+        refetchLoadingDetails(qc, context);
+      }
       // No refetch of the open list: it would drop the rows pinned for undo.
       void qc.invalidateQueries({
         queryKey: queryKeys.items.all,
