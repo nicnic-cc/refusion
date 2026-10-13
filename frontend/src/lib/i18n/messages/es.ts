@@ -335,6 +335,7 @@ export const esMessages: PartialMessages = {
   "feedFilter.toast.deleted": "Filtro eliminado",
   "feedFilter.toast.deleteFailed": "No se pudo eliminar el filtro",
   "feedFilter.toast.toggleFailed": "No se pudo cambiar el filtro",
+  "feedFilter.error.requestFailed": "La solicitud del filtro falló. Inténtalo de nuevo.",
   "globalFilter.title": "Filtro global",
   "globalFilter.description": "Oculta los artículos coincidentes en todas las fuentes.",
   "globalFilter.applying": "Aplicando...",

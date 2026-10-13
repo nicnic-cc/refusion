@@ -335,6 +335,7 @@ export const frMessages: PartialMessages = {
   "feedFilter.toast.deleted": "Filtre supprimé",
   "feedFilter.toast.deleteFailed": "Échec de la suppression du filtre",
   "feedFilter.toast.toggleFailed": "Échec du changement d'état du filtre",
+  "feedFilter.error.requestFailed": "La requête du filtre a échoué. Réessayez.",
   "globalFilter.title": "Filtre global",
   "globalFilter.description": "Masque les articles correspondants dans tous les flux.",
   "globalFilter.applying": "Application...",

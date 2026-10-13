@@ -335,6 +335,7 @@ export const deMessages: PartialMessages = {
   "feedFilter.toast.deleted": "Filter gelöscht",
   "feedFilter.toast.deleteFailed": "Filter konnte nicht gelöscht werden",
   "feedFilter.toast.toggleFailed": "Filter konnte nicht umgeschaltet werden",
+  "feedFilter.error.requestFailed": "Die Filteranfrage ist fehlgeschlagen. Versuche es erneut.",
   "globalFilter.title": "Globaler Filter",
   "globalFilter.description": "Blendet passende Artikel in allen Feeds aus.",
   "globalFilter.applying": "Wird angewendet...",

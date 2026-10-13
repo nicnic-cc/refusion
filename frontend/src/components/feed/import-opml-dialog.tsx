@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/store";
 import { useQueryClient } from "@tanstack/react-query";
-import { groupAPI, feedAPI } from "@/lib/api";
+import { apiErrorMessage, groupAPI, feedAPI } from "@/lib/api";
 import { queryKeys } from "@/queries/keys";
 import { pullQueryKey } from "@/queries/pull";
 import { toast } from "sonner";
@@ -158,9 +158,7 @@ export function ImportOpmlDialog() {
         handleClose();
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("opml.toast.failed"),
-      );
+      toast.error(apiErrorMessage(error, t("opml.toast.failed")));
     } finally {
       // Also on failure: groups created before the error must show up.
       await Promise.all([

@@ -335,6 +335,7 @@ export const svMessages: PartialMessages = {
   "feedFilter.toast.deleted": "Filter borttaget",
   "feedFilter.toast.deleteFailed": "Det gick inte att ta bort filtret",
   "feedFilter.toast.toggleFailed": "Det gick inte att växla filtret",
+  "feedFilter.error.requestFailed": "Filterförfrågan misslyckades. Försök igen.",
   "globalFilter.title": "Globalt filter",
   "globalFilter.description": "Döljer matchande artiklar i alla flöden.",
   "globalFilter.applying": "Tillämpar...",

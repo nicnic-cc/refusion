@@ -335,6 +335,7 @@ export const zhMessages: PartialMessages = {
   "feedFilter.toast.deleted": "筛选已删除",
   "feedFilter.toast.deleteFailed": "删除筛选失败",
   "feedFilter.toast.toggleFailed": "切换筛选失败",
+  "feedFilter.error.requestFailed": "筛选请求失败，请重试。",
   "globalFilter.title": "全局筛选",
   "globalFilter.description": "在所有订阅源中隐藏匹配的文章。",
   "globalFilter.applying": "正在应用...",

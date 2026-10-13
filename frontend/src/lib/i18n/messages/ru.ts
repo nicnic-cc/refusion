@@ -335,6 +335,7 @@ export const ruMessages: PartialMessages = {
   "feedFilter.toast.deleted": "Фильтр удалён",
   "feedFilter.toast.deleteFailed": "Не удалось удалить фильтр",
   "feedFilter.toast.toggleFailed": "Не удалось переключить фильтр",
+  "feedFilter.error.requestFailed": "Не удалось выполнить запрос фильтра. Попробуйте ещё раз.",
   "globalFilter.title": "Глобальный фильтр",
   "globalFilter.description": "Скрывает подходящие статьи во всех лентах.",
   "globalFilter.applying": "Применение...",
