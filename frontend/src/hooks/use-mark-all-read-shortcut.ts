@@ -16,6 +16,7 @@ export function useMarkAllReadShortcut(
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (
+        event.repeat ||
         !event.shiftKey ||
         event.metaKey ||
         event.ctrlKey ||
