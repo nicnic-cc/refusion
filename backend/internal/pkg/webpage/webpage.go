@@ -30,6 +30,10 @@ type Page struct {
 
 // Fetch downloads pageURL with client. Non-2xx responses are errors.
 func Fetch(ctx context.Context, client *http.Client, pageURL string) (Page, error) {
+	return fetch(ctx, client, pageURL, false)
+}
+
+func fetch(ctx context.Context, client *http.Client, pageURL string, forceCopy bool) (Page, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pageURL, nil)
 	if err != nil {
 		return Page{}, err
@@ -48,7 +52,7 @@ func Fetch(ctx context.Context, client *http.Client, pageURL string) (Page, erro
 
 	page := Page{FinalURL: resp.Request.URL}
 	// Plain http inside our https app would be mixed content, so it is copied instead.
-	if page.FinalURL.Scheme == "https" && Frameable(resp.Header) {
+	if !forceCopy && page.FinalURL.Scheme == "https" && Frameable(resp.Header) {
 		page.Embeddable = true
 		return page, nil
 	}

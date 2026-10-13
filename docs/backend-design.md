@@ -56,6 +56,8 @@ here, it duplicates the migrations and rots.
   no migration); older ones need a one-off table rebuild.
 - `feed_filters` — one optional filter per feed, 1:1 via `feed_id`
   (`ON DELETE CASCADE`).
+- `feed_web_css` — optional custom CSS per feed, 1:1 via `feed_id`
+  (`ON DELETE CASCADE`), injected into the copied web page view.
 - `global_filter` — single row (`id = 1`), the filter applied to every feed.
 - `items_fts` — FTS5 index of title and tag-stripped `content`, over external
   content (`content='items'`, no second copy). Triggers keep it in sync, and
