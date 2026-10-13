@@ -233,6 +233,9 @@ the feed sets `open_permalink`. Decisions (2026-10-12):
   (no `allow-same-origin`), so its scripts run in an opaque origin and
   cannot call our API with the session cookie. Plain http is copied too,
   since framing it would be mixed content.
+  A feed with custom CSS is always copied, since a redirected page can't be
+  changed. Accepted cost: script-heavy sites may break in the opaque origin.
+  The copy's meta CSP tags are dropped so they can't block the injected style.
 
 Logging is structured (`log/slog`) with level and format controlled by
 `FUSION_LOG_LEVEL` / `FUSION_LOG_FORMAT`; the full environment variable
