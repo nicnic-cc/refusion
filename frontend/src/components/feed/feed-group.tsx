@@ -96,7 +96,7 @@ export const FeedGroup = memo(function FeedGroup({
             e.stopPropagation();
             setIsOpen(!isOpen);
           }}
-          className="shrink-0 p-1 -m-1 rounded-md transition-colors hover:bg-foreground/10"
+          className="shrink-0 p-1 -m-1 max-md:p-3 max-md:-my-3 max-md:-ml-2 max-md:mr-0 rounded-md transition-colors hover:bg-foreground/10"
         >
           <ChevronRight
             className={cn(
@@ -150,7 +150,7 @@ export const FeedGroup = memo(function FeedGroup({
         </div>
       </div>
       <CollapsibleContent>
-        <div className="w-full min-w-0 pl-5">
+        <div className="w-full min-w-0 pl-5 max-md:pl-8">
           {feeds.map((feed) => (
             <FeedItem key={feed.id} feed={feed} />
           ))}
