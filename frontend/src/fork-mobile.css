@@ -80,10 +80,12 @@
   }
 
   /* Dialog X close, buttons and text fields reach 44 px (min-width keeps
-     icon-only buttons square). */
+     icon-only buttons square). The X grows from its top-right corner, so
+     the margin puts its centre back where each dialog's header expects it. */
   [data-slot="dialog-content"] > [data-slot="dialog-close"] {
     width: 2.75rem;
     height: 2.75rem;
+    margin: -6px -6px 0 0;
   }
 
   [data-slot="dialog-content"] [data-slot="button"] {

@@ -66,3 +66,10 @@ article and the web page. Decisions (2026-10-12):
   `rel="self"` entry links (the entry's own feed URL) are removed there.
 - The insert keeps `ON CONFLICT DO NOTHING` (its row count is the new-items
   count); items stored earlier get their permalink by a separate `UPDATE`.
+
+## Close button
+
+The article header's X is an outlined button like the rest of that row:
+it closes the article, a peer of prev/next. Dialog X buttons stay ghost:
+they belong to the dialog's title, not to a row of actions
+(2026-10-14).
