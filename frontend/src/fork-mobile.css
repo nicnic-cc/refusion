@@ -124,10 +124,16 @@ body {
 }
 
 /* iOS paints the status-bar strip of the installed app with the body colour,
-   even over a fixed sheet; match it to the open sheet. */
+   even over a fixed sheet; match it to the open sheet. #root keeps the page
+   behind the overlay on --background, which the body alone used to paint. */
 @media (display-mode: standalone) {
   body:has([data-slot="sheet-content"]) {
     background-color: var(--popover);
+  }
+
+  #root {
+    background-color: var(--background);
+    min-height: 100vh;
   }
 }
 
@@ -143,5 +149,40 @@ body {
   [data-slot="sheet-content"][data-side="right"] {
     height: 100vh;
     bottom: auto;
+  }
+}
+
+/* Dialogs stay between the top and bottom insets (installed PWA). All values
+   are 0 / the old ones where env() is 0. --fork-dvh is vh in standalone (see
+   above); the tall dialogs subtract --fork-inset-y from their max height. */
+:root {
+  --fork-dvh: 100dvh;
+  --fork-inset-y: calc(
+    env(safe-area-inset-top) + env(safe-area-inset-bottom)
+  );
+  --fork-inset-shift: calc(
+    (env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 2
+  );
+}
+
+/* Centre in the safe area, not the screen. Beats each dialog's top-* class. */
+[data-slot="dialog-content"] {
+  top: calc(50% + var(--fork-inset-shift));
+}
+
+/* The search dialog sits at the top on phones: 1rem below the inset. */
+@media (max-width: 767px) {
+  [data-slot="dialog-content"].fork-dialog-top {
+    top: calc(1rem + env(safe-area-inset-top));
+  }
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --fork-dvh: 100vh;
+  }
+
+  [data-slot="dialog-content"] {
+    top: calc(50vh + var(--fork-inset-shift));
   }
 }

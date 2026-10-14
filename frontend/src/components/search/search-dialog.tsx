@@ -131,7 +131,7 @@ export function SearchDialog() {
 
   return (
     <Dialog open={isSearchOpen} onOpenChange={setSearchOpen}>
-      <DialogContent className="overflow-hidden p-0 max-md:top-4 max-md:translate-y-0" showCloseButton={false}>
+      <DialogContent className="overflow-hidden p-0 fork-dialog-top max-md:translate-y-0" showCloseButton={false}>
         <DialogHeader className="sr-only">
           <DialogTitle>{t("search.title")}</DialogTitle>
           <DialogDescription>{t("search.description")}</DialogDescription>

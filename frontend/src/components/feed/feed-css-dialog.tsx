@@ -42,7 +42,7 @@ export function FeedCssDialog({
   const { t } = useI18n();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90dvh] w-full max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+      <DialogContent className="flex h-[calc(var(--fork-dvh)_*_0.9_-_var(--fork-inset-y))] w-full max-w-5xl flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle className="text-base font-semibold">
             {t("feedCss.title")}
