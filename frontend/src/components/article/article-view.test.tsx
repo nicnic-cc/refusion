@@ -56,3 +56,18 @@ describe("ArticleView scroll", () => {
     expect(viewport(container).scrollTop).toBe(0);
   });
 });
+
+describe("ArticleView body", () => {
+  // React 19 re-writes innerHTML whenever the {__html} object is new, which
+  // reloads images and drops selection on every unrelated re-render.
+  it("keeps the body DOM when a re-render leaves the content unchanged", () => {
+    const first = item(1);
+    const { container, rerender } = render(
+      <ArticleView state={stateFor(first)} variant="pane" />,
+    );
+    const paragraph = container.querySelector(".typeset-article p");
+
+    rerender(<ArticleView state={stateFor(first, true)} variant="pane" />);
+    expect(container.querySelector(".typeset-article p")).toBe(paragraph);
+  });
+});

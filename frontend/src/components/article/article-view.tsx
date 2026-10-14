@@ -77,14 +77,16 @@ export function ArticleView({
   const showingFullText = fullText !== null;
   const articleHtml = article?.content;
   const fullTextHtml = fullText?.html;
-  // Sanitizing is costly and the view re-renders on read-state and cache updates;
-  // the inputs are strings, so unchanged content keeps the memo.
-  const processedHtml = useMemo(
-    () =>
-      processArticleContent(
+  // Sanitizing is costly and the view re-renders on read-state and cache updates.
+  // The {__html} object itself is memoized: React 19 compares it by identity and
+  // a new one re-writes innerHTML, reloading images (a visible flicker).
+  const bodyHtml = useMemo(
+    () => ({
+      __html: processArticleContent(
         (showingFullText ? fullTextHtml : articleHtml) ?? "",
         safeArticleLink ?? undefined,
       ),
+    }),
     [showingFullText, fullTextHtml, articleHtml, safeArticleLink],
   );
 
@@ -286,7 +288,7 @@ export function ArticleView({
             <div
               className="typeset typeset-article mt-6 min-w-0 max-w-none"
               style={appearance.body}
-              dangerouslySetInnerHTML={{ __html: processedHtml }}
+              dangerouslySetInnerHTML={bodyHtml}
             />
           </article>
         </ScrollBox>
