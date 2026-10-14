@@ -59,6 +59,11 @@
     inset-block: -16px;
   }
 
+  /* Default switches (Edit Feed's Suspend) are 18.4 px tall: same trick. */
+  [role="switch"][data-size="default"]::after {
+    inset-block: -13px;
+  }
+
   /* Menu and select options, select triggers and dialog tabs reach 44 px. The
      tabs list is a fixed h-9 around a calc(100% - 1px) trigger: let it grow. */
   [role="option"],
@@ -72,5 +77,21 @@
 
   [data-slot="tabs-list"] {
     height: auto;
+  }
+
+  /* Dialog X close, buttons and text fields reach 44 px (min-width keeps
+     icon-only buttons square). */
+  [data-slot="dialog-content"] > [data-slot="dialog-close"] {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  [data-slot="dialog-content"] [data-slot="button"] {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  [data-slot="input"] {
+    min-height: 2.75rem;
   }
 }

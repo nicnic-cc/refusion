@@ -541,11 +541,11 @@ export function ArticleList() {
   return (
     <div className="flex h-full flex-col">
       <ContentHeader>
-        <div className="flex min-w-0 items-center gap-1">
+        <div className="flex min-w-0 items-center gap-1 max-md:gap-3">
           <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 max-md:[&_button]:size-11">
           <ShowFilteredToggle
             feedId={selectedFeedId}
             disabled={articleFilter === "starred"}

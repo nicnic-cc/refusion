@@ -13,9 +13,9 @@ export function SidebarTrigger() {
 
   return (
     <Button
-      variant="ghost"
+      variant="outline"
       size="icon"
-      className="-ml-2.5 shrink-0"
+      className="size-11 shrink-0"
       onClick={() => setSidebarOpen(true)}
       aria-label={t("common.navigation")}
     >

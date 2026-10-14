@@ -260,7 +260,7 @@ function FeedsPage() {
     <>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <ContentHeader>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 max-md:gap-3">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">{t("feeds.header")}</h1>
           </div>
