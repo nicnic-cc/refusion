@@ -419,7 +419,7 @@ function applyOptimisticItemReadState(
 // A next-page fetch builds its result from the pages it saw at start, so it
 // would bring back the old unread flags. Flip the rows again once it lands.
 // maxId also flips rows the page brings that were not loaded when the scope
-// mark started: the server marked every id up to it.
+// mark started: the server marked every id up to it, within inScope.
 function reapplyAfterNextPageLoads(
   qc: QueryClient,
   ids: number[],
@@ -427,6 +427,7 @@ function reapplyAfterNextPageLoads(
   skipFiltered: boolean,
   context: ItemsMutationContext,
   maxId?: number,
+  inScope: (item: Item) => boolean = () => true,
 ) {
   const idSet = new Set(ids);
   const inFlight = qc.getQueryCache().findAll({
@@ -447,7 +448,7 @@ function reapplyAfterNextPageLoads(
             if (
               !(
                 idSet.has(item.id) ||
-                (maxId !== undefined && item.id <= maxId)
+                (maxId !== undefined && item.id <= maxId && inScope(item))
               ) ||
               item.unread === targetUnread ||
               (skipFiltered && item.filtered)
@@ -694,6 +695,20 @@ export function loadedUnreadIdsForFeeds(qc: QueryClient, feedIds: number[]) {
 // rows up to max_id stay read. A set keeps the original error for the toast.
 const scopeApplied = new WeakSet<object>();
 
+// Whether a row falls inside a scope mark's feed or group. A group is resolved
+// through the cached feed list; without it no row is known to be inside.
+function scopeMatcher(qc: QueryClient, request: MarkScopeReadRequest) {
+  const { feed_id: feedId, group_id: groupId } = request;
+  if (feedId !== undefined) return (item: Item) => item.feed_id === feedId;
+  if (groupId === undefined) return () => true;
+  const feedIds = new Set(
+    (qc.getQueryData<Feed[]>(queryKeys.feeds.list()) ?? [])
+      .filter((feed) => feed.group_id === groupId)
+      .map((feed) => feed.id),
+  );
+  return (item: Item) => feedIds.has(item.feed_id);
+}
+
 /**
  * Marks a whole feed, group or everything read on the server. Only the loaded
  * rows flip optimistically; caches holding the rest are marked stale.
@@ -739,6 +754,7 @@ export function useMarkScopeRead() {
         true,
         context,
         request.max_id,
+        scopeMatcher(qc, request),
       );
       return context;
     },
