@@ -40,6 +40,8 @@ checks in [`dev.md`](../dev.md).
   items carry a stored `filtered` flag, and what "hidden" covers
 - `manage-feeds-speed.md` (fork): why Manage feeds keeps one filter
   dialog and one app layout, with the measured freeze numbers
+- `phone-width.md` (fork): phone-only layout rules (44 px targets, 16 px
+  fields, `h-dvh`, no support under 360 px) and what was left out
 - `reading-speed.md` (fork): why the reading loop (j/k, feed switch,
   mark read, startup) is built for speed, with the measured numbers
 - `old-database-schema.md`: legacy pre-migrations schema snapshot, kept
