@@ -104,7 +104,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Deployment:** a single binary with one SQLite file.
 - **Fever API:** connect Reeder, Unread, FeedMe and other apps. See [`docs/apps.md`](./docs/apps.md).
-- **PWA:** install it on a phone or desktop (needs HTTPS).
+- **PWA:** install it on a phone or desktop (needs HTTPS). Chrome, Edge and Android show an Install button in Settings → About. On iPhone and iPad there is none: open refusion in Safari, tap Share, then Add to Home Screen.
 - **Sign-in:** a password, or OIDC.
 - **Synced settings:** preferences follow you between devices. The reading layout stays per device.
 - **Languages:** English, Chinese, German, French, Spanish, Russian, Portuguese and Swedish.
