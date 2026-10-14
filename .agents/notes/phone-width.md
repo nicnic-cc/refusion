@@ -1,7 +1,7 @@
 # Phone width (fork)
 
 Why the app looks and behaves the way it does below 768 px. Decided in
-epic `rf-mobile-ux`, 2026-10-14.
+epics `rf-mobile-ux` and `rf-mobile-next`, 2026-10-14.
 
 ## Rules
 
@@ -28,6 +28,9 @@ epic `rf-mobile-ux`, 2026-10-14.
 
 - Article bottom action bar (prev, read, star, next) and safe-area
   insets for the installed PWA: left for a later epic.
+- Still under 44 px: article list-row buttons, menu and select options,
+  the Manage Feeds toolbar and global filter button. The small filter
+  switches stay 24x14 to the eye; an `::after` makes their tap area 44 px.
 - Swipe to close the article and edge swipe for the sidebar: only worth
   it in the PWA (Safari owns the left edge for back), via Base UI's
   `Drawer`.

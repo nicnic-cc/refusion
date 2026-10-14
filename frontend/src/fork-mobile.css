@@ -47,4 +47,15 @@
   input[type="password"] {
     font-size: 16px;
   }
+
+  /* Small switches (Manage Feeds filter): ::after grows the hit area to 44 px
+     tall; the margin keeps it off the neighbouring 44 px buttons. Matched by
+     role: the tooltip trigger overwrites the switch's data-slot. */
+  [role="switch"][data-size="sm"] {
+    margin-inline: 0.75rem;
+  }
+
+  [role="switch"][data-size="sm"]::after {
+    inset-block: -16px;
+  }
 }

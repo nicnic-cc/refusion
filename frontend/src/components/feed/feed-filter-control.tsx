@@ -55,7 +55,7 @@ export const FeedFilterControl = memo(function FeedFilterControl({
   const dim = !filter || !filter.enabled;
 
   return (
-    <div className={cn("flex items-center gap-1.5", className)}>
+    <div className={cn("flex items-center gap-1.5 max-md:gap-0", className)}>
       {/* Outside the button: the global count is not this feed's filter. */}
       {globalLabel && (
         <WithTooltip
@@ -75,7 +75,7 @@ export const FeedFilterControl = memo(function FeedFilterControl({
             type="button"
             onClick={() => onOpen(feedId)}
             className={cn(
-              "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent",
+              "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent max-md:min-h-11 max-md:min-w-11 max-md:justify-center",
               dim ? "text-muted-foreground/70" : "text-foreground",
             )}
             aria-label={t("feedFilter.title")}
