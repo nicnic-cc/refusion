@@ -204,9 +204,9 @@ export function ArticleView({
           {!isMobile && prevButton}
           {!isMobile && nextButton}
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon-sm"
-            className="-mr-2 min-[360px]:max-md:size-10"
+            className="min-[360px]:max-md:size-10"
             onClick={close}
             aria-label={t("common.cancel")}
           >
