@@ -63,7 +63,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Sheet open={isSidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent
             side="left"
-            className="data-[side=left]:w-75 data-[side=left]:sm:max-w-none p-0"
+            className="data-[side=left]:w-[min(85vw,340px)] data-[side=left]:sm:max-w-none p-0"
             showCloseButton={false}
           >
             <SheetTitle className="sr-only">{t("common.navigation")}</SheetTitle>

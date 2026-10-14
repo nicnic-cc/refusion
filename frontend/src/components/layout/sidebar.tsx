@@ -43,9 +43,9 @@ export const Sidebar = memo(function Sidebar() {
   });
 
   return (
-    <aside className="sidebar-typography flex h-full w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
+    <aside className="sidebar-typography flex h-full max-md:w-full md:w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <div className="flex h-14 shrink-0 items-center gap-2 max-md:gap-1 border-b px-4 max-md:px-3">
         <Logo className="h-6 shrink-0" />
         <div className="flex min-w-0 flex-1 justify-center">
           {!hasNoFeeds && (
@@ -59,7 +59,7 @@ export const Sidebar = memo(function Sidebar() {
           <TooltipButton
             label={t("common.search")}
             shortcut={`${modKey("K")}, /`}
-            className="text-muted-foreground"
+            className="text-muted-foreground max-md:size-11"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-4 w-4" />
@@ -74,7 +74,7 @@ export const Sidebar = memo(function Sidebar() {
                       variant="outline"
                       size="icon-sm"
                       aria-label={t("sidebar.more")}
-                      className="text-muted-foreground"
+                      className="text-muted-foreground max-md:size-11"
                     />
                   }
                 />

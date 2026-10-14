@@ -7,6 +7,7 @@
 @import "./typeset.css";
 @import "./no-default-outline.css";
 @import "./fork-colors.css";
+@import "./fork-mobile.css";
 
 @custom-variant dark (&:is(.dark *));
 

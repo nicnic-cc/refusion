@@ -41,7 +41,7 @@ export function ArticleFilterSwitch({
       value={value}
       onValueChange={(v) => onValueChange(v as ArticleFilter)}
     >
-      <TabsPrimitive.List className="relative inline-flex h-7 items-center rounded-lg bg-muted p-0.5">
+      <TabsPrimitive.List className="relative inline-flex h-7 max-md:h-12 items-center rounded-lg bg-muted p-0.5">
         <TabsPrimitive.Indicator
           className={cn(
             "absolute top-(--active-tab-top) left-(--active-tab-left) h-(--active-tab-height) w-(--active-tab-width) rounded-md bg-background shadow-sm dark:border dark:border-input dark:bg-input/30",
@@ -60,7 +60,7 @@ export function ArticleFilterSwitch({
                 <TabsPrimitive.Tab
                   value={optionValue}
                   aria-label={label}
-                  className="relative z-10 inline-flex h-full w-[30px] items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
+                  className="relative z-10 inline-flex h-full w-[30px] max-md:w-11 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-active:text-foreground"
                 />
               }
             >

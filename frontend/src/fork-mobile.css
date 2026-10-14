@@ -1,0 +1,39 @@
+/* Fork's phone-only overrides (< 768 px, the useIsMobile breakpoint).
+   Unlayered, so they beat Tailwind utilities without !important. */
+@media (max-width: 767px) {
+  /* Rows are 44 px tall; the buttons inside fill that height themselves. */
+  aside [data-sidebar-key] {
+    padding-block: 0;
+    min-height: 2.75rem;
+  }
+
+  aside [data-sidebar-key] button:not([aria-label]) {
+    min-height: 2.75rem;
+  }
+
+  aside [data-sidebar-key] svg.lucide {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Row icon boxes (favicon, placeholder, error badge) match the 20 px svgs. */
+  aside [data-sidebar-key] img,
+  aside [data-sidebar-key] span[aria-hidden="true"],
+  aside [data-sidebar-key] span[role="img"] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Count + mark-all-read / undo: the wrapper grows to hold both side by side. */
+  aside [data-sidebar-key] > div.shrink-0 {
+    width: auto;
+    min-width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  aside [data-sidebar-key] button[aria-label] {
+    width: 2.75rem;
+    height: 2.75rem;
+    justify-content: center;
+  }
+}
