@@ -121,7 +121,7 @@ export function FilterDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-h-[90dvh] w-full max-w-[680px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
+        className="flex max-h-[calc(var(--fork-dvh)_*_0.9_-_var(--fork-inset-y))] w-full max-w-[680px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
       >
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle className="text-base font-semibold">

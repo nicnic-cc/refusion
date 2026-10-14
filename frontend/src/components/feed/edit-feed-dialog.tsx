@@ -215,7 +215,7 @@ export function EditFeedDialog() {
         onOpenChange={(open) => setEditFeedOpen(open)}
       >
         <DialogContent
-          className="flex max-h-[calc(100dvh-2rem)] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
+          className="flex max-h-[calc(var(--fork-dvh)_-_2rem_-_var(--fork-inset-y))] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
           showCloseButton={false}
           initialFocus={urlInputRef}
         >

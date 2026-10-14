@@ -33,7 +33,8 @@ Why the app looks and behaves the way it does below 768 px. Decided
   `Emulation.setSafeAreaInsetsOverride`.
 - In the installed iOS app the status-bar strip takes the body colour,
   even over a fixed sheet, so an open sheet switches the body to
-  `--popover` (`display-mode: standalone` only).
+  `--popover` (`display-mode: standalone` only). `#root` paints
+  `--background` there, so the page behind the overlay keeps its shade.
 - The installed iOS app sometimes starts with `innerHeight`, `dvh`,
   `100%` and `inset: 0` 62 px short (screen minus status bar) and never
   corrects; `vh` stays right. So in standalone mode the shell and the
@@ -52,7 +53,10 @@ Why the app looks and behaves the way it does below 768 px. Decided
   are >= 768 px, so the footer isn't rendered there; on smaller phones in
   landscape it holds the only prev/next.
 - No bottom inset on the phone sidebar sheet: padding would show a
-  `bg-popover` strip under `bg-sidebar`. Dialogs are not inset (centred).
+  `bg-popover` strip under `bg-sidebar`. Dialogs are centred between the
+  insets, tall ones shrink by both (`--fork-inset-y`), and the phone search
+  dialog sits 1rem below the top inset. A new tall dialog needs the same max
+  height; the unused `CommandDialog` (`top-1/3`) would be re-centred.
 - Still under 44 px: the article list-row mark-read dot is 36 px so
   rows don't grow; star and open-in-browser there are hover-only, so
   touch phones drop them from the row (iPad keeps them). Switches keep

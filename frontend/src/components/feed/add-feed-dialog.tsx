@@ -278,7 +278,7 @@ export function AddFeedDialog() {
     <>
       <Dialog open={isAddFeedOpen} onOpenChange={handleOpenChange}>
         <DialogContent
-          className="flex max-h-[calc(100dvh-2rem)] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
+          className="flex max-h-[calc(var(--fork-dvh)_-_2rem_-_var(--fork-inset-y))] w-full flex-col sm:max-w-2xl gap-0 overflow-hidden p-0"
           showCloseButton={false}
         >
           {/* Header */}
@@ -328,6 +328,12 @@ export function AddFeedDialog() {
                 onChange={(e) => {
                   cancelPendingDetect();
                   setUrl(e.target.value);
+                }}
+                enterKeyHint="go"
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+                  e.preventDefault();
+                  if (!isSubmitting && url.trim()) void handleSubmit();
                 }}
                 className="h-9 w-full"
                 autoComplete="off"
