@@ -517,14 +517,18 @@ function rollbackItemsMutation(
   const { targetUnread } = context;
   const revertTo = (id: number) =>
     keep?.(id) ? undefined : revertValue(qc, context, id);
+  // Touched rows count too: a row another mark flipped is reverted here when this
+  // is the last of the marks on it to fail.
+  const withTouched = (flipped: Set<number> | undefined) =>
+    new Set([...(flipped ?? []), ...context.touched]);
 
   // Write only the caches that really change; setQueryData on an untouched
   // query would clear its invalidated flag.
   for (const [key, old] of qc.getQueriesData<ItemsInfiniteData>({
     queryKey: queryKeys.items.lists(),
   })) {
-    const ids = context.flippedLists.get(hashKey(key));
-    if (!old || !ids) continue;
+    if (!old) continue;
+    const ids = withTouched(context.flippedLists.get(hashKey(key)));
     const next = unflipRows<Item, ItemsInfiniteData>(
       old,
       ids,
@@ -535,7 +539,7 @@ function rollbackItemsMutation(
     if (next) qc.setQueryData<ItemsInfiniteData>(key, next);
   }
 
-  for (const id of context.flippedDetails) {
+  for (const id of withTouched(context.flippedDetails)) {
     const key = queryKeys.items.detail(id);
     const current = qc.getQueryData<Item>(key);
     const to = revertTo(id);
@@ -583,8 +587,8 @@ function rollbackItemsMutation(
   for (const [key, old] of qc.getQueriesData<BookmarksInfiniteData>({
     queryKey: queryKeys.bookmarks.lists(),
   })) {
-    const ids = context.flippedBookmarkLists.get(hashKey(key));
-    if (!old || !ids) continue;
+    if (!old) continue;
+    const ids = withTouched(context.flippedBookmarkLists.get(hashKey(key)));
     const next = unflipRows<Bookmark, BookmarksInfiniteData>(
       old,
       ids,
