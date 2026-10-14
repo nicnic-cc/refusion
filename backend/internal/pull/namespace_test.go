@@ -83,3 +83,25 @@ func TestFetchAndParseItemNamespace(t *testing.T) {
 		})
 	}
 }
+
+func TestCountItemElements(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want int
+	}{
+		{"bom before xml", "\xef\xbb\xbf" + rssFeed(` xmlns="http://example.com/ns"`, rssOneItem), 1},
+		{"leading whitespace", "\n  " + atomFeedNS("http://www.w3.org/2005/Atom/"), 1},
+		{"json body", `{"title":"<item>","items":[]}`, 0},
+		{"item nested in channel extension", rssFeed("", `<x:related xmlns:x="u"><x:item/></x:related>`), 0},
+		{"item directly under rss", `<rss><item/></rss>`, 1},
+		{"entry under non-feed root", `<rss><channel><entry/></channel></rss>`, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := countItemElements([]byte(tt.body)); got != tt.want {
+				t.Fatalf("countItemElements() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
