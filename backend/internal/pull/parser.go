@@ -105,6 +105,9 @@ func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration,
 	if err != nil {
 		return result, fmt.Errorf("parse feed: %w", err)
 	}
+	if err := checkItemNamespace(body, len(parsedFeed.Items)); err != nil {
+		return result, err
+	}
 
 	siteURL := normalizeSiteURL(parsedFeed.Link)
 
