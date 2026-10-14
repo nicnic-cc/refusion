@@ -19,7 +19,7 @@ export function FeedOptionRow({
 }) {
   return (
     <>
-      <div className="min-w-0">
+      <div className="-mb-2 min-w-0 sm:mb-0">
         <label
           id={labelId}
           htmlFor={htmlFor}
@@ -35,7 +35,7 @@ export function FeedOptionRow({
         className={
           fill
             ? "flex min-w-0 items-center gap-2 justify-self-stretch"
-            : "min-w-0 justify-self-end"
+            : "min-w-0 justify-self-start sm:justify-self-end"
         }
       >
         {children}

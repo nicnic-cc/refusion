@@ -293,7 +293,7 @@ export function AddFeedDialog() {
           </DialogHeader>
 
           {/* Form Content */}
-          <div className="grid min-h-0 flex-1 grid-cols-[14rem_minmax(0,1fr)] items-center gap-x-6 gap-y-4 overflow-y-auto p-5">
+          <div className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[14rem_minmax(0,1fr)] sm:items-center gap-x-6 gap-y-4 overflow-y-auto p-5">
             {/* Name Section */}
             <FeedOptionRow
               label={t("feed.add.nameLabel")}
@@ -384,7 +384,7 @@ export function AddFeedDialog() {
             </FeedOptionRow>
 
             {/* Divider before the per-feed options */}
-            <div className="col-span-2 border-t" />
+            <div className="border-t sm:col-span-2" />
 
             <FeedOptionRow
               label={t("feed.add.refreshFrequencyLabel")}
