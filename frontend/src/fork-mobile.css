@@ -36,4 +36,15 @@
     height: 2.75rem;
     justify-content: center;
   }
+
+  /* iOS zooms the page when focusing a field under 16 px. */
+  [cmdk-input],
+  textarea,
+  input:not([type]),
+  input[type="text"],
+  input[type="search"],
+  input[type="url"],
+  input[type="password"] {
+    font-size: 16px;
+  }
 }
