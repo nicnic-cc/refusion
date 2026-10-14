@@ -281,7 +281,7 @@ function FeedsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={isReordering}
-                className="h-9 w-full pl-9 sm:w-[280px]"
+                className="h-9 w-full pl-9 max-md:h-11 sm:w-[280px]"
                 name="feed-search"
                 autoComplete="off"
                 aria-label={t("feeds.searchPlaceholder")}
@@ -295,7 +295,7 @@ function FeedsPage() {
                     render={
                       <Button
                         variant="outline"
-                        className="shrink-0 gap-1.5"
+                        className="shrink-0 gap-1.5 max-md:h-11"
                         disabled={isReordering}
                         aria-label={statusFilterLabels[statusFilter]}
                       />
@@ -323,11 +323,11 @@ function FeedsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-md:flex-wrap">
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button disabled={isReordering}>
+                  <Button className="max-md:h-11" disabled={isReordering}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
                     {t("common.add")}
                     <ChevronDown className="ml-1 h-3.5 w-3.5" />
@@ -351,6 +351,7 @@ function FeedsPage() {
               }
               render={
                 <Button
+                  className="max-md:h-11 max-md:min-w-11"
                   variant={isReordering ? "default" : "outline"}
                   onClick={toggleReorder}
                   aria-pressed={isReordering}
@@ -375,6 +376,7 @@ function FeedsPage() {
               label={t("feeds.refreshAll")}
               render={
                 <Button
+                  className="max-md:h-11 max-md:min-w-11"
                   variant="outline"
                   onClick={() => setRefreshConfirmOpen(true)}
                   disabled={refreshFeedsMutation.isPending || isReordering}
@@ -394,6 +396,7 @@ function FeedsPage() {
               label={t("common.import")}
               render={
                 <Button
+                  className="max-md:h-11 max-md:min-w-11"
                   variant="outline"
                   onClick={() => setImportOpmlOpen(true)}
                   disabled={isReordering}
@@ -408,6 +411,7 @@ function FeedsPage() {
               label={isExporting ? t("common.exporting") : t("feeds.exportButton")}
               render={
                 <Button
+                  className="max-md:h-11 max-md:min-w-11"
                   variant="outline"
                   onClick={handleExport}
                   disabled={isExporting || isReordering}

@@ -38,7 +38,7 @@ export function GlobalFilterRow() {
               type="button"
               onClick={() => setOpen(true)}
               className={cn(
-                "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent",
+                "flex items-center gap-1 rounded p-1 text-xs hover:bg-accent max-md:min-h-11 max-md:min-w-11 max-md:justify-center",
                 dim ? "text-muted-foreground/70" : "text-foreground",
               )}
               aria-label={t("globalFilter.title")}
