@@ -38,7 +38,7 @@ docker compose up -d
 
 The database is `/data/fusion.db` in the container (the `fusion` name stays so a Fusion volume works as it is). Keep `/data` on a volume, or the database goes when the container is removed.
 
-The app runs as user 1000, not root. A named volume needs nothing. If you bind-mount a folder (`-v /srv/refusion:/data`), the first start changes that folder's owner to 1000. To run with `--cap-drop ALL`, add `--user 1000:1000`: the switch from root to user 1000 needs the SETUID and SETGID capabilities. With `--user` the start skips that owner change, so the volume or folder must already be owned by 1000.
+The app runs as user 1000, not root. A named volume needs nothing. If you bind-mount a folder (`-v /srv/refusion:/data`), the first start changes that folder's owner to 1000. With `FUSION_DB_PATH` outside `/data`, it changes only the database folder and files, and where root may not change owners (NFS with root_squash) it prints a warning and starts anyway. To run with `--cap-drop ALL`, add `--user 1000:1000`: the switch from root to user 1000 needs the SETUID and SETGID capabilities. With `--user` the start skips that owner change, so the volume or folder must already be owned by 1000.
 
 ## Binary
 
