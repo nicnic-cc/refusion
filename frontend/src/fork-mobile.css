@@ -1,4 +1,5 @@
-/* Fork's phone-only overrides (< 768 px, the useIsMobile breakpoint).
+/* Fork's phone-only overrides (< 768 px, the useIsMobile breakpoint), plus
+   the global safe-area insets at the end.
    Unlayered, so they beat Tailwind utilities without !important. */
 @media (max-width: 767px) {
   /* Rows are 44 px tall; the buttons inside fill that height themselves. */
@@ -95,5 +96,37 @@
 
   [data-slot="input"] {
     min-height: 2.75rem;
+  }
+}
+
+/* Installed iOS PWA (viewport-fit=cover): the page runs under the status bar,
+   notch and home indicator. The insets are 0 in a desktop browser, so none of
+   these rules change desktop. Not in the phone query: iPads have insets too. */
+body {
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+
+/* Fixed 3.5rem headers grow by the inset instead of squashing their content. */
+.fork-safe-top {
+  height: calc(3.5rem + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Fixed-position sheets ignore the body padding. The article drawer's header
+   is auto-height, so the sheet itself clears the top. */
+[data-slot="sheet-content"][data-side="left"] {
+  padding-left: env(safe-area-inset-left);
+}
+
+[data-slot="sheet-content"][data-side="right"] {
+  padding-top: env(safe-area-inset-top);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+
+/* iOS paints the status-bar strip of the installed app with the body colour,
+   even over a fixed sheet; match it to the open sheet. */
+@media (display-mode: standalone) {
+  body:has([data-slot="sheet-content"]) {
+    background-color: var(--popover);
   }
 }

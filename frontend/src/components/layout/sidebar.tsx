@@ -45,7 +45,7 @@ export const Sidebar = memo(function Sidebar() {
   return (
     <aside className="sidebar-typography flex h-full max-md:w-full md:w-75 flex-none flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center gap-2 max-md:gap-1 border-b px-4 max-md:px-3">
+      <div className="fork-safe-top flex h-14 shrink-0 items-center gap-2 max-md:gap-1 border-b px-4 max-md:px-3">
         <Logo className="h-6 shrink-0" />
         <div className="flex min-w-0 flex-1 justify-center">
           {!hasNoFeeds && (

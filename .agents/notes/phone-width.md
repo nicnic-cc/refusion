@@ -26,6 +26,14 @@ Why the app looks and behaves the way it does below 768 px. Decided
   `sm:max-md:px-1.5` is needed because `sm:px-6` comes later in the CSS.
   The Navigation icon is 20 px against 16 px for the other header icons
   on purpose: it is the main button.
+- Safe-area insets (installed PWA, `viewport-fit=cover`) are global, not
+  phone-only: iPads have them too, and `env()` is 0 in desktop browsers.
+  Fixed 56 px headers carry `fork-safe-top` and grow by the inset
+  instead of squashing. Playwright can fake insets with CDP
+  `Emulation.setSafeAreaInsetsOverride`.
+- In the installed iOS app the status-bar strip takes the body colour,
+  even over a fixed sheet, so an open sheet switches the body to
+  `--popover` (`display-mode: standalone` only).
 - Phones narrower than 360 px are not supported. The drawer header
   (logo, three filter tabs, Search, More at 44 px) needs about 318 px and
   overlaps in the 272 px drawer of a 320 px phone.
@@ -36,6 +44,8 @@ Why the app looks and behaves the way it does below 768 px. Decided
   rejected. The footer keeps prev/next only; the
   header's read and star are 40 px instead (32 px under 360 px, where
   40 px pushes the close button off screen).
+- No bottom inset on the phone sidebar sheet: padding would show a
+  `bg-popover` strip under `bg-sidebar`. Dialogs are not inset (centred).
 - Still under 44 px: the article list-row mark-read dot is 36 px so
   rows don't grow; star and open-in-browser there are hover-only, so
   touch phones drop them from the row (iPad keeps them). Switches keep
