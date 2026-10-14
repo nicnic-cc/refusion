@@ -79,6 +79,9 @@ export function AddFeedDialog() {
     label: group.name,
   }));
 
+  // Detect and URL edits cancel a pending Add, which would leave a created feed
+  // behind an open dialog; so they are locked once the create is in flight.
+  const createInFlight = isSubmitting && !isLookingUp;
   const cancelPendingDetect = () => {
     detectRun.current += 1;
     setIsValidating(false);
@@ -329,6 +332,7 @@ export function AddFeedDialog() {
                 className="h-9 w-full"
                 autoComplete="off"
                 spellCheck={false}
+                disabled={createInFlight}
               />
               <TooltipButton
                 variant="outline"
@@ -340,7 +344,7 @@ export function AddFeedDialog() {
                 }
                 className="h-9 w-9 shrink-0"
                 onClick={handleValidate}
-                disabled={isValidating || !url.trim()}
+                disabled={isValidating || createInFlight || !url.trim()}
               >
                 <Radar
                   className={cn(
