@@ -1,7 +1,7 @@
 # Phone width (fork)
 
 Why the app looks and behaves the way it does below 768 px. Decided in
-epics `rf-mobile-ux` and `rf-mobile-next`, 2026-10-14.
+epics `rf-mobile-ux`, `rf-mobile-next` and `rf-mobile-reach`, 2026-10-14.
 
 ## Rules
 
@@ -26,8 +26,11 @@ epics `rf-mobile-ux` and `rf-mobile-next`, 2026-10-14.
 
 ## Not done
 
-- Article bottom action bar (prev, read, star, next) and safe-area
-  insets for the installed PWA: left for a later epic.
+- Article footer with read and star next to prev/next: built and
+  rejected (`rf-mobile-reach`). The footer keeps prev/next only; the
+  header's read and star are 40 px instead (32 px under 360 px, where
+  40 px pushes the close button off screen).
+- Safe-area insets for the installed PWA: planned in `rf-mobile-safearea`.
 - Still under 44 px: article list-row buttons, menu and select options,
   the Manage Feeds toolbar and global filter button. The small filter
   switches stay 24x14 to the eye; an `::after` makes their tap area 44 px.
