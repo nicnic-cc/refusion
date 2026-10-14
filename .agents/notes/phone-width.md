@@ -24,6 +24,8 @@ epics `rf-mobile-ux`, `rf-mobile-next` and `rf-mobile-reach`, 2026-10-14.
   above and below their 44 px buttons; they need not line up with the
   list text because only one header shows at a time.
   `sm:max-md:px-1.5` is needed because `sm:px-6` comes later in the CSS.
+  The Navigation icon is 20 px against 16 px for the other header icons
+  on purpose: it is the main button.
 - Phones narrower than 360 px are not supported. The drawer header
   (logo, three filter tabs, Search, More at 44 px) needs about 318 px and
   overlaps in the 272 px drawer of a 320 px phone.
