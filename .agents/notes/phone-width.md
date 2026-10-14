@@ -34,6 +34,10 @@ epics `rf-mobile-ux`, `rf-mobile-next` and `rf-mobile-reach`, 2026-10-14.
 - In the installed iOS app the status-bar strip takes the body colour,
   even over a fixed sheet, so an open sheet switches the body to
   `--popover` (`display-mode: standalone` only).
+- The installed iOS app sometimes starts with `innerHeight`, `dvh`,
+  `100%` and `inset: 0` 62 px short (screen minus status bar) and never
+  corrects; `vh` stays right. So in standalone mode the shell and the
+  sheets use `100vh` (no Safari toolbar there for `dvh` to track).
 - Phones narrower than 360 px are not supported. The drawer header
   (logo, three filter tabs, Search, More at 44 px) needs about 318 px and
   overlaps in the 272 px drawer of a 320 px phone.

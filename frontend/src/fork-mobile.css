@@ -130,3 +130,18 @@ body {
     background-color: var(--popover);
   }
 }
+
+/* The installed iOS app sometimes starts with dvh, 100% and inset:0 sized
+   62 px short (screen minus status bar) and never corrects; vh stays right.
+   No Safari toolbar here, so dvh gains nothing. */
+@media (display-mode: standalone) {
+  .h-dvh {
+    height: 100vh;
+  }
+
+  [data-slot="sheet-content"][data-side="left"],
+  [data-slot="sheet-content"][data-side="right"] {
+    height: 100vh;
+    bottom: auto;
+  }
+}
