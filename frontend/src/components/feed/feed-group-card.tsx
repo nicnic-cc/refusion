@@ -136,7 +136,7 @@ export function FeedGroupCard({
               <button
                 type="button"
                 onClick={() => onToggleGroup(group.id)}
-                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                className="flex min-w-0 flex-1 items-center gap-2 text-left max-md:min-h-11"
                 aria-expanded={!isCollapsed}
                 aria-label={`Toggle group ${group.name}`}
               />
@@ -182,7 +182,7 @@ export function FeedGroupCard({
           />
         )}
         {!reorder && (
-          <div className="flex items-center gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
+          <div className="flex items-center gap-1 max-md:gap-0 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
             <WithTooltip
               label={t("feeds.tooltip.addFeed")}
               render={
@@ -192,7 +192,7 @@ export function FeedGroupCard({
                     e.stopPropagation();
                     onOpenAddFeed();
                   }}
-                  className="rounded p-1 hover:bg-accent"
+                  className="rounded p-1 hover:bg-accent max-md:inline-flex max-md:min-h-11 max-md:min-w-11 max-md:items-center max-md:justify-center"
                   aria-label={t("feed.add.button")}
                 />
               }
@@ -208,7 +208,7 @@ export function FeedGroupCard({
                     e.stopPropagation();
                     onStartEditingGroup(group);
                   }}
-                  className="rounded p-1 hover:bg-accent"
+                  className="rounded p-1 hover:bg-accent max-md:inline-flex max-md:min-h-11 max-md:min-w-11 max-md:items-center max-md:justify-center"
                   aria-label={t("feeds.renameGroup")}
                 />
               }
@@ -225,7 +225,7 @@ export function FeedGroupCard({
                       e.stopPropagation();
                       onOpenDeleteGroup(group);
                     }}
-                    className="rounded p-1 hover:bg-accent"
+                    className="rounded p-1 hover:bg-accent max-md:inline-flex max-md:min-h-11 max-md:min-w-11 max-md:items-center max-md:justify-center"
                     aria-label={t("feeds.deleteGroup.title")}
                   />
                 }
@@ -259,7 +259,7 @@ export function FeedGroupCard({
                   </p>
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+              <div className="flex shrink-0 items-center gap-1.5 max-sm:gap-0 sm:gap-2.5">
                 {feed.fetch_state.last_error && (
                   <Tooltip
                     open={
@@ -285,7 +285,7 @@ export function FeedGroupCard({
                               current === feed.id ? null : feed.id,
                             );
                           }}
-                          className="flex items-center gap-1 rounded-sm text-xs text-destructive"
+                          className="flex items-center gap-1 rounded-sm text-xs text-destructive max-md:min-h-11 max-md:min-w-11 max-md:justify-center"
                         />
                       }
                     >
@@ -328,7 +328,7 @@ export function FeedGroupCard({
                         <button
                           type="button"
                           onClick={() => onOpenEditFeed(feed)}
-                          className="rounded p-1 hover:bg-accent"
+                          className="rounded p-1 hover:bg-accent max-md:inline-flex max-md:min-h-11 max-md:min-w-11 max-md:items-center max-md:justify-center"
                           aria-label={t("feed.edit.title")}
                         />
                       }
