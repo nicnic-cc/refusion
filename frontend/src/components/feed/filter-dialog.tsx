@@ -408,7 +408,7 @@ function FilterForm({
                       <X className="text-muted-foreground" />
                     </Button>
                   ) : (
-                    <span className="ml-auto size-8" />
+                    <span className="ml-auto size-8 max-md:size-11" />
                   )}
                 </div>
                 {error && (
@@ -606,7 +606,7 @@ function Checkbox({
   return (
     <label
       className={cn(
-        "flex w-fit items-center gap-2 text-[13px]",
+        "flex w-fit items-center gap-2 text-[13px] max-md:min-h-11",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
