@@ -54,7 +54,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }, [router, setSidebarOpen]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-dvh w-full overflow-hidden">
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
 
