@@ -31,8 +31,9 @@ epics `rf-mobile-ux`, `rf-mobile-next` and `rf-mobile-reach`, 2026-10-14.
   header's read and star are 40 px instead (32 px under 360 px, where
   40 px pushes the close button off screen).
 - Safe-area insets for the installed PWA: planned in `rf-mobile-safearea`.
-- Still under 44 px: menu and select options, the Manage Feeds toolbar
-  and global filter button. The article list-row mark-read dot is 36 px
+- Still under 44 px: the content header's Navigation button, dialog
+  close and footer buttons, dialog text fields and the filter dialog's
+  checkboxes. The article list-row mark-read dot is 36 px
   so rows don't grow; star and open-in-browser there are hover-only, so
   touch phones drop them from the row (iPad keeps them). The small filter
   switches stay 24x14 to the eye; an `::after` makes their tap area 44 px.
