@@ -48,6 +48,9 @@ epics `rf-mobile-ux`, `rf-mobile-next` and `rf-mobile-reach`, 2026-10-14.
   rejected (`rf-mobile-reach`). The footer keeps prev/next only; the
   header's read and star are 40 px instead (32 px under 360 px, where
   40 px pushes the close button off screen).
+- Hiding the article footer in landscape: not done. iPhones in landscape
+  are >= 768 px, so the footer isn't rendered there; on smaller phones in
+  landscape it holds the only prev/next.
 - No bottom inset on the phone sidebar sheet: padding would show a
   `bg-popover` strip under `bg-sidebar`. Dialogs are not inset (centred).
 - Still under 44 px: the article list-row mark-read dot is 36 px so
