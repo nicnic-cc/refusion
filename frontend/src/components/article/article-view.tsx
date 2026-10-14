@@ -133,7 +133,7 @@ export function ArticleView({
           variant === "pane" ? "h-14 shrink-0" : "py-3",
         )}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-[360px]:max-md:[&_a]:size-10 min-[360px]:max-md:[&_button]:size-10">
           <TooltipButton
             label={readLabel}
             shortcut="m"
@@ -206,7 +206,7 @@ export function ArticleView({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="-mr-2"
+            className="-mr-2 min-[360px]:max-md:size-10"
             onClick={close}
             aria-label={t("common.cancel")}
           >
