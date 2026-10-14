@@ -130,7 +130,7 @@ export function ArticleView({
       <div
         className={cn(
           "flex items-center justify-between border-b px-4 sm:px-6",
-          variant === "pane" ? "h-14 shrink-0" : "py-3",
+          variant === "pane" ? "fork-safe-top h-14 shrink-0" : "py-3",
         )}
       >
         <div className="flex items-center gap-2 min-[360px]:max-md:[&_a]:size-10 min-[360px]:max-md:[&_button]:size-10">
@@ -294,7 +294,7 @@ export function ArticleView({
 
       {/* Footer - Navigation (mobile only: in thumb reach; desktop has it in the header) */}
       {isMobile && (
-        <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
           {prevButton}
           {nextButton}
         </div>
