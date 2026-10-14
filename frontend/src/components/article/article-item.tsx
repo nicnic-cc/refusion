@@ -106,7 +106,7 @@ export const ArticleItem = memo(function ArticleItem({
           <span className="shrink-0 text-muted-foreground">
             {formatDate(article.pub_date)}
           </span>
-          <div className="-my-1 flex shrink-0 items-center">
+          <div className="-my-1 flex shrink-0 items-center max-md:-my-2.5">
             <TooltipButton
               variant="ghost"
               size="icon-xs"
@@ -117,7 +117,7 @@ export const ArticleItem = memo(function ArticleItem({
               }
               onClick={handleToggleRead}
               disabled={!canToggleRead}
-              className={article.unread ? undefined : rowAction}
+              className={cn("max-md:size-9", !article.unread && rowAction)}
             >
               <Circle
                 className={
@@ -132,7 +132,7 @@ export const ArticleItem = memo(function ArticleItem({
                 isStarred ? t("article.action.unstar") : t("article.action.star")
               }
               onClick={handleToggleStar}
-              className={hoverAction}
+              className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
             >
               <Star
                 className={
@@ -147,7 +147,7 @@ export const ArticleItem = memo(function ArticleItem({
               href={safeArticleLink ?? undefined}
               disabled={!safeArticleLink}
               onClick={(e) => e.stopPropagation()}
-              className={hoverAction}
+              className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
             >
               <ExternalLink className={mutedIcon} />
             </TooltipButton>
