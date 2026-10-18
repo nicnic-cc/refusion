@@ -15,9 +15,6 @@ backend/internal/web/dist/*
 !.env.example
 backend/fusion
 
-.dolt/
-*.gate.lock*
-
 # One-off research scripts
 .research/
 # Script for VM deployment - testing
