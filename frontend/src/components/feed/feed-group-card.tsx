@@ -61,6 +61,12 @@ function getDomain(url: string) {
   }
 }
 
+function formatLastChecked(feed: Feed, t: FeedGroupCardProps["t"]) {
+  return feed.fetch_state.last_checked_at > 0
+    ? formatDate(feed.fetch_state.last_checked_at)
+    : t("common.unknown");
+}
+
 export function FeedGroupCard({
   group,
   togglingFilterFeedIds,
@@ -250,7 +256,7 @@ export function FeedGroupCard({
             <div
               key={feed.id}
               className={cn(
-                "flex items-center justify-between py-2.5 pl-8 pr-3.5 transition-colors hover:bg-accent/30 sm:pl-11",
+                "flex items-center justify-between py-2.5 px-3.5 transition-colors hover:bg-accent/30",
                 index < groupFeeds.length - 1 && "border-b border-border/50",
               )}
             >
@@ -261,8 +267,19 @@ export function FeedGroupCard({
                 />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-medium">{feed.name}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">
+                  <p className="truncate text-[11px] text-muted-foreground max-sm:hidden">
                     {getDomain(feed.link)}
+                  </p>
+                  {/* Phone: the meta span on the right is hidden, so its text takes the domain's line. The time truncates, the counts never do. */}
+                  <p className="flex whitespace-nowrap text-[11px] text-muted-foreground sm:hidden">
+                    <span className="shrink-0">
+                      <FeedArticleCounts
+                        feedId={feed.id}
+                        shown={feed.item_count}
+                      />
+                    </span>
+                    <span className="mx-1.5 shrink-0">·</span>
+                    <span className="truncate">{formatLastChecked(feed, t)}</span>
                   </p>
                 </div>
               </div>
@@ -318,9 +335,7 @@ export function FeedGroupCard({
                     shown={feed.item_count}
                   />
                   <span className="mx-1.5">·</span>
-                  {feed.fetch_state.last_checked_at > 0
-                    ? formatDate(feed.fetch_state.last_checked_at)
-                    : t("common.unknown")}
+                  {formatLastChecked(feed, t)}
                 </span>
                 {!reorder && (
                   <>
