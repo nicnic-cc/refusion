@@ -186,3 +186,15 @@ body {
     top: calc(50vh + var(--fork-inset-shift));
   }
 }
+
+/* Top toasts start below the status bar. Sonner injects its CSS at runtime
+   after ours, so the extra `ol` outranks its [data-sonner-toaster] rules. */
+ol[data-sonner-toaster][data-y-position="top"] {
+  top: calc(var(--offset-top) + env(safe-area-inset-top));
+}
+
+@media (max-width: 600px) {
+  ol[data-sonner-toaster][data-y-position="top"] {
+    top: calc(var(--mobile-offset-top) + env(safe-area-inset-top));
+  }
+}
