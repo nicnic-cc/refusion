@@ -76,7 +76,12 @@ export function GlobalFilterRow() {
           />
         )}
       </div>
-      <FilterDialog filter={filter} open={open} onOpenChange={setOpen} />
+      <FilterDialog
+        target={{ kind: "global" }}
+        filter={filter}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </div>
   );
 }

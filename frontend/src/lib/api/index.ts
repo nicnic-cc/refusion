@@ -30,6 +30,8 @@ import type {
   GlobalFilter,
   GlobalFilterSaved,
   GlobalPreview,
+  GroupFilter,
+  GroupFilterSaved,
   SaveFeedFilterRequest,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
@@ -159,6 +161,30 @@ export const globalFilterAPI = {
   preview: (rule: FilterRule, signal?: AbortSignal) =>
     api.post<APIResponse<GlobalPreview>>(
       "/global-filter/preview",
+      rule,
+      signal,
+    ),
+};
+
+// Folder filter APIs. preview() answers a sample of the folder's latest
+// articles, shaped like the global preview.
+export const groupFilterAPI = {
+  list: () => api.get<ListResponse<GroupFilter>>("/group-filters"),
+
+  save: (groupId: number, data: SaveFeedFilterRequest) =>
+    api.put<APIResponse<GroupFilterSaved>>(`/groups/${groupId}/filter`, data),
+
+  setEnabled: (groupId: number, enabled: boolean) =>
+    api.patch<APIResponse<GroupFilterSaved>>(`/groups/${groupId}/filter`, {
+      enabled,
+    }),
+
+  delete: (groupId: number) =>
+    api.delete<APIResponse<GroupFilterSaved>>(`/groups/${groupId}/filter`),
+
+  preview: (groupId: number, rule: FilterRule, signal?: AbortSignal) =>
+    api.post<APIResponse<GlobalPreview>>(
+      `/groups/${groupId}/filter/preview`,
       rule,
       signal,
     ),

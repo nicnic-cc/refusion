@@ -55,7 +55,9 @@ export interface Item {
   pub_date: number;
   unread: boolean;
   filtered: boolean;
-  // Hidden by the global filter and not by the feed's own; implies filtered.
+  // Hidden by the folder filter and not by the feed's own; implies filtered.
+  filtered_group: boolean;
+  // Hidden by the global filter alone; implies filtered.
   filtered_global: boolean;
   created_at: number;
 }
@@ -269,9 +271,11 @@ export interface FeedWebCSS {
 }
 
 // GET /filters/hidden-counts, keyed by feed id; only feeds hiding something.
-// feed: hidden by the feed's own filter; global: by the global filter alone.
+// feed: hidden by the feed's own filter; group: by the folder filter and not
+// the feed's own; global: by the global filter alone. Together: all hidden.
 export interface HiddenCounts {
   feed: number;
+  group: number;
   global: number;
 }
 
@@ -323,6 +327,19 @@ export interface GlobalPreview {
   checked: number;
   hidden: number;
   items: GlobalPreviewItem[];
+}
+
+// A folder's filter: hides articles in every feed of the folder.
+export interface GroupFilter extends FilterRule {
+  group_id: number;
+  enabled: boolean;
+  updated_at: number;
+}
+
+// PUT, PATCH and DELETE /groups/:id/filter; hidden_total counts every article
+// hidden by any filter in the folder's feeds. DELETE answers only the count.
+export interface GroupFilterSaved extends Partial<GroupFilter> {
+  hidden_total: number;
 }
 
 export interface ListBookmarksParams {

@@ -19,7 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { apiErrorMessage, feedFilterAPI, globalFilterAPI } from "@/lib/api";
+import {
+  apiErrorMessage,
+  feedFilterAPI,
+  globalFilterAPI,
+  groupFilterAPI,
+} from "@/lib/api";
 import type {
   Feed,
   FeedFilter,
@@ -31,6 +36,8 @@ import type {
   FilterTrigger,
   GlobalFilter,
   GlobalPreview,
+  Group,
+  GroupFilter,
 } from "@/lib/api";
 import {
   OPERATORS,
@@ -45,11 +52,13 @@ import {
   type DraftCondition,
   type DraftRule,
 } from "@/lib/feed-filter";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   useDeleteFeedFilter,
+  useDeleteGroupFilter,
   useSaveFeedFilter,
+  useSaveGroupFilter,
 } from "@/queries/feed-filters";
 import {
   useDeleteGlobalFilter,
@@ -57,6 +66,12 @@ import {
 } from "@/queries/global-filter";
 
 const PREVIEW_DEBOUNCE_MS = 300;
+
+const PREVIEW_SUMMARY = {
+  feed: "feedFilter.preview.summary",
+  group: "groupFilter.preview.summary",
+  global: "globalFilter.preview.summary",
+} as const satisfies Record<FilterTarget["kind"], TranslationKey>;
 
 interface RowError {
   index: number | null;
@@ -103,21 +118,37 @@ function initialDraft(filter?: FilterRule): DraftRule {
   };
 }
 
-interface FilterDialogProps {
-  // Without a feed the dialog edits the global filter (Remove only).
-  feed?: Feed;
-  filter?: FeedFilter | GlobalFilter;
+// What the dialog edits. The global filter is Remove only.
+export type FilterTarget =
+  | { kind: "feed"; feed: Feed }
+  | { kind: "group"; group: Group }
+  | { kind: "global" };
+
+type AnyFilter = FeedFilter | GroupFilter | GlobalFilter;
+
+type FilterDialogProps = {
+  filter?: AnyFilter;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+  // `feed` is shorthand for a feed target.
+} & ({ target: FilterTarget } | { feed: Feed });
 
-export function FilterDialog({
-  feed,
-  filter,
-  open,
-  onOpenChange,
-}: FilterDialogProps) {
+export function FilterDialog(props: FilterDialogProps) {
+  const { filter, open, onOpenChange } = props;
+  const target: FilterTarget =
+    "target" in props ? props.target : { kind: "feed", feed: props.feed };
   const { t } = useI18n();
+  const title = {
+    feed: t("feedFilter.title"),
+    group: t("groupFilter.title"),
+    global: t("globalFilter.title"),
+  }[target.kind];
+  const description =
+    target.kind === "feed"
+      ? target.feed.name
+      : target.kind === "group"
+        ? target.group.name
+        : t("globalFilter.description");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -125,14 +156,14 @@ export function FilterDialog({
       >
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle className="text-base font-semibold">
-            {t(feed ? "feedFilter.title" : "globalFilter.title")}
+            {title}
           </DialogTitle>
           <DialogDescription className="truncate">
-            {feed ? feed.name : t("globalFilter.description")}
+            {description}
           </DialogDescription>
         </DialogHeader>
         <FilterForm
-          feed={feed}
+          target={target}
           filter={filter}
           onClose={() => onOpenChange(false)}
         />
@@ -141,24 +172,41 @@ export function FilterDialog({
   );
 }
 
+// The id the preview, save and delete calls take; null for the global filter.
+function targetId(target: FilterTarget): number | null {
+  if (target.kind === "feed") return target.feed.id;
+  if (target.kind === "group") return target.group.id;
+  return null;
+}
+
 function FilterForm({
-  feed,
+  target,
   filter,
   onClose,
 }: {
-  feed?: Feed;
-  filter?: FeedFilter | GlobalFilter;
+  target: FilterTarget;
+  filter?: AnyFilter;
   onClose: () => void;
 }) {
   const { t } = useI18n();
   const saveFeed = useSaveFeedFilter();
   const deleteFeed = useDeleteFeedFilter();
+  const saveGroup = useSaveGroupFilter();
+  const deleteGroup = useDeleteGroupFilter();
   const saveGlobal = useSaveGlobalFilter();
   const deleteGlobal = useDeleteGlobalFilter();
-  const isGlobal = !feed;
-  const feedId = feed?.id;
-  const saveMutation = isGlobal ? saveGlobal : saveFeed;
-  const deleteMutation = isGlobal ? deleteGlobal : deleteFeed;
+  const kind = target.kind;
+  const id = targetId(target);
+  const saveMutation = { feed: saveFeed, group: saveGroup, global: saveGlobal }[
+    kind
+  ];
+  const deleteMutation = {
+    feed: deleteFeed,
+    group: deleteGroup,
+    global: deleteGlobal,
+  }[kind];
+  // Folder and global saves re-check many feeds, so the button says so.
+  const slowSave = kind !== "feed";
   const [draft, setDraft] = useState(() => initialDraft(filter));
   const [saveError, setSaveError] = useState<RowError | null>(null);
   const [onlyHidden, setOnlyHidden] = useState(false);
@@ -189,9 +237,11 @@ function FilterForm({
     if (!ready) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      (feedId !== undefined
-        ? feedFilterAPI.preview(feedId, rule, controller.signal)
-        : globalFilterAPI.preview(rule, controller.signal)
+      (kind === "feed" && id !== null
+        ? feedFilterAPI.preview(id, rule, controller.signal)
+        : kind === "group" && id !== null
+          ? groupFilterAPI.preview(id, rule, controller.signal)
+          : globalFilterAPI.preview(rule, controller.signal)
       )
         .then((res) => {
           setPreview({ key: ruleKey, data: res.data ?? null, error: null });
@@ -211,7 +261,7 @@ function FilterForm({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [ready, rule, ruleKey, feedId, t]);
+  }, [ready, rule, ruleKey, kind, id, t]);
 
   const previewCurrent = preview.key === ruleKey;
   const loading = ready && !previewCurrent;
@@ -231,9 +281,17 @@ function FilterForm({
     try {
       // Saving keeps the row's on/off state; only the switch changes it.
       const body = { ...rule, enabled: filter?.enabled ?? true };
-      if (feed) {
-        await saveFeed.mutateAsync({ feedId: feed.id, rule: body });
+      if (target.kind === "feed") {
+        await saveFeed.mutateAsync({ feedId: target.feed.id, rule: body });
         toast.success(t("feedFilter.toast.saved"));
+      } else if (target.kind === "group") {
+        const res = await saveGroup.mutateAsync({
+          groupId: target.group.id,
+          rule: body,
+        });
+        toast.success(
+          t("groupFilter.toast.saved", { count: res.data?.hidden_total ?? 0 }),
+        );
       } else {
         const res = await saveGlobal.mutateAsync(body);
         toast.success(
@@ -252,7 +310,9 @@ function FilterForm({
 
   const handleDelete = async () => {
     try {
-      if (feed) await deleteFeed.mutateAsync(feed.id);
+      if (target.kind === "feed") await deleteFeed.mutateAsync(target.feed.id);
+      else if (target.kind === "group")
+        await deleteGroup.mutateAsync(target.group.id);
       else await deleteGlobal.mutateAsync();
       toast.success(t("feedFilter.toast.deleted"));
       onClose();
@@ -281,7 +341,7 @@ function FilterForm({
   return (
     <>
       <div className="space-y-5 overflow-y-auto p-5">
-        {feed && (
+        {kind !== "global" && (
           <Tabs
             value={draft.action}
             onValueChange={(v) =>
@@ -467,9 +527,7 @@ function FilterForm({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[13px] font-medium">
                     {t(
-                      isGlobal
-                        ? "globalFilter.preview.summary"
-                        : "feedFilter.preview.summary",
+                      PREVIEW_SUMMARY[kind],
                       {
                         hidden: preview.data.hidden,
                         checked: preview.data.checked,
@@ -550,7 +608,7 @@ function FilterForm({
             {t("common.cancel")}
           </Button>
           <Button disabled={!ready || busy} onClick={handleSave}>
-            {isGlobal && saveMutation.isPending
+            {slowSave && saveMutation.isPending
               ? t("globalFilter.applying")
               : t("feedFilter.save")}
           </Button>
@@ -562,9 +620,15 @@ function FilterForm({
           <DialogHeader>
             <DialogTitle>{t("feedFilter.deleteConfirm.title")}</DialogTitle>
             <DialogDescription>
-              {feed
-                ? t("feedFilter.deleteConfirm.description", { name: feed.name })
-                : t("globalFilter.deleteConfirm.description")}
+              {target.kind === "feed"
+                ? t("feedFilter.deleteConfirm.description", {
+                    name: target.feed.name,
+                  })
+                : target.kind === "group"
+                  ? t("groupFilter.deleteConfirm.description", {
+                      name: target.group.name,
+                    })
+                  : t("globalFilter.deleteConfirm.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

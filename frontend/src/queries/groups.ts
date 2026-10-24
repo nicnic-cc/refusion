@@ -5,10 +5,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { groupAPI, type Group } from "@/lib/api";
-import {
-  invalidateFilteredBookmarkLists,
-  invalidateGroupItemLists,
-} from "./feeds";
+import { invalidateFilterViews } from "./feed-filters";
+import { invalidateFilteredBookmarkLists } from "./feeds";
 import { queryKeys } from "./keys";
 
 export const groupQueries = {
@@ -67,9 +65,9 @@ export function useDeleteGroup() {
       qc.setQueryData(queryKeys.groups.list(), (old: Group[] | undefined) =>
         old?.filter((g) => g.id !== id),
       );
-      qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
-      // Its feeds moved to the default group, so group-scoped lists change.
-      void invalidateGroupItemLists(qc);
+      // Its feeds moved to the default group and fall under its filter, so
+      // hidden flags, counts and every list change.
+      void invalidateFilterViews(qc);
       void invalidateFilteredBookmarkLists(qc);
     },
   });

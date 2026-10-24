@@ -314,7 +314,6 @@ export const enMessages = {
   "feedFilter.button.remove": "Remove",
   "feedFilter.button.keep": "Keep",
   "feedFilter.button.hidden": "{count} hidden",
-  "feedFilter.button.hiddenByGlobal": "{count} by global",
   "feedFilter.trigger.title": "Title",
   "feedFilter.trigger.content": "Content",
   "feedFilter.trigger.titleOrContent": "Title or content",
@@ -357,11 +356,20 @@ export const enMessages = {
   "feeds.tooltip.editFeed": "Edit feed",
   "feedFilter.tooltip.edit": "Edit filter",
   "feedFilter.tooltip.add": "Add filter",
-  "feedFilter.tooltip.hiddenByGlobal": "Hidden by the global filter",
   "feedFilter.tooltip.turnOff": "Turn filter off",
   "feedFilter.tooltip.turnOn": "Turn filter on",
   "globalFilter.tooltip.edit": "Edit global filter",
   "globalFilter.tooltip.add": "Add global filter",
+  "article.filteredTag.group": "Folder filter",
+  "groupFilter.title": "Folder filter",
+  "groupFilter.toast.saved": "Folder filter saved · {count} articles hidden in its feeds",
+  "groupFilter.deleteConfirm.description":
+    'Delete the filter for the folder "{name}"? Articles it hides come back, with their read/unread state, unless another filter hides them.',
+  "groupFilter.preview.summary": "Would remove {hidden} of the folder's latest {checked} articles",
+  "groupFilter.tooltip.edit": "Edit folder filter",
+  "groupFilter.tooltip.add": "Add folder filter",
+  "feeds.shownCount": "{count} shown",
+  "feedFilter.hiddenBy.feed": "This feed's filter",
 } as const;
 
 export type TranslationKey = keyof typeof enMessages;

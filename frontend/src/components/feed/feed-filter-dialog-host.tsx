@@ -15,7 +15,7 @@ export function FeedFilterDialogHost({
   const filter = useFeedFilter(feed.id);
   return (
     <FilterDialog
-      feed={feed}
+      target={{ kind: "feed", feed }}
       filter={filter}
       open={open}
       onOpenChange={onOpenChange}

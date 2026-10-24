@@ -7,8 +7,10 @@ import {
 } from "@tanstack/react-query";
 import {
   feedFilterAPI,
+  groupFilterAPI,
   hiddenCountsAPI,
   type FeedFilter,
+  type GroupFilter,
   type HiddenCounts,
   type SaveFeedFilterRequest,
 } from "@/lib/api";
@@ -28,6 +30,22 @@ export function useFeedFilters() {
     [query.data],
   );
   return { byFeedId, isLoading: query.isLoading };
+}
+
+const groupFiltersKey = ["group-filters"] as const;
+
+const groupFiltersQuery = {
+  queryKey: groupFiltersKey,
+  queryFn: async () => (await groupFilterAPI.list()).data,
+};
+
+// Narrow subscription, like useFeedFilter.
+export function useGroupFilter(groupId: number) {
+  const select = useCallback(
+    (filters: GroupFilter[]) => filters.find((f) => f.group_id === groupId),
+    [groupId],
+  );
+  return useQuery({ ...groupFiltersQuery, select }).data;
 }
 
 // Nested under feeds so any feeds invalidation (end of a pull, import) also
@@ -60,10 +78,11 @@ export function useFeedFilter(feedId: number) {
   return useQuery({ ...feedFiltersQuery, select }).data;
 }
 
-// Warms both caches at app start so Manage feeds draws its rows once.
+// Warms the filter caches at app start so Manage feeds draws its rows once.
 export function prefetchFilterViews(qc: QueryClient) {
   return Promise.all([
     qc.prefetchQuery(feedFiltersQuery),
+    qc.prefetchQuery(groupFiltersQuery),
     qc.prefetchQuery(hiddenCountsQuery),
   ]);
 }
@@ -72,6 +91,7 @@ export function prefetchFilterViews(qc: QueryClient) {
 export function invalidateFilterViews(qc: QueryClient) {
   return Promise.all([
     qc.invalidateQueries({ queryKey: feedFiltersKey }),
+    qc.invalidateQueries({ queryKey: groupFiltersKey }),
     qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
     qc.invalidateQueries({ queryKey: queryKeys.items.all }),
   ]);
@@ -127,6 +147,37 @@ export function useDeleteFeedFilter() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (feedId: number) => feedFilterAPI.delete(feedId),
+    onSuccess: () => invalidateFilterViews(qc),
+  });
+}
+
+export function useSaveGroupFilter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      groupId,
+      rule,
+    }: {
+      groupId: number;
+      rule: SaveFeedFilterRequest;
+    }) => groupFilterAPI.save(groupId, rule),
+    onSuccess: () => invalidateFilterViews(qc),
+  });
+}
+
+export function useSetGroupFilterEnabled() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ groupId, enabled }: { groupId: number; enabled: boolean }) =>
+      groupFilterAPI.setEnabled(groupId, enabled),
+    onSuccess: () => invalidateFilterViews(qc),
+  });
+}
+
+export function useDeleteGroupFilter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (groupId: number) => groupFilterAPI.delete(groupId),
     onSuccess: () => invalidateFilterViews(qc),
   });
 }

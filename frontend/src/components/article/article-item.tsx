@@ -102,7 +102,7 @@ export const ArticleItem = memo(function ArticleItem({
           <span className="min-w-0 flex-1 truncate font-medium text-muted-foreground">
             {feedName}
           </span>
-          {article.filtered && <FilteredTag global={article.filtered_global} />}
+          {article.filtered && <FilteredTag article={article} />}
           <span className="shrink-0 text-muted-foreground">
             {formatDate(article.pub_date)}
           </span>

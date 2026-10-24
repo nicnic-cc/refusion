@@ -63,11 +63,13 @@ One extra filter hides articles in every feed. Code:
   save.
 - **The per-feed preview applies the global filter too** and reports what
   it already hides (`global_hidden`), apart from the draft's own count.
-- **A feed row shows two counts** from `GET /filters/hidden-counts` (one
-  `GROUP BY`): "N hidden" by its own filter and "N by global" by the
-  global filter alone, each only when above 0. The global row has no
-  count. With "show filtered" on, an article's tag reads "Feed filter" or
-  "Global filter".
+- **A feed row shows its counts in the grey text,** from
+  `GET /filters/hidden-counts` (one `GROUP BY`): an eye icon with the
+  articles shown, then an icon and count per filter that hides something
+  (global, folder, feed), each named in its tooltip. The filter button
+  shows only the feed's own setting. Decided 2026-10-25: counts on the
+  button and "N by global" badges beside it read as one jumble once
+  folder filters stacked on top. The global and folder rows have no count.
 - **The app preloads filters and counts on load**
   (`usePrefetchFilterViews` in the app layout), so Manage feeds draws them
   in its first pass: their late arrival redrew every row, a ~120 ms freeze
@@ -91,7 +93,8 @@ Decided 2026-10-25.
   global.** `filtered_group` = 1 when the folder filter hides the article
   and the feed filter doesn't. `filtered_global` = 1 only when the global
   filter alone hides it. A feed's three counts add up to everything hidden
-  in it, and the "show filtered" tag names the blamed filter.
+  in it, and the "show filtered" tag names the blamed filter ("Feed
+  filter", "Folder filter" or "Global filter").
 - **Re-check triggers:**
   1. Saving, switching or deleting a folder filter re-checks each feed of
      the folder, one feed per short transaction. It answers with
@@ -106,3 +109,8 @@ Decided 2026-10-25.
   folder, like the global preview. The feed preview does not apply the
   folder filter.
 - **No per-feed opt-out** from the folder filter.
+- **Manage feeds:** the folder card has its own filter button and switch
+  (`GroupFilterControl` in `components/feed/feed-filter-control.tsx`).
+  Moving a feed or deleting a folder calls `invalidateFilterViews`, or
+  lists and counts would show the old folder's result until the next
+  refetch.

@@ -2,7 +2,11 @@ import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, Tr
 import type { Dispatch, SetStateAction } from "react";
 import { WithTooltip } from "@/components/common/with-tooltip";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
-import { FeedFilterControl } from "@/components/feed/feed-filter-control";
+import {
+  FeedArticleCounts,
+  FeedFilterControl,
+  GroupFilterControl,
+} from "@/components/feed/feed-filter-control";
 import { ReorderControls } from "@/components/feed/reorder-controls";
 import { Input } from "@/components/ui/input";
 import {
@@ -181,8 +185,11 @@ export function FeedGroupCard({
             t={t}
           />
         )}
+        {!reorder && !isEditing && (
+          <GroupFilterControl group={group} className="mr-1" />
+        )}
         {!reorder && (
-          <div className="flex items-center gap-1 max-md:gap-0 sm:opacity-0 sm:transition-opacity sm:group-hover/header:opacity-100">
+          <div className="flex items-center gap-1 max-md:gap-0">
             <WithTooltip
               label={t("feeds.tooltip.addFeed")}
               render={
@@ -306,10 +313,11 @@ export function FeedGroupCard({
                   <Pause className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className="hidden text-xs text-muted-foreground sm:inline">
-                  {t("feeds.itemCount", {
-                    count: feed.item_count,
-                  })}{" "}
-                  ·{" "}
+                  <FeedArticleCounts
+                    feedId={feed.id}
+                    shown={feed.item_count}
+                  />
+                  <span className="mx-1.5">·</span>
                   {feed.fetch_state.last_checked_at > 0
                     ? formatDate(feed.fetch_state.last_checked_at)
                     : t("common.unknown")}

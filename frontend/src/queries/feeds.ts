@@ -7,6 +7,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { feedAPI, type Feed } from "@/lib/api";
+import { invalidateFilterViews } from "./feed-filters";
 import { queryKeys } from "./keys";
 import { pullQueryKey, useStartPull } from "./pull";
 
@@ -139,10 +140,10 @@ export function useUpdateFeed() {
         ),
       );
       // The backend appends a moved feed to the end of its new group.
+      // It now falls under the new folder's filter, so hidden flags change.
       if (previous && previous.group_id !== updated.group_id) {
-        qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+        void invalidateFilterViews(qc);
         void invalidateFilteredBookmarkLists(qc);
-        void invalidateGroupItemLists(qc);
       }
     },
   });
