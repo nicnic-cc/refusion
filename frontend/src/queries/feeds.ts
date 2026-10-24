@@ -83,20 +83,6 @@ export function invalidateFilteredBookmarkLists(qc: QueryClient) {
   });
 }
 
-// A feed changing group changes what every group-scoped items list holds.
-// Unscoped and single-feed lists keep the same rows.
-export function invalidateGroupItemLists(qc: QueryClient) {
-  return qc.invalidateQueries({
-    queryKey: queryKeys.items.lists(),
-    predicate: (query) => {
-      const filters = query.queryKey[2] as
-        | { groupId?: number | null }
-        | undefined;
-      return filters?.groupId != null;
-    },
-  });
-}
-
 export function useCreateFeed() {
   const qc = useQueryClient();
   return useMutation({
@@ -196,10 +182,10 @@ export function useMoveFeedsToGroup() {
       );
     },
     // Also on failure: some updates may have landed, so the cache is stale.
+    // Each landed move re-checks filtered flags under the new folder's filter.
     onSettled: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.feeds.list() });
+      void invalidateFilterViews(qc);
       void invalidateFilteredBookmarkLists(qc);
-      void invalidateGroupItemLists(qc);
     },
   });
 }
