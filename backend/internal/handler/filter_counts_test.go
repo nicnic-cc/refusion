@@ -32,7 +32,7 @@ func TestHiddenCountsEndpoint(t *testing.T) {
 		t.Fatalf("put global filter: %d %s", w.Code, w.Body.String())
 	}
 	w := performRequest(router, http.MethodGet, "/api/filters/hidden-counts", nil, nil)
-	want := `{"data":{"` + strconv.FormatInt(garden.ID, 10) + `":{"feed":0,"global":1}}}`
+	want := `{"data":{"` + strconv.FormatInt(garden.ID, 10) + `":{"feed":0,"group":0,"global":1}}}`
 	if w.Body.String() != want {
 		t.Fatalf("hidden counts = %s, want %s", w.Body.String(), want)
 	}

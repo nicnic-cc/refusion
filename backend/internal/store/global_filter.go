@@ -135,33 +135,48 @@ func (s *Store) savedGlobalFilter() (*model.GlobalFilterSaved, error) {
 // transaction per feed so a pull is never blocked past busy_timeout. It
 // returns how many articles are hidden afterwards.
 func (s *Store) RecomputeAllFilters() (int64, error) {
-	rows, err := s.db.Query(`SELECT id FROM feeds ORDER BY id`)
+	feedIDs, err := listIDs(s.db, `SELECT id FROM feeds ORDER BY id`)
 	if err != nil {
 		return 0, err
 	}
-	var feedIDs []int64
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return 0, err
-		}
-		feedIDs = append(feedIDs, id)
-	}
-	if err := rows.Err(); err != nil {
-		rows.Close()
+	if err := s.recomputeFeeds(feedIDs); err != nil {
 		return 0, err
-	}
-	rows.Close()
-
-	for _, id := range feedIDs {
-		if err := s.RecomputeFilter(id); err != nil {
-			return 0, fmt.Errorf("feed %d: %w", id, err)
-		}
 	}
 	var total int64
 	err = s.db.QueryRow(`SELECT COUNT(*) FROM items WHERE filtered = 1`).Scan(&total)
 	return total, err
+}
+
+type rowsQuerier interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+}
+
+// listIDs runs a query selecting one id column.
+func listIDs(q rowsQuerier, query string, args ...any) ([]int64, error) {
+	rows, err := q.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// recomputeFeeds re-checks each feed in its own short transaction.
+func (s *Store) recomputeFeeds(feedIDs []int64) error {
+	for _, id := range feedIDs {
+		if err := s.RecomputeFilter(id); err != nil {
+			return fmt.Errorf("feed %d: %w", id, err)
+		}
+	}
+	return nil
 }
 
 // PreviewGlobalFilter runs a draft rule over the latest articles of all feeds
@@ -170,18 +185,32 @@ func (s *Store) PreviewGlobalFilter(rule filter.Rule) (*model.GlobalPreview, err
 	if rule.Action != filter.ActionRemove {
 		return nil, fmt.Errorf("%w: the global filter can only remove", ErrInvalid)
 	}
+	return s.previewLatest(rule, nil)
+}
+
+// previewLatest runs a draft rule over the latest articles of all feeds, or
+// only of the folder's feeds when groupID is set.
+func (s *Store) previewLatest(rule filter.Rule, groupID *int64) (*model.GlobalPreview, error) {
 	m, err := filter.Compile(rule)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalid, err)
+	}
+
+	where := ""
+	args := []any{sql.Named("limit", globalPreviewLimit)}
+	if groupID != nil {
+		where = "WHERE f.group_id = :group_id"
+		args = append(args, sql.Named("group_id", *groupID))
 	}
 
 	started := time.Now()
 	rows, err := s.db.Query(`
 		SELECT i.id, i.feed_id, f.name, i.title, i.link, i.content, i.pub_date
 		FROM items i JOIN feeds f ON f.id = i.feed_id
+		`+where+`
 		ORDER BY i.pub_date DESC, i.id DESC
 		LIMIT :limit
-	`, sql.Named("limit", globalPreviewLimit))
+	`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +235,6 @@ func (s *Store) PreviewGlobalFilter(rule filter.Rule) (*model.GlobalPreview, err
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	slog.Debug("global filter preview", "checked", preview.Checked, "duration", time.Since(started))
+	slog.Debug("latest articles filter preview", "group_id", groupID, "checked", preview.Checked, "duration", time.Since(started))
 	return preview, nil
 }

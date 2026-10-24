@@ -100,6 +100,10 @@ func (s *Store) DeleteGroup(id int64) error {
 	}
 	defer tx.Rollback()
 
+	movedFeedIDs, err := groupFeedIDsTx(tx, id)
+	if err != nil {
+		return err
+	}
 	if _, err := tx.Exec(`UPDATE feeds SET group_id = 1 WHERE group_id = :id`, sql.Named("id", id)); err != nil {
 		return err
 	}
@@ -116,5 +120,8 @@ func (s *Store) DeleteGroup(id int64) error {
 		return fmt.Errorf("%w: group", ErrNotFound)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return s.recomputeFeeds(movedFeedIDs)
 }

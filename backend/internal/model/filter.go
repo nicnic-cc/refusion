@@ -10,10 +10,12 @@ type FeedFilter struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-// HiddenCounts splits a feed's hidden articles: Feed by its own filter, Global
-// by the global filter alone. Together they are everything hidden in the feed.
+// HiddenCounts splits a feed's hidden articles: Feed by its own filter, Group
+// by its folder's filter and not its own, Global by the global filter alone.
+// Together they are everything hidden in the feed.
 type HiddenCounts struct {
 	Feed   int64 `json:"feed"`
+	Group  int64 `json:"group"`
 	Global int64 `json:"global"`
 }
 
@@ -69,4 +71,21 @@ type GlobalPreview struct {
 	Checked int                 `json:"checked"`
 	Hidden  int                 `json:"hidden"`
 	Items   []GlobalPreviewItem `json:"items"`
+}
+
+// GroupFilter is a folder's article filter: it hides articles in every feed
+// of the folder.
+type GroupFilter struct {
+	GroupID int64 `json:"group_id"`
+	filter.Rule
+	Enabled   bool  `json:"enabled"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
+// GroupFilterSaved is the answer to saving, switching or deleting a folder
+// filter. HiddenTotal is every article now hidden by any filter in the
+// folder's feeds. GroupFilter is nil after a delete.
+type GroupFilterSaved struct {
+	*GroupFilter
+	HiddenTotal int64 `json:"hidden_total"`
 }

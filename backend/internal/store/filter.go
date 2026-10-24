@@ -151,8 +151,8 @@ func (s *Store) DeleteFeedFilter(feedID int64) error {
 	})
 }
 
-// RecomputeFilter sets items.filtered and filtered_global on every item of the
-// feed (all 0 when no filter applies).
+// RecomputeFilter sets items.filtered, filtered_group and filtered_global on
+// every item of the feed (all 0 when no filter applies).
 func (s *Store) RecomputeFilter(feedID int64) error {
 	return s.inTx(func(tx *sql.Tx) error { return recomputeFilterTx(tx, feedID) })
 }
@@ -173,15 +173,26 @@ type rowQuerier interface {
 	QueryRow(query string, args ...any) *sql.Row
 }
 
-// matchers holds the compiled global and feed filters; either may be nil.
+// matchers holds the compiled global, folder and feed filters; any may be nil.
 // An article is hidden when any of them hides it.
 type matchers struct {
-	global, feed *filter.Matcher
+	global, group, feed *filter.Matcher
 }
 
-// activeMatchers returns the enabled global filter and the feed's enabled filter.
+func (ms matchers) all() []*filter.Matcher { return []*filter.Matcher{ms.global, ms.group, ms.feed} }
+
+// activeMatchers returns the enabled global filter, the enabled filter of the
+// feed's folder and the feed's enabled filter.
 func activeMatchers(q rowQuerier, feedID int64) (matchers, error) {
 	g, err := activeGlobalMatcher(q)
+	if err != nil {
+		return matchers{}, err
+	}
+	grp, err := compileStored(q, `
+		SELECT gf.action, gf."join", gf.whole_words, gf.conditions
+		FROM group_filters gf JOIN feeds f ON f.group_id = gf.group_id
+		WHERE f.id = :feed_id AND gf.enabled = 1
+	`, sql.Named("feed_id", feedID))
 	if err != nil {
 		return matchers{}, err
 	}
@@ -192,7 +203,7 @@ func activeMatchers(q rowQuerier, feedID int64) (matchers, error) {
 	if err != nil {
 		return matchers{}, err
 	}
-	return matchers{global: g, feed: f}, nil
+	return matchers{global: g, group: grp, feed: f}, nil
 }
 
 func activeGlobalMatcher(q rowQuerier) (*filter.Matcher, error) {
@@ -217,11 +228,18 @@ func compileStored(q rowQuerier, query string, args ...any) (*filter.Matcher, er
 	return filter.Compile(rule)
 }
 
-func (ms matchers) none() bool { return ms.global == nil && ms.feed == nil }
+func (ms matchers) none() bool {
+	for _, m := range ms.all() {
+		if m != nil {
+			return false
+		}
+	}
+	return true
+}
 
-// item builds the article once for both matchers, stripping HTML only if one needs it.
+// item builds the article once for all matchers, stripping HTML only if one needs it.
 func (ms matchers) item(title, link, content string) filter.Item {
-	for _, m := range []*filter.Matcher{ms.global, ms.feed} {
+	for _, m := range ms.all() {
 		if m != nil && m.NeedsText() {
 			return NewFilterItem(m, title, link, content)
 		}
@@ -229,13 +247,34 @@ func (ms matchers) item(title, link, content string) filter.Item {
 	return filter.Item{Title: title, Link: link, HTML: content}
 }
 
-// verdict says whether the article is hidden, and whether only the global
-// filter hides it (the feed's own filter wins when both do).
-func (ms matchers) verdict(title, link, content string) (hidden, globalOnly bool) {
+// blame names the filter an article is hidden by: the most specific one that
+// hides it (feed, then folder, then global).
+type blame int
+
+const (
+	blameNone blame = iota
+	blameFeed
+	blameGroup
+	blameGlobal
+)
+
+// flags are the values of items.filtered, filtered_group and filtered_global.
+func (b blame) flags() (filtered, group, global bool) {
+	return b != blameNone, b == blameGroup, b == blameGlobal
+}
+
+// verdict says which filter hides the article, if any.
+func (ms matchers) verdict(title, link, content string) blame {
 	it := ms.item(title, link, content)
-	feedHides := ms.feed != nil && ms.feed.Hidden(it)
-	globalHides := ms.global != nil && ms.global.Hidden(it)
-	return feedHides || globalHides, globalHides && !feedHides
+	switch {
+	case ms.feed != nil && ms.feed.Hidden(it):
+		return blameFeed
+	case ms.group != nil && ms.group.Hidden(it):
+		return blameGroup
+	case ms.global != nil && ms.global.Hidden(it):
+		return blameGlobal
+	}
+	return blameNone
 }
 
 func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
@@ -250,32 +289,33 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 	}
 	if ms.none() {
 		_, err := tx.Exec(`
-			UPDATE items SET filtered = 0, filtered_global = 0
-			WHERE feed_id = :feed_id AND (filtered != 0 OR filtered_global != 0)
+			UPDATE items SET filtered = 0, filtered_group = 0, filtered_global = 0
+			WHERE feed_id = :feed_id AND (filtered != 0 OR filtered_group != 0 OR filtered_global != 0)
 		`, sql.Named("feed_id", feedID))
 		return err
 	}
 
-	rows, err := tx.Query(`SELECT id, title, link, content, filtered, filtered_global FROM items WHERE feed_id = :feed_id`, sql.Named("feed_id", feedID))
+	rows, err := tx.Query(`SELECT id, title, link, content, filtered, filtered_group, filtered_global FROM items WHERE feed_id = :feed_id`, sql.Named("feed_id", feedID))
 	if err != nil {
 		return err
 	}
 	type change struct {
-		id             int64
-		hidden, global int
+		id                    int64
+		hidden, group, global int
 	}
 	var changes []change
 	for rows.Next() {
 		var id int64
 		var title, link, content string
-		var current, currentGlobal int
-		if err := rows.Scan(&id, &title, &link, &content, &current, &currentGlobal); err != nil {
+		var current, currentGroup, currentGlobal int
+		if err := rows.Scan(&id, &title, &link, &content, &current, &currentGroup, &currentGlobal); err != nil {
 			rows.Close()
 			return err
 		}
-		hidden, globalOnly := ms.verdict(title, link, content)
-		if want, wantGlobal := boolToInt(hidden), boolToInt(globalOnly); want != current || wantGlobal != currentGlobal {
-			changes = append(changes, change{id, want, wantGlobal})
+		hidden, group, global := ms.verdict(title, link, content).flags()
+		want := change{id, boolToInt(hidden), boolToInt(group), boolToInt(global)}
+		if want != (change{id, current, currentGroup, currentGlobal}) {
+			changes = append(changes, want)
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -284,28 +324,28 @@ func recomputeFilterTx(tx *sql.Tx, feedID int64) error {
 	}
 	rows.Close()
 
-	stmt, err := tx.Prepare(`UPDATE items SET filtered = :filtered, filtered_global = :filtered_global WHERE id = :id`)
+	stmt, err := tx.Prepare(`UPDATE items SET filtered = :filtered, filtered_group = :filtered_group, filtered_global = :filtered_global WHERE id = :id`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, c := range changes {
-		if _, err := stmt.Exec(sql.Named("filtered", c.hidden), sql.Named("filtered_global", c.global), sql.Named("id", c.id)); err != nil {
+		if _, err := stmt.Exec(sql.Named("filtered", c.hidden), sql.Named("filtered_group", c.group), sql.Named("filtered_global", c.global), sql.Named("id", c.id)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// MarkFilteredInputs sets Filtered and FilteredGlobal on new articles about to be saved, using
-// the global and the feed's current filter. Without a filter it changes nothing.
+// MarkFilteredInputs sets Filtered, FilteredGroup and FilteredGlobal on new articles about to be
+// saved, using the global, the folder's and the feed's current filter. Without a filter it changes nothing.
 func (s *Store) MarkFilteredInputs(feedID int64, inputs []BatchCreateItemInput) error {
 	ms, err := activeMatchers(s.db, feedID)
 	if err != nil || ms.none() {
 		return err
 	}
 	for i, in := range inputs {
-		inputs[i].Filtered, inputs[i].FilteredGlobal = ms.verdict(in.Title, in.Link, in.Content)
+		inputs[i].Filtered, inputs[i].FilteredGroup, inputs[i].FilteredGlobal = ms.verdict(in.Title, in.Link, in.Content).flags()
 	}
 	return nil
 }
@@ -313,6 +353,7 @@ func (s *Store) MarkFilteredInputs(feedID int64, inputs []BatchCreateItemInput) 
 // PreviewFilter runs a draft rule over every stored article of the feed
 // without saving anything, and lists the latest ones with their verdict.
 // The saved global filter is applied too, reported apart as global_hidden.
+// The folder filter is not applied.
 func (s *Store) PreviewFilter(feedID int64, rule filter.Rule) (*model.FilterPreview, error) {
 	m, err := filter.Compile(rule)
 	if err != nil {

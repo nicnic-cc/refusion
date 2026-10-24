@@ -332,6 +332,9 @@ func (s *Store) UpdateFeed(id int64, params UpdateFeedParams) error {
 	if rows == 0 {
 		return fmt.Errorf("%w: feed", ErrNotFound)
 	}
+	if err := recheckMovedFeedTx(tx, id, params.GroupID); err != nil {
+		return err
+	}
 
 	if params.Link != nil {
 		if _, err := tx.Exec(`

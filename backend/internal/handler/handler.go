@@ -159,6 +159,12 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.DELETE("/global-filter", h.deleteGlobalFilter)
 			auth.POST("/global-filter/preview", h.previewGlobalFilter)
 
+			auth.GET("/group-filters", h.listGroupFilters)
+			auth.PUT("/groups/:id/filter", h.putGroupFilter)
+			auth.PATCH("/groups/:id/filter", h.patchGroupFilter)
+			auth.DELETE("/groups/:id/filter", h.deleteGroupFilter)
+			auth.POST("/groups/:id/filter/preview", h.previewGroupFilter)
+
 			auth.GET("/pull/status", h.pullStatus)
 			auth.GET("/pull/new-count", h.pullNewCount)
 			auth.POST("/pull", h.startPull)

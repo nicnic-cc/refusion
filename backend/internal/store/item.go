@@ -153,6 +153,7 @@ type BatchCreateItemInput struct {
 	Permalink string
 
 	Filtered       bool
+	FilteredGroup  bool
 	FilteredGlobal bool
 }
 
@@ -170,8 +171,8 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO items (feed_id, guid, title, link, permalink, content, pub_date, filtered, filtered_global)
-		VALUES (:feed_id, :guid, :title, :link, :permalink, :content, :pub_date, :filtered, :filtered_global)
+		INSERT INTO items (feed_id, guid, title, link, permalink, content, pub_date, filtered, filtered_group, filtered_global)
+		VALUES (:feed_id, :guid, :title, :link, :permalink, :content, :pub_date, :filtered, :filtered_group, :filtered_global)
 		ON CONFLICT(feed_id, guid) DO NOTHING
 	`)
 	if err != nil {
@@ -201,6 +202,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 			sql.Named("content", input.Content),
 			sql.Named("pub_date", input.PubDate),
 			sql.Named("filtered", boolToInt(input.Filtered)),
+			sql.Named("filtered_group", boolToInt(input.FilteredGroup)),
 			sql.Named("filtered_global", boolToInt(input.FilteredGlobal)),
 		)
 		if err != nil {

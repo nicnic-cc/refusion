@@ -73,3 +73,36 @@ One extra filter hides articles in every feed. Code:
   in its first pass: their late arrival redrew every row, a ~120 ms freeze
   with 200 feeds at 4x slower CPU.
 - **A feed can't opt out yet** (deferred).
+
+## Folder filter
+
+One filter per folder hides articles in every feed of the folder. Code:
+`backend/internal/store/group_filter.go`,
+`migrations/908_group_filter.sql`, `activeMatchers` in `store/filter.go`.
+Decided 2026-10-25.
+
+- **One rule: an article is hidden if any filter hides it** (global, its
+  folder's, its feed's). No level can un-hide, so order doesn't matter.
+  Each feed is in exactly one folder, so at most three filters check an
+  article.
+- **Remove or Keep,** like a feed filter. The global filter stays Remove
+  only.
+- **Blame goes to the most specific filter: feed, then folder, then
+  global.** `filtered_group` = 1 when the folder filter hides the article
+  and the feed filter doesn't. `filtered_global` = 1 only when the global
+  filter alone hides it. A feed's three counts add up to everything hidden
+  in it, and the "show filtered" tag names the blamed filter.
+- **Re-check triggers:**
+  1. Saving, switching or deleting a folder filter re-checks each feed of
+     the folder, one feed per short transaction. It answers with
+     `hidden_total`: everything hidden in the folder's feeds.
+  2. Moving a feed to another folder re-checks it inside `UpdateFeed`'s
+     transaction.
+  3. Deleting a folder moves its feeds to Default, so they fall under
+     Default's filter. `DeleteGroup` re-checks them after commit.
+  4. New feeds (create, OPML import) need none: they have no articles yet,
+     and the pull reads the folder at insert time.
+- **The folder preview is a sample** of the latest 300 articles in the
+  folder, like the global preview. The feed preview does not apply the
+  folder filter.
+- **No per-feed opt-out** from the folder filter.

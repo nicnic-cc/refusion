@@ -85,7 +85,9 @@ type Item struct {
 	PubDate   int64   `json:"pub_date"`
 	Unread    bool    `json:"unread"`
 	Filtered  bool    `json:"filtered"`
-	// FilteredGlobal: hidden by the global filter and not by the feed's own.
+	// FilteredGroup: hidden by the folder filter and not by the feed's own.
+	FilteredGroup bool `json:"filtered_group"`
+	// FilteredGlobal: hidden by the global filter alone.
 	FilteredGlobal bool  `json:"filtered_global"`
 	CreatedAt      int64 `json:"created_at"`
 }
