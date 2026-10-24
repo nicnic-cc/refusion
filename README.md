@@ -16,7 +16,7 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 
 - **Reading:** two layouts (drawer and panes), full article text or the original page on demand, your own CSS for a feed's pages, YouTube in the article view
 - **New articles:** automatic checks and pull to refresh, with progress per feed
-- **Filters:** hide (or show only) articles per feed or everywhere, with a live preview
+- **Filters:** hide (or show only) articles per feed, per folder or everywhere, with a live preview
 - **Organising:** folders in your own order, mark all as read, OPML import and export
 - **Search:** feeds and article text, with excerpts and Google Reader shortcuts
 - **Self-hosting:** one binary and one SQLite file, Fever API for mobile apps, a PWA
@@ -68,13 +68,20 @@ refusion is a web app for reading RSS and Atom feeds on your own server. It is a
 - **Feed filters:** remove or keep articles by title, content, URL, or whether they have pictures or video.
 - **Conditions:** contains, is, begins with, ends with or a regular expression, joined by And or Or.
 - **Live preview:** see which articles a filter would hide before you save it.
+- **Folder filters:** remove or keep articles in every feed of a folder. A feed moved to another folder follows that folder's filter.
 - **Global filter:** removes matching articles from every feed.
-- **Hidden everywhere:** filtered articles stay out of lists, unread counts, search and Fever apps. In a single feed, "Also show filtered articles" brings them back, dimmed and tagged.
+- **How filters combine:** an article passes through up to three filters: the global one, its folder's and its feed's.
+  - If any of them hides the article, it stays hidden. No filter brings back what another hides, so order doesn't matter.
+  - Example: a folder keeps only articles with "harbor" in the title, and one of its feeds removes "sponsored". A sponsored harbor article is hidden by the feed filter. An article about trains is hidden by the folder filter.
+- **Counts:** on the feeds page, each feed shows its hidden articles per filter, with an icon for each.
+  - An article that several filters would hide counts once, under the most specific one: feed, then folder, then global.
+  - The tag in "Also show filtered articles" follows the same rule.
+- **Hidden everywhere:** filtered articles stay out of lists, unread counts, search and Fever apps. In a single feed, "Also show filtered articles" brings them back, dimmed and tagged with the filter that hid them.
 
 ### Organising
 
 <p align="center">
-  <img src="./assets/screenshots/feeds.png" alt="Manage feeds: folders, the global filter and hidden-article counts per feed" width="100%" />
+  <img src="./assets/screenshots/feeds.png" alt="Manage feeds: folders with their own filter buttons, the global filter and per-filter hidden counts on each feed" width="100%" />
 </p>
 
 - **Adding feeds:** paste a site's address and refusion finds its feeds. That also works for GitHub repos, GitHub users and subreddits.
@@ -116,7 +123,7 @@ Fusion provides the core: feed parsing and discovery, unread tracking, bookmarks
 - Panes layout, full article text, the web page view and YouTube playback
 - Per-feed settings for which view articles open in, for links to the feed's own page, and custom CSS for the web page view
 - Pull to refresh with progress per feed, and the new-articles pill
-- Feed and global filters
+- Feed, folder and global filters
 - Finding feeds from a GitHub repo, a GitHub user or a subreddit
 - Stars that show on the same article in every feed it was posted to
 - Reorder mode, search excerpts and the text settings
