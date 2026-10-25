@@ -2,6 +2,8 @@ module github.com/0x2E/fusion
 
 go 1.26.0
 
+toolchain go1.27.3
+
 require (
 	codeberg.org/readeck/go-readability/v2 v2.1.3
 	github.com/0x2E/feedfinder v0.1.2
