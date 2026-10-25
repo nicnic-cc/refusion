@@ -188,9 +188,13 @@ export function useMoveFeedsToGroup() {
     }) => {
       const feeds = qc.getQueryData<Feed[]>(queryKeys.feeds.list()) ?? [];
       const toMove = feeds.filter((f) => f.group_id === fromGroupId);
-      await Promise.all(
+      // allSettled, not all: settling on the first failure would refetch while
+      // other moves are still in flight, and the refetch could miss them.
+      const results = await Promise.allSettled(
         toMove.map((f) => feedAPI.update(f.id, { group_id: toGroupId })),
       );
+      const failed = results.find((r) => r.status === "rejected");
+      if (failed) throw failed.reason;
       return { fromGroupId, toGroupId };
     },
     onSuccess: ({ fromGroupId, toGroupId }) => {
