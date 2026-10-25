@@ -136,7 +136,7 @@ Decided 2026-10-25. Code: `frontend/src/hooks/use-mark-read-on-scroll.ts`.
 - **At the true end the list adds one list-height of empty space** (with "No more articles"), so the last rows can scroll off too. Rejected: marking the rest on reaching the bottom, or a "mark remaining" button.
 - **Rows are found by `data-article-id` and a binary search on their rects,** never every row per scroll event. The scroll box also holds the pill and the footer, so an index lookup would break.
 - **A failed mark is only logged,** like a single toggle.
-- **Each mark costs a long task (~60–90 ms at 4× slower CPU),** from applying the `/feeds` refetch. The cost is in mark-read itself, so it also hits held `j`/`k`. Tracked in bead `rf-markread-feeds`.
+- **A mark re-renders only each flipped row's read toggle.** One mark flips about 30 rows, and base-ui's tooltip trigger made each row's three buttons the main cost. So the star and open-link buttons in `article-item.tsx` are memoized parts with stable handlers. The `/feeds` refetch after a mark has no measurable cost (decided 2026-10-25).
 
 ### Mark all read: a 5 s undo window instead of a confirm dialog
 

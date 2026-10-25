@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from "react";
+import { useStableCallback } from "@/hooks/use-stable-callback";
 import { useSearch } from "@tanstack/react-router";
 import { Circle, Star, ExternalLink } from "lucide-react";
 import { TooltipButton } from "@/components/common/tooltip-button";
@@ -16,6 +17,74 @@ import { FilteredTag } from "./filtered-tag";
 const rowAction = "opacity-60 group-hover:opacity-100 group-focus-within:opacity-100";
 const hoverAction = "invisible group-hover:visible group-focus-within:visible";
 const mutedIcon = "text-muted-foreground group-hover/button:text-foreground";
+
+const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
+
+const ReadToggle = memo(function ReadToggle({
+  unread,
+  canToggleRead,
+  onClick,
+}: {
+  unread: boolean;
+  canToggleRead: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <TooltipButton
+      variant="ghost"
+      size="icon-xs"
+      label={
+        unread ? t("article.action.markRead") : t("article.action.markUnread")
+      }
+      onClick={onClick}
+      disabled={!canToggleRead}
+      className={cn("max-md:size-9", !unread && rowAction)}
+    >
+      <Circle className={unread ? "fill-primary text-primary" : mutedIcon} />
+    </TooltipButton>
+  );
+});
+
+const StarToggle = memo(function StarToggle({
+  isStarred,
+  onClick,
+}: {
+  isStarred: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <TooltipButton
+      variant="ghost"
+      size="icon-xs"
+      label={isStarred ? t("article.action.unstar") : t("article.action.star")}
+      onClick={onClick}
+      className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
+    >
+      <Star
+        className={isStarred ? "fill-amber-500 text-amber-500" : mutedIcon}
+      />
+    </TooltipButton>
+  );
+});
+
+const OpenLink = memo(function OpenLink({ href }: { href: string | undefined }) {
+  const { t } = useI18n();
+  return (
+    <TooltipButton
+      variant="ghost"
+      size="icon-xs"
+      label={t("article.action.openInBrowser")}
+      href={href}
+      disabled={!href}
+      onClick={stopPropagation}
+      className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
+    >
+      <ExternalLink className={mutedIcon} />
+    </TooltipButton>
+  );
+});
 
 interface ArticleItemProps {
   article: Item;
@@ -45,8 +114,6 @@ export const ArticleItem = memo(function ArticleItem({
   openPermalink = false,
   isFresh,
 }: ArticleItemProps) {
-  const { t } = useI18n();
-
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,7 +123,9 @@ export const ArticleItem = memo(function ArticleItem({
     articleOpenLink(article, openPermalink),
   );
 
-  const handleToggleRead = async (e: React.MouseEvent) => {
+  // Stable identities, so a row whose only change is unread re-renders just
+  // the read toggle: the star and open-link buttons keep their props and skip.
+  const handleToggleRead = useStableCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!canToggleRead) return;
 
@@ -65,16 +134,16 @@ export const ArticleItem = memo(function ArticleItem({
     } catch (error) {
       console.error("Failed to toggle read status:", error);
     }
-  };
+  });
 
-  const handleToggleStar = async (e: React.MouseEvent) => {
+  const handleToggleStar = useStableCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await onToggleStar(article);
     } catch (error) {
       console.error("Failed to toggle star:", error);
     }
-  };
+  });
 
   return (
     <div
@@ -108,50 +177,13 @@ export const ArticleItem = memo(function ArticleItem({
             {formatDate(article.pub_date)}
           </span>
           <div className="-my-1 flex shrink-0 items-center max-md:-my-2.5">
-            <TooltipButton
-              variant="ghost"
-              size="icon-xs"
-              label={
-                article.unread
-                  ? t("article.action.markRead")
-                  : t("article.action.markUnread")
-              }
+            <ReadToggle
+              unread={article.unread}
+              canToggleRead={canToggleRead}
               onClick={handleToggleRead}
-              disabled={!canToggleRead}
-              className={cn("max-md:size-9", !article.unread && rowAction)}
-            >
-              <Circle
-                className={
-                  article.unread ? "fill-primary text-primary" : mutedIcon
-                }
-              />
-            </TooltipButton>
-            <TooltipButton
-              variant="ghost"
-              size="icon-xs"
-              label={
-                isStarred ? t("article.action.unstar") : t("article.action.star")
-              }
-              onClick={handleToggleStar}
-              className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
-            >
-              <Star
-                className={
-                  isStarred ? "fill-amber-500 text-amber-500" : mutedIcon
-                }
-              />
-            </TooltipButton>
-            <TooltipButton
-              variant="ghost"
-              size="icon-xs"
-              label={t("article.action.openInBrowser")}
-              href={safeArticleLink ?? undefined}
-              disabled={!safeArticleLink}
-              onClick={(e) => e.stopPropagation()}
-              className={cn(hoverAction, "max-md:[@media(hover:none)]:hidden")}
-            >
-              <ExternalLink className={mutedIcon} />
-            </TooltipButton>
+            />
+            <StarToggle isStarred={isStarred} onClick={handleToggleStar} />
+            <OpenLink href={safeArticleLink ?? undefined} />
           </div>
         </div>
         <h3
