@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { CheckCheck, ChevronRight, Undo2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,27 @@ import type { Feed } from "@/lib/api";
 interface FeedGroupProps {
   groupId: number;
   name: string;
+  // The folder's full feed list, stable while its feeds are unchanged.
   feeds: Feed[];
+  // FeedList's sticky ids, or null when every feed shows. After its adjust
+  // pass they equal the visible feed ids, and the set changes identity only
+  // when a new feed becomes visible or the view changes.
+  visibleIds: ReadonlySet<number> | null;
   unreadCount: number;
 }
 
 export const FeedGroup = memo(function FeedGroup({
   groupId,
   name,
-  feeds,
+  feeds: allFeeds,
+  visibleIds,
   unreadCount,
 }: FeedGroupProps) {
+  const feeds = useMemo(
+    () =>
+      visibleIds ? allFeeds.filter((f) => visibleIds.has(f.id)) : allFeeds,
+    [allFeeds, visibleIds],
+  );
   const isOpen = useCollapsedGroupsStore(
     (s) => !s.collapsedIds.includes(groupId),
   );

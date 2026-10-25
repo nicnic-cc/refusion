@@ -44,6 +44,25 @@ export function useFeedLookup() {
   return { feeds, getFeedById, getFeedsByGroup, isLoading };
 }
 
+const NO_FEEDS_BY_GROUP: Record<number, Feed[]> = {};
+
+// A module-level function, so the observer memoizes the select result.
+function groupFeedsByGroupId(feeds: Feed[]): Record<number, Feed[]> {
+  const byGroup: Record<number, Feed[]> = {};
+  for (const feed of feeds) (byGroup[feed.group_id] ??= []).push(feed);
+  return byGroup;
+}
+
+// Query-core structurally shares select output (replaceEqualDeep), so a group
+// whose feeds did not change keeps its array across cache updates.
+export function useFeedsByGroup() {
+  const { data = NO_FEEDS_BY_GROUP } = useQuery({
+    ...feedQueries.list(),
+    select: groupFeedsByGroupId,
+  });
+  return data;
+}
+
 export function useUnreadCounts() {
   const { data: feeds = [] } = useFeeds();
 

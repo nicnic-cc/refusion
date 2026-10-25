@@ -5,7 +5,7 @@ import { ScrollBox } from "@/components/scroll-box";
 import { isArticleFilter } from "@/lib/article-filter";
 import { allFeedsLabelKey } from "@/lib/all-feeds-label";
 import { useGroups } from "@/queries/groups";
-import { useFeedLookup, useUnreadCounts } from "@/queries/feeds";
+import { useFeedLookup, useFeedsByGroup, useUnreadCounts } from "@/queries/feeds";
 import { useBookmarkLookup } from "@/queries/bookmarks";
 import { useUrlState } from "@/hooks/use-url-state";
 import { useSidebarNavigation } from "@/hooks/use-sidebar-navigation";
@@ -19,14 +19,17 @@ import {
   isFeedCovered,
   usePendingFeedReadsStore,
 } from "@/store/pending-feed-reads";
+import type { Feed } from "@/lib/api";
 import { FeedGroup } from "./feed-group";
 
 const EMPTY_IDS: ReadonlySet<number> = new Set();
+const EMPTY_FEEDS: Feed[] = [];
 
 export function FeedList() {
   const { t } = useI18n();
   const { data: groups = [], isLoading } = useGroups();
-  const { feeds, getFeedsByGroup } = useFeedLookup();
+  const { feeds } = useFeedLookup();
+  const feedsByGroup = useFeedsByGroup();
   const { getTotalUnreadCount } = useUnreadCounts();
   const { total: starredTotal, bookmarks } = useBookmarkLookup();
   const {
@@ -50,26 +53,21 @@ export function FeedList() {
     () => getSidebarGroups(groups, feeds),
     [groups, feeds],
   );
-  // Stable between renders so memoized groups skip re-rendering on URL changes.
-  const feedsByGroup = useMemo(
-    () => new Map(sidebarGroups.map((g) => [g.id, getFeedsByGroup(g.id)])),
-    [sidebarGroups, getFeedsByGroup],
-  );
   // Feeds covered by a mark waiting out its undo window already count as read.
   const pendingReads = usePendingFeedReadsStore((s) => s.pending);
   const unreadByGroup = useMemo(
     () =>
       new Map(
-        [...feedsByGroup].map(([id, groupFeeds]) => [
-          id,
-          groupFeeds.reduce(
+        sidebarGroups.map((g) => [
+          g.id,
+          (feedsByGroup[g.id] ?? EMPTY_FEEDS).reduce(
             (sum, f) =>
               sum + (isFeedCovered(pendingReads, f) ? 0 : f.unread_count || 0),
             0,
           ),
         ]),
       ),
-    [feedsByGroup, pendingReads],
+    [sidebarGroups, feedsByGroup, pendingReads],
   );
 
   const starredFeedIds = useMemo(
@@ -120,13 +118,14 @@ export function FeedList() {
   const visibleFeedsByGroup = useMemo(
     () =>
       new Map(
-        [...feedsByGroup].map(([id, groupFeeds]) => {
-          const shown = groupFeeds.filter((f) => visibleFeedIds.has(f.id));
-          // Same array when nothing is hidden, so memoized groups skip re-render.
-          return [id, shown.length === groupFeeds.length ? groupFeeds : shown];
-        }),
+        sidebarGroups.map((g) => [
+          g.id,
+          (feedsByGroup[g.id] ?? EMPTY_FEEDS).filter((f) =>
+            visibleFeedIds.has(f.id),
+          ),
+        ]),
       ),
-    [feedsByGroup, visibleFeedIds],
+    [sidebarGroups, feedsByGroup, visibleFeedIds],
   );
   const visibleGroups = useMemo(
     () =>
@@ -236,7 +235,9 @@ export function FeedList() {
               key={group.id}
               groupId={group.id}
               name={group.name}
-              feeds={visibleFeedsByGroup.get(group.id) ?? []}
+              feeds={feedsByGroup[group.id] ?? EMPTY_FEEDS}
+              // Sticky ids change on every feed click, so "all" skips them.
+              visibleIds={articleFilter === "all" ? null : stickyIds}
               unreadCount={unreadByGroup.get(group.id) ?? 0}
             />
           ))}
