@@ -19,7 +19,9 @@ import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import {
   onArticleNavigationEnd,
+  onArticlesPassed,
   onOpenArticleMissing,
+  stepSelectedArticle,
   useArticleNavigation,
 } from "@/hooks/use-keyboard";
 import { useUrlState } from "@/hooks/use-url-state";
@@ -34,6 +36,7 @@ import { PullIndicator } from "@/components/feed/pull-indicator";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { useDelayedFlag } from "@/hooks/use-delayed-flag";
 import { usePreferencesStore } from "@/store/preferences";
+import { useNavHighlightStore } from "@/store/nav-highlight";
 import { useMarkItemsRead, useMarkItemsUnread } from "@/queries/items";
 import {
   undoDeferredRead,
@@ -176,6 +179,29 @@ export function ArticleList() {
     enabled: selectedArticleId === null,
   });
 
+  // A held j/k leaves the URL on the article its first press opened and moves
+  // this highlight instead; everything that follows the selection follows it.
+  const highlightedId = useNavHighlightStore((s) => s.id);
+  const navigatedId = highlightedId ?? selectedArticleId;
+
+  // Rows a held key passed count as opened: with auto mark-read "open" they are
+  // marked in one request when the key comes up. The mutation rolls the unread
+  // flips back if the request fails.
+  const markPassedRows = useEffectEvent((ids: number[]) => {
+    if (usePreferencesStore.getState().autoMarkRead !== "open") return;
+    const unreadIds = ids.filter(
+      (id) => id > 0 && articles[indexById.get(id) ?? -1]?.unread,
+    );
+    if (unreadIds.length === 0) return;
+    // Pin before the request, as a toggle does, so the optimistic unread flip
+    // cannot drop the rows from the unread view under the user.
+    pinRead(unreadIds);
+    markItemsRead.mutateAsync(unreadIds).catch((error: unknown) => {
+      console.error("Failed to mark passed rows read:", error);
+    });
+  });
+  useEffect(() => onArticlesPassed((ids) => markPassedRows(ids)), []);
+
   // When every loaded row has been read away (hidden from the unread view),
   // keep pulling deeper pages instead of dead-ending on an empty list while
   // the server still has unread items. A failed fetch stops it (no retry loop).
@@ -247,7 +273,7 @@ export function ArticleList() {
     const index = indexById.get(pending) ?? -1;
     const isLast = index === articles.length - 1;
     if (
-      selectedArticleId !== pending ||
+      navigatedId !== pending ||
       index === -1 ||
       isFetchNextPageError ||
       (isLast && !hasMore)
@@ -255,12 +281,12 @@ export function ArticleList() {
       pendingAdvanceRef.current = null;
     } else if (!isLast) {
       pendingAdvanceRef.current = null;
-      setSelectedArticle(articles[index + 1].id);
+      stepSelectedArticle(articles[index + 1].id, setSelectedArticle);
     }
   }, [
     articles,
     indexById,
-    selectedArticleId,
+    navigatedId,
     hasMore,
     isFetchNextPageError,
     setSelectedArticle,
@@ -342,7 +368,7 @@ export function ArticleList() {
   ]);
 
   const selectedIndex =
-    selectedArticleId === null ? -1 : (indexById.get(selectedArticleId) ?? -1);
+    navigatedId === null ? -1 : (indexById.get(navigatedId) ?? -1);
   // One page ahead, so key repeat never waits on a fetch.
   const selectionNearEnd =
     selectedIndex >= 0 && selectedIndex >= articles.length - articlePageSize;
@@ -356,7 +382,7 @@ export function ArticleList() {
     if (lastRowSelectedWithMore) {
       footerRef.current?.scrollIntoView({ block: "nearest" });
     }
-  }, [lastRowSelectedWithMore, selectedArticleId]);
+  }, [lastRowSelectedWithMore, navigatedId]);
 
   // Wait until scrolling stops, so a page never lands mid-fling.
   useEffect(() => {

@@ -10,6 +10,7 @@ import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { articleOpenLink } from "@/lib/article-link";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 import { parseArticleIdParam } from "@/lib/route-params";
+import { useNavHighlightStore } from "@/store/nav-highlight";
 import { FilteredTag } from "./filtered-tag";
 
 // Actions sit in the meta row: the unread dot shows at full strength, the read
@@ -201,14 +202,22 @@ export const ArticleItem = memo(function ArticleItem({
 
 // Reads its own selection from the URL, so the list need not pass the selected
 // id down: a j press re-renders only the rows whose answer flips, not all of them.
+// While a key is held the highlight store wins over the URL (which still shows
+// the article the first press opened). Its answer is "on" for the highlighted
+// row, "off" for the URL's row, and "url" for every other row, so starting or
+// ending a hold re-renders only those rows.
 export const ArticleRow = memo(function ArticleRow(
   props: Omit<ArticleItemProps, "isSelected">,
 ) {
   const id = props.article.id;
-  const isSelected = useSearch({
+  const isUrlSelected = useSearch({
     strict: false,
     select: (s) =>
       parseArticleIdParam((s as Record<string, unknown>).article) === id,
   });
+  const highlight = useNavHighlightStore((s) =>
+    s.id === id ? "on" : isUrlSelected && s.id !== null ? "off" : "url",
+  );
+  const isSelected = highlight === "on" || (highlight === "url" && isUrlSelected);
   return <ArticleItem {...props} isSelected={isSelected} />;
 });

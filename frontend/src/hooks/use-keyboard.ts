@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStartPull } from "@/queries/pull";
 import { useSidebarNavStore, useUIStore } from "@/store";
+import { useNavHighlightStore } from "@/store/nav-highlight";
 import { usePullStore } from "@/store/pull";
 import { useUrlState } from "./use-url-state";
 
@@ -324,6 +325,236 @@ export function onOpenArticleMissing(listener: ArticleMissingListener) {
   };
 }
 
+// A held j/k opens the article of its first press only. Repeats move the list
+// highlight (a store, not the URL) so no article body is rendered per row
+// passed; the row the highlight is on when the key comes up (or repeats stop
+// for HOLD_IDLE_MS, in case the keyup is lost) opens then. The rows passed are
+// handed to the list in one go, which marks them read when "open" is on.
+// Module state: the list's and the drawer's navigation instances take turns
+// handling one hold, since the first press opens an article and flips which of
+// them is enabled.
+const HOLD_IDLE_MS = 150;
+const SETTLE_TIMEOUT_MS = 1000;
+
+type PassedListener = (ids: number[]) => void;
+const passedListeners = new Set<PassedListener>();
+
+// Holds only run while a list listens: it draws the highlight and marks the rows.
+export function onArticlesPassed(listener: PassedListener) {
+  passedListeners.add(listener);
+  return () => {
+    passedListeners.delete(listener);
+  };
+}
+
+interface NavigationState {
+  articleIds: number[];
+  selectedArticleId: number | null;
+  setSelectedArticle: (articleId: number | null) => void;
+}
+
+let heldKey: string | null = null;
+// What the press of heldKey asked the URL to open; the URL may not show it yet.
+let heldOpen: { from: number | null; to: number } | null = null;
+// When the held key last repeated: a page that lands while repeats still arrive
+// belongs to the hold, one that lands after a tap does not.
+let lastRepeatAt = 0;
+let moving = false;
+let passed: number[] = [];
+let holdState: { current: NavigationState } | null = null;
+let idleTimer: number | null = null;
+// Highlight handed to the URL: kept until the URL shows it, so the row does not
+// flash back to the previous article.
+let settling: number | null = null;
+let settleTimer: number | null = null;
+
+function highlightedId() {
+  return useNavHighlightStore.getState().id;
+}
+
+function openedId(state: NavigationState) {
+  return heldOpen !== null && state.selectedArticleId === heldOpen.from
+    ? heldOpen.to
+    : state.selectedArticleId;
+}
+
+function clearIdleTimer() {
+  if (idleTimer !== null) {
+    window.clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+}
+
+function cancelSettle() {
+  if (settleTimer !== null) {
+    window.clearTimeout(settleTimer);
+    settleTimer = null;
+  }
+  settling = null;
+}
+
+function clearHighlight() {
+  cancelSettle();
+  useNavHighlightStore.setState({ id: null });
+}
+
+function handOverHighlight(id: number) {
+  cancelSettle();
+  settling = id;
+  useNavHighlightStore.setState({ id });
+  settleTimer = window.setTimeout(clearHighlight, SETTLE_TIMEOUT_MS);
+}
+
+function settleHighlight(urlArticleId: number | null) {
+  if (settling !== null && urlArticleId === settling) clearHighlight();
+}
+
+function moveHighlight(id: number, state: { current: NavigationState }) {
+  if (!moving) {
+    moving = true;
+    passed = [];
+  }
+  holdState = state;
+  passed.push(id);
+  cancelSettle();
+  useNavHighlightStore.setState({ id });
+  armIdleTimer();
+}
+
+function armIdleTimer() {
+  clearIdleTimer();
+  idleTimer = window.setTimeout(releaseHold, HOLD_IDLE_MS);
+}
+
+function emitPassed(ids: number[], skip: Array<number | null>) {
+  const rows = [...new Set(ids)].filter((id) => !skip.includes(id));
+  if (rows.length > 0) passedListeners.forEach((l) => l(rows));
+}
+
+function dropHold() {
+  clearIdleTimer();
+  moving = false;
+  passed = [];
+  clearHighlight();
+}
+
+function releaseHold() {
+  clearIdleTimer();
+  if (!moving || holdState === null) return;
+  const state = holdState.current;
+  const target = highlightedId();
+  moving = false;
+  const rows = passed;
+  passed = [];
+  if (target === null) return;
+  const open = openedId(state);
+  emitPassed(rows, [target, open]);
+  if (target === open) {
+    clearHighlight();
+    return;
+  }
+  handOverHighlight(target);
+  state.setSelectedArticle(target);
+}
+
+function handleStepKeyUp(event: KeyboardEvent) {
+  if (event.key.toLowerCase() !== heldKey) return;
+  releaseHold();
+  heldKey = null;
+  heldOpen = null;
+}
+
+function stepDirection(event: KeyboardEvent): 1 | -1 | null {
+  const key = event.key.toLowerCase();
+  if (key === "j" || key === "n" || event.key === "ArrowDown") return 1;
+  if (key === "k" || key === "p" || event.key === "ArrowUp") return -1;
+  return null;
+}
+
+// For the list's own steps (a page that landed under a held j): they move the
+// highlight while a key is down, and the URL otherwise.
+export function stepSelectedArticle(
+  id: number,
+  setSelectedArticle: (articleId: number) => void,
+) {
+  const repeating =
+    heldKey !== null && Date.now() - lastRepeatAt < HOLD_IDLE_MS;
+  if ((moving || repeating) && holdState !== null) {
+    moveHighlight(id, holdState);
+  } else setSelectedArticle(id);
+}
+
+function stepFromKey(
+  stateRef: { current: NavigationState },
+  direction: 1 | -1,
+  event: KeyboardEvent,
+) {
+  const state = stateRef.current;
+  const ids = state.articleIds;
+  const key = event.key.toLowerCase();
+  holdState = stateRef;
+
+  if (event.repeat && heldKey === key && passedListeners.size > 0) {
+    lastRepeatAt = Date.now();
+    if (moving) armIdleTimer();
+    const base = moving ? highlightedId() : openedId(state);
+    const index = base === null ? -1 : ids.indexOf(base);
+    if (index === -1) {
+      if (moving) dropHold();
+      return;
+    }
+    const next = ids[index + direction];
+    if (next !== undefined) moveHighlight(next, stateRef);
+    else if (direction === 1) articleEndListeners.forEach((l) => l(ids[index]));
+    return;
+  }
+
+  // A fresh press (or a repeat nobody started): opens at once, like a single tap.
+  const wasMoving = moving;
+  const base = wasMoving ? highlightedId() : state.selectedArticleId;
+  const index = base === null ? -1 : ids.indexOf(base);
+  if (
+    !wasMoving &&
+    direction === 1 &&
+    base !== null &&
+    index === -1 &&
+    [...articleMissingListeners].some((l) => l(base))
+  ) {
+    return;
+  }
+  const target =
+    direction === 1
+      ? index < ids.length - 1
+        ? ids[index + 1]
+        : undefined
+      : index > 0
+        ? ids[index - 1]
+        : undefined;
+  if (target === undefined) {
+    if (direction === 1 && index >= 0) {
+      articleEndListeners.forEach((l) => l(ids[index]));
+    }
+    if (!wasMoving) {
+      heldKey = key;
+      heldOpen = null;
+    }
+    return;
+  }
+
+  if (wasMoving) {
+    // Another key took over mid-hold: the highlight is passed too.
+    clearIdleTimer();
+    moving = false;
+    const rows = passed;
+    passed = [];
+    emitPassed(rows, [heldOpen?.to ?? null]);
+  }
+  heldKey = key;
+  heldOpen = { from: state.selectedArticleId, to: target };
+  if (wasMoving || settling !== null) handOverHighlight(target);
+  state.setSelectedArticle(target);
+}
+
 export function useArticleNavigation(
   articleIds: number[],
   options: ArticleNavigationOptions = {},
@@ -440,39 +671,13 @@ export function useArticleNavigation(
         return;
       }
 
-      const currentIndex = state.selectedArticleId
-        ? state.articleIds.indexOf(state.selectedArticleId)
-        : -1;
-
       const key = event.key.toLowerCase();
 
-      // J or ArrowDown: Next article
-      if (key === "j" || key === "n" || event.key === "ArrowDown") {
+      // J/N/ArrowDown: next article. K/P/ArrowUp: previous article.
+      const direction = stepDirection(event);
+      if (direction !== null) {
         event.preventDefault();
-        const openId = state.selectedArticleId;
-        if (
-          openId !== null &&
-          currentIndex === -1 &&
-          [...articleMissingListeners].some((l) => l(openId))
-        ) {
-          return;
-        }
-        if (currentIndex < state.articleIds.length - 1) {
-          state.setSelectedArticle(state.articleIds[currentIndex + 1]);
-        } else if (currentIndex >= 0) {
-          articleEndListeners.forEach((l) =>
-            l(state.articleIds[currentIndex]),
-          );
-        }
-        return;
-      }
-
-      // K or ArrowUp: Previous article
-      if (key === "k" || key === "p" || event.key === "ArrowUp") {
-        event.preventDefault();
-        if (currentIndex > 0) {
-          state.setSelectedArticle(state.articleIds[currentIndex - 1]);
-        }
+        stepFromKey(latestStateRef, direction, event);
         return;
       }
 
@@ -510,8 +715,16 @@ export function useArticleNavigation(
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleStepKeyUp);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleStepKeyUp);
+    };
   }, []);
+
+  useEffect(() => {
+    settleHighlight(selectedArticleId);
+  }, [selectedArticleId]);
 
   const goToNext = () => {
     const currentIndex = selectedArticleId
