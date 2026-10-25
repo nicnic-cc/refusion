@@ -166,7 +166,7 @@ export function useStarredItems(
     isLoading: query.isLoading,
     isFetchingNextPage: query.isFetchingNextPage,
     isFetchNextPageError: query.isFetchNextPageError,
-    fetchNextPage: () => void query.fetchNextPage(),
+    fetchNextPage: () => void query.fetchNextPage({ cancelRefetch: false }),
   };
 }
 

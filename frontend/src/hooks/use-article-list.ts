@@ -112,7 +112,9 @@ export function useArticleList(filters: ArticleListFilters) {
     isStarredMode,
     fetchNextPage: isStarredMode
       ? starred.fetchNextPage
-      : () => void itemsQuery.fetchNextPage(),
+      : // Look-ahead and a key press can ask in the same tick: join the
+        // request in flight instead of cancelling and restarting it.
+        () => void itemsQuery.fetchNextPage({ cancelRefetch: false }),
     isItemStarred,
     getBookmarkByItemId,
   };

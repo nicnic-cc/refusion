@@ -25,6 +25,13 @@ function MissingScopeRedirect() {
   return null;
 }
 
+// Its own component so the selected article (read by the shortcuts) re-renders
+// only this null, not the layout and its dialogs on every j/k.
+function KeyboardShortcuts() {
+  useKeyboardShortcuts();
+  return null;
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
@@ -38,8 +45,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   });
   const readingPane = useReadingPane() && !onFeedsPage;
 
-  // Register global keyboard shortcuts
-  useKeyboardShortcuts();
   usePullRun();
   usePrefetchFilterViews();
 
@@ -72,6 +77,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Sheet>
       )}
 
+      <KeyboardShortcuts />
       <MissingScopeRedirect />
 
       {/* Main content */}
