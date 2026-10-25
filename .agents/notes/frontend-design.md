@@ -131,7 +131,7 @@ Decided 2026-10-25. Code: `frontend/src/hooks/use-mark-read-on-scroll.ts`.
 
 - **Its own toggle, per device, off by default.** It is about list rows, while `autoMarkRead` is about an opened article. Both can be on.
 - **A row counts when its bottom crosses the top edge on a downward scroll.** A row only partly above the edge stays unread. Scrolling up never marks.
-- **Whatever moved the list counts:** wheel, touch, or `j` scrolling the selected row into view. Each row `j` pushes off was opened on the way.
+- **Whatever moved the list counts:** wheel, touch, or `j` scrolling the selected row into view. Each row `j` pushes off was opened or, under a held `j`, highlighted on the way.
 - **Marks go out in one request after a 200 ms pause,** the same wait as loading more. Leaving the list inside that wait drops them, and those rows stay unread.
 - **At the true end the list adds one list-height of empty space** (with "No more articles"), so the last rows can scroll off too. Rejected: marking the rest on reaching the bottom, or a "mark remaining" button.
 - **Rows are found by `data-article-id` and a binary search on their rects,** never every row per scroll event. The scroll box also holds the pill and the footer, so an index lookup would break.
