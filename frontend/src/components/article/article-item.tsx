@@ -79,6 +79,7 @@ export const ArticleItem = memo(function ArticleItem({
   return (
     <div
       ref={rootRef}
+      data-article-id={article.id}
       role="button"
       tabIndex={0}
       onClick={() => onSelectArticle(article.id)}

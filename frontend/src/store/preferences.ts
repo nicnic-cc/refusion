@@ -68,6 +68,9 @@ const defaultAutoMarkRead: AutoMarkRead = "off";
 const defaultReadingLayout: ReadingLayout = "drawer";
 const defaultDateFormat: DateFormat = "relative";
 const defaultArticleLoading: ArticleLoading = "scroll";
+// Per device and never synced: rows scrolled past the top of the list are
+// marked read.
+const defaultMarkReadOnScroll = false;
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -115,6 +118,10 @@ function normalizeArticleLoading(
     : defaultArticleLoading;
 }
 
+function normalizeMarkReadOnScroll(value: unknown): boolean {
+  return typeof value === "boolean" ? value : defaultMarkReadOnScroll;
+}
+
 // "off" disables the feature; every other member maps to a delay where 0
 // means "as soon as the article is open".
 export function autoMarkReadDelayMs(option: AutoMarkRead): number | null {
@@ -131,12 +138,14 @@ export interface PreferencesState {
   readingLayout: ReadingLayout;
   dateFormat: DateFormat;
   articleLoading: ArticleLoading;
+  markReadOnScroll: boolean;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
   setAutoMarkRead: (option: string) => void;
   setReadingLayout: (layout: string) => void;
   setDateFormat: (format: string) => void;
   setArticleLoading: (mode: string) => void;
+  setMarkReadOnScroll: (on: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -148,6 +157,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       readingLayout: defaultReadingLayout,
       dateFormat: defaultDateFormat,
       articleLoading: defaultArticleLoading,
+      markReadOnScroll: defaultMarkReadOnScroll,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
@@ -159,6 +169,8 @@ export const usePreferencesStore = create<PreferencesState>()(
         set({ dateFormat: normalizeDateFormat(format) }),
       setArticleLoading: (mode) =>
         set({ articleLoading: normalizeArticleLoading(mode) }),
+      setMarkReadOnScroll: (on) =>
+        set({ markReadOnScroll: normalizeMarkReadOnScroll(on) }),
     }),
     {
       name: "fusion-preferences",
@@ -170,6 +182,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         readingLayout: state.readingLayout,
         dateFormat: state.dateFormat,
         articleLoading: state.articleLoading,
+        markReadOnScroll: state.markReadOnScroll,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -191,6 +204,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           ),
           articleLoading: normalizeArticleLoading(
             persisted?.articleLoading ?? currentState.articleLoading,
+          ),
+          markReadOnScroll: normalizeMarkReadOnScroll(
+            persisted?.markReadOnScroll ?? currentState.markReadOnScroll,
           ),
         };
       },

@@ -26,6 +26,7 @@ import { useUrlState } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
 import { useListPull } from "@/hooks/use-list-pull";
 import { useMarkAllReadShortcut } from "@/hooks/use-mark-all-read-shortcut";
+import { useMarkReadOnScroll } from "@/hooks/use-mark-read-on-scroll";
 import { useNewArticles } from "@/hooks/use-new-articles";
 import { NewArticlesPill } from "./new-articles-pill";
 import { FeedErrorLine } from "./feed-error-line";
@@ -201,6 +202,14 @@ export function ArticleList() {
   useLayoutEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [pinsKey]);
+
+  const markReadOnScroll = useMarkReadOnScroll({
+    scrollRef,
+    articles,
+    feedId: selectedFeedId,
+    groupId: selectedGroupId,
+    articleFilter,
+  });
 
   // Scrolling only loads in scroll mode; a key press counts as asking, like the button.
   const requestNextPage = useEffectEvent((asked = false) => {
@@ -649,6 +658,14 @@ export function ArticleList() {
                   fetchNextPage={fetchNextPage}
                 />
               </div>
+              {/* One list-height of room, so the last rows can scroll off the top too. */}
+              {markReadOnScroll && !hasMore && (
+                <div className="h-full px-4 py-4 text-center sm:px-6">
+                  <p className="text-sm text-muted-foreground">
+                    {t("article.list.noMore")}
+                  </p>
+                </div>
+              )}
             </>
           )}
         </ScrollBox>

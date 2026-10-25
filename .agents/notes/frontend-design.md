@@ -104,8 +104,8 @@ and the next save renumbers that list).
   cache of the user's synced settings (`lib/settings-sync.ts` pulls the
   server values once per page load before the first authenticated screen
   renders, server non-null values win, and each settings-dialog change
-  PATCHes only the changed key). The reading layout is the one preference
-  kept per device and never synced. Theme lives in next-themes' own
+  PATCHes only the changed key). Some preferences are kept per device and
+  never synced: each is marked so in `store/preferences.ts`. Theme lives in next-themes' own
   localStorage key and is mirrored through the same sync.
 
 ### Read-state changes: grayed rows are an undo affordance, not stale UI

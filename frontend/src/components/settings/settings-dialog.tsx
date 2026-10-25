@@ -7,6 +7,7 @@ import { Logo } from "@/components/brand/logo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -114,12 +115,14 @@ function GeneralContent() {
     readingLayout,
     dateFormat,
     articleLoading,
+    markReadOnScroll,
     setLocale,
     setArticlePageSize,
     setAutoMarkRead,
     setReadingLayout,
     setDateFormat,
     setArticleLoading,
+    setMarkReadOnScroll,
   } = usePreferencesStore();
   const applySetting = useApplySetting();
   const queryClient = useQueryClient();
@@ -350,6 +353,23 @@ function GeneralContent() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Mark as read on scroll (per device, not synced) */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-medium">
+            {t("settings.markReadOnScroll.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.markReadOnScroll.description")}
+          </p>
+        </div>
+        <Switch
+          checked={markReadOnScroll}
+          aria-label={t("settings.markReadOnScroll.label")}
+          onCheckedChange={setMarkReadOnScroll}
+        />
       </div>
 
       {/* Reading layout (per device, not synced) */}
