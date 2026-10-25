@@ -34,6 +34,17 @@ between sessions, so compare old and new binaries within one session.
   so 500 loaded rows cost the same as 10. Left as is: with mark-read on
   open, the unread flip still makes every row check its props, because the
   data really changed.
+- **A held `j`/`k` moves only the list highlight, and the article opens
+  on release** (2026-10-25). Each opened article cost about 60 ms at 4×
+  slower CPU, mostly the browser laying out the new body. Key repeat is
+  about 33 ms, so presses piled up. A first press (not a repeat) still
+  opens at once, so a single tap gets no delay. The highlight lives in a
+  store, not the URL. Keyup opens the highlighted row, and so does 150 ms
+  without a repeat, in case a keyup is lost. With auto mark-read on
+  open, the rows passed are marked read in one request on release.
+  Held `j` long tasks over 50 ms went 17 → 4 and the longest frame gap
+  250 → 100 ms. Accepted: a hold works only while the list is mounted.
+  A click within 1 s of a release can show the old highlight that long.
 - **The next page loads ahead, and `j` at the last loaded row loads more
   in both loading modes.** In button mode a key press counts as asking,
   like clicking the button; scrolling there still never loads. The list
