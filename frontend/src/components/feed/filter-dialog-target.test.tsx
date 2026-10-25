@@ -25,8 +25,8 @@ afterEach(() => {
 });
 
 function setup(target: FilterTarget) {
-  const fetchMock = vi.fn(
-    async (_input: RequestInfo | URL) =>
+  const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(
+    async () =>
       new Response(
         JSON.stringify({ data: { checked: 0, hidden: 0, items: [] } }),
         { headers: { "Content-Type": "application/json" } },
