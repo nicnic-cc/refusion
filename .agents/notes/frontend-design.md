@@ -125,6 +125,19 @@ Star/bookmark changes are deliberately the opposite pattern: un-starring removes
 
 Before filing "marked-read items still show up in the unread list" as a bug, check which half is reported: grayed rows while staying in the same unread list are this design working; rows surviving a filter/scope switch was the actual defect, fixed by the pin scoping (#262, #266).
 
+### Mark as read on scroll (fork): a crossing, not a state
+
+Decided 2026-10-25. Code: `frontend/src/hooks/use-mark-read-on-scroll.ts`.
+
+- **Its own toggle, per device, off by default.** It is about list rows, while `autoMarkRead` is about an opened article. Both can be on.
+- **A row counts when its bottom crosses the top edge on a downward scroll.** A row only partly above the edge stays unread. Scrolling up never marks.
+- **Whatever moved the list counts:** wheel, touch, or `j` scrolling the selected row into view. Each row `j` pushes off was opened on the way.
+- **Marks go out in one request after a 200 ms pause,** the same wait as loading more. Leaving the list inside that wait drops them, and those rows stay unread.
+- **At the true end the list adds one list-height of empty space** (with "No more articles"), so the last rows can scroll off too. Rejected: marking the rest on reaching the bottom, or a "mark remaining" button.
+- **Rows are found by `data-article-id` and a binary search on their rects,** never every row per scroll event. The scroll box also holds the pill and the footer, so an index lookup would break.
+- **A failed mark is only logged,** like a single toggle.
+- **Each mark costs a long task (~60–90 ms at 4× slower CPU),** from applying the `/feeds` refetch. The cost is in mark-read itself, so it also hits held `j`/`k`. Tracked in bead `rf-markread-feeds`.
+
 ### Mark all read: a 5 s undo window instead of a confirm dialog
 
 Every "mark all read" (the sidebar feed and folder rows, the list header
