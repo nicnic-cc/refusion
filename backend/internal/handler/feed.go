@@ -18,6 +18,7 @@ import (
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/gin-gonic/gin"
 	"github.com/mmcdole/gofeed"
+	"golang.org/x/sync/errgroup"
 )
 
 type createFeedRequest struct {
@@ -57,13 +58,18 @@ type validateFeedResponse struct {
 	Feeds []discoveredFeed `json:"feeds"`
 }
 
+// Notice codes served by GET /api/app. They are stable identifiers; all copy
+// lives in the frontend.
+const noticeOIDCAllowedUserUnset = "oidc_allowed_user_unset"
+
 type appInfoResponse struct {
-	PullInterval            int     `json:"pull_interval"`
-	AllowedRefreshIntervals []int64 `json:"allowed_refresh_intervals"`
+	PullInterval            int      `json:"pull_interval"`
+	AllowedRefreshIntervals []int64  `json:"allowed_refresh_intervals"`
+	Notices                 []string `json:"notices"`
 }
 
 type batchCreateFeedsRequest struct {
-	Feeds []batchCreateFeedItem `json:"feeds" binding:"required"`
+	Feeds []batchCreateFeedItem `json:"feeds" binding:"required,dive"`
 }
 
 type batchCreateFeedItem struct {
@@ -108,6 +114,7 @@ func (h *Handler) getAppInfo(c *gin.Context) {
 	dataResponse(c, appInfoResponse{
 		PullInterval:            h.config.PullInterval,
 		AllowedRefreshIntervals: allowedRefreshIntervals,
+		Notices:                 h.notices,
 	})
 }
 
@@ -150,7 +157,7 @@ func (h *Handler) createFeed(c *gin.Context) {
 		return
 	}
 	if err := httpc.ValidateRequestURL(c.Request.Context(), req.Link, h.config.AllowPrivateFeeds); err != nil {
-		badRequestError(c, "invalid link")
+		badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
 		return
 	}
 	refreshInterval, err := normalizeCreateRefreshInterval(req.RefreshIntervalSeconds)
@@ -214,7 +221,7 @@ func (h *Handler) updateFeed(c *gin.Context) {
 	}
 	if req.Link != nil {
 		if err := httpc.ValidateRequestURL(c.Request.Context(), *req.Link, h.config.AllowPrivateFeeds); err != nil {
-			badRequestError(c, "invalid link")
+			badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
 			return
 		}
 		params.Link = req.Link
@@ -289,6 +296,10 @@ func (h *Handler) deleteFeed(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// newFeedDiscoveryClient builds the HTTP client used for feed discovery. It
+// is a variable so tests can route a fake public address to a local server.
+var newFeedDiscoveryClient = httpc.NewClient
+
 func (h *Handler) validateFeed(c *gin.Context) {
 	var req validateFeedRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -300,36 +311,32 @@ func (h *Handler) validateFeed(c *gin.Context) {
 	proxy := strings.TrimSpace(req.Proxy)
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
 	if err := httpc.ValidateRequestURL(c.Request.Context(), target, allowPrivateFeeds); err != nil {
-		badRequestError(c, "invalid url")
+		badRequestError(c, fmt.Sprintf("invalid URL: %v", err))
+		return
+	}
+
+	client, err := newFeedDiscoveryClient(30*time.Second, proxy, allowPrivateFeeds)
+	if err != nil {
+		badRequestError(c, "invalid proxy")
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	if feed, ok := h.directFeed(ctx, target, proxy); ok {
+	if feed, ok := h.directFeed(ctx, client, target); ok {
 		dataResponse(c, validateFeedResponse{Feeds: []discoveredFeed{feed}})
 		return
 	}
 
-	found, err := discoverFeeds(ctx, target, proxy, allowPrivateFeeds)
+	found, err := discoverFeeds(ctx, client, target, allowPrivateFeeds)
 	if err != nil {
 		slog.Warn("feed discovery failed", "url", target, "error", err)
 	}
 
 	feeds := normalizeDiscoveredFeeds(found)
-	if !allowPrivateFeeds {
-		filtered := make([]discoveredFeed, 0, len(feeds))
-		for _, feed := range feeds {
-			if err := httpc.ValidateRequestURL(ctx, feed.Link, false); err == nil {
-				filtered = append(filtered, feed)
-			}
-		}
-		feeds = filtered
-	}
-
 	if len(feeds) == 0 {
-		title, parseErr := h.parseFeedTitle(ctx, target, proxy)
+		title, parseErr := h.parseFeedTitle(ctx, client, target)
 		if parseErr == nil {
 			feeds = append(feeds, discoveredFeed{Title: title, Link: target})
 		}
@@ -366,13 +373,8 @@ func normalizeDiscoveredFeeds(found []feedfinder.Feed) []discoveredFeed {
 	return result
 }
 
-func (h *Handler) parseFeedTitle(ctx context.Context, target, proxy string) (string, error) {
+func (h *Handler) parseFeedTitle(ctx context.Context, client *http.Client, target string) (string, error) {
 	allowPrivateFeeds := h.config != nil && h.config.AllowPrivateFeeds
-
-	client, err := httpc.NewClient(30*time.Second, proxy, allowPrivateFeeds)
-	if err != nil {
-		return "", err
-	}
 
 	body, _, err := fetchCapped(ctx, client, target, allowPrivateFeeds)
 	if err != nil {
@@ -460,6 +462,16 @@ func (h *Handler) finishRefreshAll() {
 	h.refreshAllMu.Unlock()
 }
 
+// batchCreateFeedsValidationConcurrency bounds concurrent URL validation so a
+// large OPML import cannot flood the resolver or exhaust file descriptors.
+const batchCreateFeedsValidationConcurrency = 8
+
+// batchCreateFeedsValidationBudget caps the whole validation pass below the
+// server's 30s WriteTimeout. Without it, enough stalled DNS lookups make the
+// client see a dropped connection while the valid feeds still get committed.
+// Feeds not validated in time are reported as failed and can be re-imported.
+const batchCreateFeedsValidationBudget = 20 * time.Second
+
 func (h *Handler) batchCreateFeeds(c *gin.Context) {
 	var req batchCreateFeedsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -467,12 +479,29 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		return
 	}
 
-	// One bad link must not sink an OPML import: skip it and report it instead.
+	// Validate each feed independently: a dead domain in an OPML export must
+	// not block the feeds that are still reachable. The checks run concurrently
+	// because each DNS lookup can stall for seconds, and a serial pass over a
+	// large export can outlive the server write timeout. Results are stored by
+	// index so the response stays deterministic.
+	validateCtx, cancel := context.WithTimeout(c.Request.Context(), batchCreateFeedsValidationBudget)
+	defer cancel()
+	validationErrs := make([]error, len(req.Feeds))
+	var g errgroup.Group
+	g.SetLimit(batchCreateFeedsValidationConcurrency)
+	for i, f := range req.Feeds {
+		g.Go(func() error {
+			validationErrs[i] = httpc.ValidateRequestURL(validateCtx, f.Link, h.config.AllowPrivateFeeds)
+			return nil
+		})
+	}
+	_ = g.Wait()
+
 	inputs := make([]store.BatchCreateFeedsInput, 0, len(req.Feeds))
-	var errs []string
-	for _, f := range req.Feeds {
-		if err := httpc.ValidateRequestURL(c.Request.Context(), f.Link, h.config.AllowPrivateFeeds); err != nil {
-			errs = append(errs, "invalid link: "+f.Link)
+	var feedErrors []string
+	for i, f := range req.Feeds {
+		if err := validationErrs[i]; err != nil {
+			feedErrors = append(feedErrors, fmt.Sprintf("invalid URL %s: %v", f.Link, err))
 			continue
 		}
 		inputs = append(inputs, store.BatchCreateFeedsInput{
@@ -488,6 +517,7 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		internalError(c, err, "batch create feeds")
 		return
 	}
+	feedErrors = append(feedErrors, result.Errors...)
 
 	// Trigger initial pull for each new feed in background.
 	refreshTimeout := time.Duration(h.config.PullTimeout) * time.Second
@@ -501,11 +531,10 @@ func (h *Handler) batchCreateFeeds(c *gin.Context) {
 		}(id)
 	}
 
-	errs = append(errs, result.Errors...)
 	dataResponse(c, gin.H{
 		"created":    result.Created,
-		"failed":     len(errs),
+		"failed":     len(feedErrors),
 		"duplicates": result.Duplicates,
-		"errors":     errs,
+		"errors":     feedErrors,
 	})
 }

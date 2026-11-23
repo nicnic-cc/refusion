@@ -64,14 +64,14 @@ describe("OPML import failure toast", () => {
   });
 
   // Control: a successful import reports the created count.
-  it("control: a successful import toasts success", async () => {
+  it("control: a successful import shows the created count", async () => {
     await importWith(
       () =>
         new Response(JSON.stringify({ data: { created: 1, failed: 0 } }), {
           headers: { "Content-Type": "application/json" },
         }),
     );
-    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(await screen.findByText("Imported 1 feeds")).toBeTruthy();
     expect(toast.error).not.toHaveBeenCalled();
   });
 });

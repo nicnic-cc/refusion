@@ -40,10 +40,13 @@ func NewClient(timeout time.Duration, proxyURL string, allowPrivate bool) (*http
 		ResponseHeaderTimeout: timeout,
 	}
 	dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
-	// Checking the resolved IP at connect time closes the DNS-rebinding window.
 	// A configured proxy is admin-trusted, and net/http dials the proxy address, so skip it.
-	if !allowPrivate && proxyURL == "" {
-		dialer.Control = publicOnlyControl
+	if proxyURL == "" {
+		// ControlContext sees the resolved ip:port the dialer is about to
+		// connect to, so DNS cannot change between validation and connection.
+		dialer.ControlContext = func(_ context.Context, _, address string, _ syscall.RawConn) error {
+			return validateDialAddress(address, allowPrivate)
+		}
 	}
 	transport.DialContext = dialer.DialContext
 
@@ -87,32 +90,6 @@ func redirectValidator(allowPrivate bool) func(req *http.Request, via []*http.Re
 
 		return ValidateRequestURL(req.Context(), req.URL.String(), allowPrivate)
 	}
-}
-
-// publicOnlyControl runs on the address the dialer is about to connect to, after DNS resolution.
-func publicOnlyControl(_, address string, _ syscall.RawConn) error {
-	host, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return fmt.Errorf("invalid dial address: %w", err)
-	}
-	ip := net.ParseIP(host)
-	if ip == nil || isPrivateOrLocalIP(ip) {
-		return fmt.Errorf("private host is not allowed")
-	}
-	return nil
-}
-
-func validateDialTarget(ctx context.Context, addr string, allowPrivate bool) error {
-	if allowPrivate {
-		return nil
-	}
-
-	host := addr
-	if parsedHost, _, err := net.SplitHostPort(addr); err == nil {
-		host = parsedHost
-	}
-
-	return validatePublicHost(ctx, host)
 }
 
 // SetDefaultHeaders adds default headers required for feed fetching.

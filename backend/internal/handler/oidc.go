@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/0x2E/fusion/internal/auth"
 	"github.com/gin-gonic/gin"
@@ -23,8 +24,11 @@ func (h *Handler) setPendingCookie(c *gin.Context, value string, maxAge int) {
 	})
 }
 
-func (h *Handler) oidcEnabled(c *gin.Context) {
-	dataResponse(c, gin.H{"enabled": h.oidcAuth != nil})
+func (h *Handler) authMethods(c *gin.Context) {
+	dataResponse(c, gin.H{
+		"password": h.passwordEnabled,
+		"oidc":     h.oidcAuth != nil,
+	})
 }
 
 func (h *Handler) oidcLogin(c *gin.Context) {
@@ -33,7 +37,7 @@ func (h *Handler) oidcLogin(c *gin.Context) {
 		return
 	}
 
-	authURL, pending, err := h.oidcAuth.AuthURL()
+	authURL, pending, err := h.oidcAuth.AuthURL(h.oidcRedirectURI(c.Request))
 	if err != nil {
 		internalError(c, err, "oidc auth url")
 		return
@@ -41,6 +45,23 @@ func (h *Handler) oidcLogin(c *gin.Context) {
 	h.setPendingCookie(c, pending, int(auth.PendingMaxAge.Seconds()))
 
 	dataResponse(c, gin.H{"auth_url": authURL})
+}
+
+// oidcRedirectURI resolves the callback URL for one login request. Without an
+// explicit FUSION_OIDC_REDIRECT_URI it is derived from the request so the same
+// deployment works under any host name or scheme a proxy serves it on. The IdP
+// only accepts registered redirect URIs, so a spoofed Host fails there.
+func (h *Handler) oidcRedirectURI(r *http.Request) string {
+	if redirectURI := strings.TrimSpace(h.config.OIDCRedirectURI); redirectURI != "" {
+		return redirectURI
+	}
+
+	scheme := "http"
+	if isSecureRequest(r) {
+		scheme = "https"
+	}
+
+	return scheme + "://" + r.Host + "/api/oidc/callback"
 }
 
 func (h *Handler) oidcCallback(c *gin.Context) {

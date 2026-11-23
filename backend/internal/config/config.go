@@ -34,7 +34,7 @@ type Config struct {
 	OIDCIssuer       string // OIDC provider URL
 	OIDCClientID     string // OAuth2 client ID
 	OIDCClientSecret string // OAuth2 client secret
-	OIDCRedirectURI  string // Callback URL (required when OIDC is enabled)
+	OIDCRedirectURI  string // Callback URL; derived from the login request when empty
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 }
 
@@ -61,8 +61,10 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	if strings.TrimSpace(password) == "" && !allowEmptyPassword {
-		return nil, fmt.Errorf("FUSION_PASSWORD is required (or set FUSION_ALLOW_EMPTY_PASSWORD=true)")
+	oidcIssuer := os.Getenv("FUSION_OIDC_ISSUER")
+
+	if strings.TrimSpace(password) == "" && strings.TrimSpace(oidcIssuer) == "" && !allowEmptyPassword {
+		return nil, fmt.Errorf("FUSION_PASSWORD or FUSION_OIDC_ISSUER is required (or set FUSION_ALLOW_EMPTY_PASSWORD=true for anonymous mode)")
 	}
 
 	port := os.Getenv("FUSION_PORT")
@@ -146,7 +148,7 @@ func Load() (*Config, error) {
 		LogLevel:           logLevel,
 		LogFormat:          logFormat,
 
-		OIDCIssuer:       os.Getenv("FUSION_OIDC_ISSUER"),
+		OIDCIssuer:       oidcIssuer,
 		OIDCClientID:     os.Getenv("FUSION_OIDC_CLIENT_ID"),
 		OIDCClientSecret: os.Getenv("FUSION_OIDC_CLIENT_SECRET"),
 		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),

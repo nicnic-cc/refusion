@@ -396,13 +396,17 @@ export interface BatchCreateFeedsResponse {
 export interface AppInfoResponse {
   pull_interval: number;
   allowed_refresh_intervals: number[];
+  // Stable notice codes for configuration warnings; copy lives in the frontend.
+  notices: string[];
+}
+
+// Auth
+export interface AuthMethodsResponse {
+  password: boolean;
+  oidc: boolean;
 }
 
 // OIDC
-export interface OIDCStatusResponse {
-  enabled: boolean;
-}
-
 export interface OIDCLoginResponse {
   auth_url: string;
 }

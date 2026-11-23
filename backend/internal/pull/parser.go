@@ -51,15 +51,20 @@ type FetchResult struct {
 // FetchAndParse fetches RSS/Atom feed with conditional request headers.
 // It returns fetch metadata plus parsed items when response status is 200.
 func FetchAndParse(ctx context.Context, feed *model.Feed, timeout time.Duration, allowPrivateFeeds bool) (*FetchResult, error) {
+	client, err := httpc.NewClient(timeout, feed.Proxy, allowPrivateFeeds)
+	if err != nil {
+		return nil, fmt.Errorf("create client: %w", err)
+	}
+	return FetchAndParseWith(ctx, client, feed, allowPrivateFeeds)
+}
+
+// FetchAndParseWith is FetchAndParse with a caller-built client, which must
+// come from httpc.NewClient so the fetch stays guarded. feed.Proxy is ignored.
+func FetchAndParseWith(ctx context.Context, client *http.Client, feed *model.Feed, allowPrivateFeeds bool) (*FetchResult, error) {
 	result := &FetchResult{}
 
 	if err := httpc.ValidateRequestURL(ctx, feed.Link, allowPrivateFeeds); err != nil {
 		return nil, fmt.Errorf("validate feed url: %w", err)
-	}
-
-	client, err := httpc.NewClient(timeout, feed.Proxy, allowPrivateFeeds)
-	if err != nil {
-		return nil, fmt.Errorf("create client: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", feed.Link, nil)

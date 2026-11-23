@@ -10,7 +10,19 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
+
+	"github.com/0x2E/fusion/internal/pkg/httpc"
 )
+
+func newTestDiscoveryClient(t *testing.T, allowPrivate bool) *http.Client {
+	t.Helper()
+	client, err := httpc.NewClient(30*time.Second, "", allowPrivate)
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	return client
+}
 
 // Discovery must dial through the guarded client: with private feeds off, a
 // loopback host is never contacted (this is the blind-SSRF path of validate).
@@ -23,7 +35,7 @@ func TestDiscoverFeedsRefusesInternalAddress(t *testing.T) {
 	}))
 	defer server.Close()
 
-	feeds, _ := discoverFeeds(context.Background(), server.URL, "", false)
+	feeds, _ := discoverFeeds(context.Background(), newTestDiscoveryClient(t, false), server.URL, false)
 
 	if n := hits.Load(); n != 0 {
 		t.Fatalf("internal server was contacted %d times", n)
@@ -115,6 +127,10 @@ func TestServiceDiscoveryNoUnguardedFetch(t *testing.T) {
 		http.Redirect(w, r, "http://127.0.0.1:9/internal-admin", http.StatusFound)
 	}))
 	defer proxy.Close()
+	client, err := httpc.NewClient(30*time.Second, proxy.URL, false)
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
 
 	for _, target := range []string{
 		"http://github.com/",          // empty username
@@ -128,7 +144,7 @@ func TestServiceDiscoveryNoUnguardedFetch(t *testing.T) {
 			seen = nil
 			mu.Unlock()
 			u, _ := url.Parse(target)
-			d := &feedDiscoverer{target: u, proxy: proxy.URL}
+			d := &feedDiscoverer{target: u, client: client}
 			d.fromService(context.Background())
 			mu.Lock()
 			defer mu.Unlock()

@@ -27,12 +27,25 @@ disagree, the code wins — fix the page.
 - Login attempts are rate limited: excess attempts get `429` with a
   `Retry-After` header (seconds). Password login only: `GET /api/oidc/login`
   is not limited because it keeps no server state.
-- OIDC: `GET /api/oidc/enabled` always exists; `/api/oidc/login` and
-  `/api/oidc/callback` are registered only when OIDC is configured. Login
-  returns `{data: {auth_url}}` for the client to navigate to and sets a signed,
-  single-use `oidc_pending` cookie (state + PKCE verifier, 10 min, key random
-  per process, so a login pending across a restart fails); the callback
-  redirects (307) to `/` on success or `/login?error=oidc_failed` on failure.
+- Auth discovery: `GET /api/auth/methods` is public and returns
+  `{data: {password, oidc}}` so clients can choose the login controls. OIDC:
+  `/api/oidc/login` and `/api/oidc/callback` are registered only when OIDC is
+  configured. Login returns `{data: {auth_url}}` for the client to navigate to
+  and sets a signed, single-use `oidc_pending` cookie (state, PKCE verifier and
+  redirect URI, 10 min, key random per process, so a login pending across a
+  restart fails); the callback redirects (307) to `/` on success or
+  `/login?error=oidc_failed` on failure.
+- OIDC redirect URI: `FUSION_OIDC_REDIRECT_URI` is used verbatim when set.
+  Otherwise `/api/oidc/login` derives `http(s)://<Host>/api/oidc/callback` from
+  the request (TLS or `X-Forwarded-Proto: https` means `https`, `Host` is never
+  taken from `X-Forwarded-Host`), stores it in the pending cookie, and sends the
+  same value in the token exchange. The identity provider must have that URL
+  registered, so a spoofed `Host` only produces a failed login there. A reverse
+  proxy therefore has to pass the original `Host` and `X-Forwarded-Proto`;
+  otherwise set the variable.
+- `GET /api/app` carries `notices`: stable string codes for configuration
+  warnings that the client renders as copy. Unknown codes must be ignored, so
+  new codes can ship ahead of client releases.
 
 ## Response envelopes
 
@@ -95,6 +108,10 @@ Three cases return the status with an empty body instead: unknown routes
   that item server-side (preferred), or a full `{link, title, content,
   feed_name, pub_date?}` snapshot when there is no item. Sending `item_id`
   makes the server ignore all other fields.
+- `POST /api/feeds/batch` is best-effort: each feed is validated
+  independently, invalid links are reported in `errors` with the link and
+  reason, and the remaining feeds are still created. A dead feed in an OPML
+  export must not block the rest of the import; only a malformed body is 400.
 - `PATCH /api/items/-/read` and `-/unread` accept 1–1000 ids
   (`maxBatchUpdateIDs`).
 - `refresh_interval_seconds` (create and update feed): on **create**, absent

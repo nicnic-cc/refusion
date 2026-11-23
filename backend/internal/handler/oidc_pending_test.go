@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/0x2E/fusion/internal/auth"
+	"github.com/0x2E/fusion/internal/config"
 )
 
 func newOIDCIssuer(t *testing.T) string {
@@ -30,11 +31,11 @@ func newOIDCIssuer(t *testing.T) string {
 
 func newOIDCTestRouter(t *testing.T) (http.Handler, *auth.OIDCAuthenticator) {
 	t.Helper()
-	a, err := auth.NewOIDC(context.Background(), newOIDCIssuer(t), "client", "secret", "http://localhost/cb")
+	a, err := auth.NewOIDC(context.Background(), newOIDCIssuer(t), "client", "secret")
 	if err != nil {
 		t.Fatalf("new oidc: %v", err)
 	}
-	h := &Handler{oidcAuth: a}
+	h := &Handler{oidcAuth: a, config: &config.Config{OIDCRedirectURI: "http://localhost/cb"}}
 	r := newTestRouter()
 	_ = r.SetTrustedProxies(nil)
 	r.GET("/api/oidc/login", h.oidcLogin)

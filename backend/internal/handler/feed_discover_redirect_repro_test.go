@@ -24,7 +24,7 @@ func TestDiscoverFeedsResolvesRelativeLinkAgainstFinalURL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	feeds, err := discoverFeeds(context.Background(), server.URL+"/blog", "", true)
+	feeds, err := discoverFeeds(context.Background(), newTestDiscoveryClient(t, true), server.URL+"/blog", true)
 	if err != nil {
 		t.Fatal(err)
 	}

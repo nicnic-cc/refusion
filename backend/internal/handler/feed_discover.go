@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/0x2E/feedfinder"
 	"github.com/0x2E/fusion/internal/pkg/httpc"
@@ -69,22 +68,18 @@ func fetchCapped(ctx context.Context, client *http.Client, rawURL string, allowP
 type feedDiscoverer struct {
 	client       *http.Client
 	target       *url.URL
-	proxy        string
 	allowPrivate bool
 }
 
-// discoverFeeds replaces feedfinder's Find, whose HTTP client cannot be swapped
-// and so bypasses the dial-time IP check, redirect validation and body cap.
-func discoverFeeds(ctx context.Context, target, proxy string, allowPrivate bool) ([]feedfinder.Feed, error) {
+// discoverFeeds replaces feedfinder's Find so every fetch goes through
+// fetchCapped and its body cap.
+// client must come from httpc.NewClient so every request stays guarded.
+func discoverFeeds(ctx context.Context, client *http.Client, target string, allowPrivate bool) ([]feedfinder.Feed, error) {
 	u, err := url.Parse(target)
 	if err != nil {
 		return nil, err
 	}
-	client, err := httpc.NewClient(30*time.Second, proxy, allowPrivate)
-	if err != nil {
-		return nil, err
-	}
-	d := &feedDiscoverer{client: client, target: u, proxy: proxy, allowPrivate: allowPrivate}
+	d := &feedDiscoverer{client: client, target: u, allowPrivate: allowPrivate}
 
 	if feeds := d.fromService(ctx); len(feeds) != 0 {
 		return feeds, nil
@@ -129,7 +124,7 @@ func hostIs(host, domain string) bool {
 }
 
 // fromService handles known sites. GitHub and Reddit feeds are derived from the
-// URL alone (feedfinder's Find cannot take the guarded client); unmatched paths
+// URL alone, with no fetch; unmatched paths
 // return nil and fall through to the guarded page and well-known discovery.
 func (d *feedDiscoverer) fromService(ctx context.Context) []feedfinder.Feed {
 	host := d.target.Hostname()

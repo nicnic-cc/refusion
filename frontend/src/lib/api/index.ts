@@ -37,7 +37,7 @@ import type {
   BatchCreateFeedsRequest,
   BatchCreateFeedsResponse,
   SearchResponse,
-  OIDCStatusResponse,
+  AuthMethodsResponse,
   OIDCLoginResponse,
   AppInfoResponse,
   Settings,
@@ -54,10 +54,13 @@ export const sessionAPI = {
   logout: () => api.delete<void>("/sessions"),
 };
 
+// Auth APIs
+export const authAPI = {
+  methods: () => api.get<APIResponse<AuthMethodsResponse>>("/auth/methods"),
+};
+
 // OIDC APIs
 export const oidcAPI = {
-  status: () => api.get<APIResponse<OIDCStatusResponse>>("/oidc/enabled"),
-
   login: () => api.get<APIResponse<OIDCLoginResponse>>("/oidc/login"),
 };
 

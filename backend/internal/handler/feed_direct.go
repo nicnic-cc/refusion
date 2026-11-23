@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/0x2E/fusion/internal/model"
@@ -10,17 +11,18 @@ import (
 
 // directFeed fetches target once and reports it as a feed when it parses with
 // a title or items. It lets validate skip feedfinder's slow path probing.
-func (h *Handler) directFeed(ctx context.Context, target, proxy string) (discoveredFeed, bool) {
-	timeout := 30 * time.Second
+func (h *Handler) directFeed(ctx context.Context, client *http.Client, target string) (discoveredFeed, bool) {
 	allowPrivateFeeds := false
 	if h.config != nil {
 		allowPrivateFeeds = h.config.AllowPrivateFeeds
 		if h.config.PullTimeout > 0 {
-			timeout = time.Duration(h.config.PullTimeout) * time.Second
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(h.config.PullTimeout)*time.Second)
+			defer cancel()
 		}
 	}
 
-	res, err := pull.FetchAndParse(ctx, &model.Feed{Link: target, Proxy: proxy}, timeout, allowPrivateFeeds)
+	res, err := pull.FetchAndParseWith(ctx, client, &model.Feed{Link: target}, allowPrivateFeeds)
 	if err != nil || res == nil || res.NotModified {
 		return discoveredFeed{}, false
 	}

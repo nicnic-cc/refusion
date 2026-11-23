@@ -6,7 +6,7 @@ toolchain go1.27.3
 
 require (
 	codeberg.org/readeck/go-readability/v2 v2.1.3
-	github.com/0x2E/feedfinder v0.1.2
+	github.com/0x2E/feedfinder v0.2.0
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/gin-gonic/gin v1.12.0
