@@ -19,3 +19,5 @@ backend/fusion
 .research/
 # Script for VM deployment - testing
 deploy-local.sh
+# Local markdown issue tracker (see docs/agents/issue-tracker.md)
+.scratch/

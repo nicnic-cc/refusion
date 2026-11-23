@@ -20,7 +20,10 @@ Fever clients should send:
 Username is configured by `FUSION_FEVER_USERNAME` (default: `fusion`).
 Password is your refusion login password (`FUSION_PASSWORD`).
 With OIDC and no password set, Fever is off: an empty password would
-otherwise bypass OIDC.
+otherwise bypass OIDC. The endpoint stays up but always returns `"auth": 0`.
+In anonymous mode (no password and no OIDC) Fever accepts the key derived from
+an empty password, matching the rest of the API being open. See `New` in
+`backend/internal/handler/handler.go`.
 
 Client setup for people, with the md5 commands and a curl login check:
 [`docs/apps.md`](../../docs/apps.md).
