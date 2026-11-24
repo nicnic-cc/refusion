@@ -29,10 +29,16 @@ gh release edit vX.Y.Z -R nicnic-cc/refusion --notes-file <file>
 
 ## Upstream tags stay out
 
-`remote.upstream.tagOpt` is `--no-tags`. The app's shown version comes from `git describe --tags` in `frontend/vite.config.ts`, so upstream's tags would put Fusion version numbers in the app. Restore them with:
+`remote.upstream.tagOpt` is `--no-tags`. The app's shown version comes from `git describe --tags` in `frontend/vite.config.ts`, so upstream's tags would put Fusion version numbers in the app.
+
+Upstream also used `v0.4.0` to `v0.9.x`, so its tags clash with the fork's own versions. A stray upstream `vX.Y.Z` makes `git tag vX.Y.Z` fail with "already exists", or gets pushed in place of the fork's tag.
+
+`--no-tags` only stops automatic tag fetching. An explicit `--tags`, as in `git fetch --all --tags`, still brings upstream's tags in. To merge an upstream release, fetch it without creating a tag: `git fetch upstream refs/tags/vX.Y.Z`, then merge `FETCH_HEAD`.
+
+Before tagging, list local tags that aren't on GitHub. Anything listed is a stray, removed with `git tag -d`:
 
 ```shell
-git config --unset remote.upstream.tagOpt && git fetch upstream --tags
+git tag | grep -vxFf <(git ls-remote --tags origin | grep -v '\^{}' | sed 's|.*refs/tags/||')
 ```
 
 ## Gotchas
