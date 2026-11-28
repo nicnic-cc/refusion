@@ -124,6 +124,17 @@ export function ArticleView({
       <ChevronRight className="h-4 w-4" />
     </TooltipButton>
   );
+  const closeButton = (
+    <Button
+      variant="outline"
+      size="icon-sm"
+      className="min-[360px]:max-md:size-10"
+      onClick={close}
+      aria-label={t("common.cancel")}
+    >
+      <X className="h-[18px] w-[18px] text-muted-foreground" />
+    </Button>
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -135,6 +146,7 @@ export function ArticleView({
           variant === "pane" ? "fork-safe-top h-14 shrink-0" : "py-3",
         )}
       >
+        {isMobile && closeButton}
         <div className="flex items-center gap-2 min-[360px]:max-md:[&_a]:size-10 min-[360px]:max-md:[&_button]:size-10">
           <TooltipButton
             label={readLabel}
@@ -187,7 +199,6 @@ export function ArticleView({
               />
             </TooltipButton>
           )}
-          <ArticleAppearance />
           <TooltipButton
             label={t("article.action.original")}
             shortcut="o"
@@ -196,25 +207,20 @@ export function ArticleView({
           >
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </TooltipButton>
+          <ArticleAppearance />
         </div>
 
         {variant === "drawer" && (
         <SheetTitle className="sr-only">{article.title}</SheetTitle>
       )}
 
-        <div className="flex items-center gap-2">
-          {!isMobile && prevButton}
-          {!isMobile && nextButton}
-          <Button
-            variant="outline"
-            size="icon-sm"
-            className="min-[360px]:max-md:size-10"
-            onClick={close}
-            aria-label={t("common.cancel")}
-          >
-            <X className="h-[18px] w-[18px] text-muted-foreground" />
-          </Button>
-        </div>
+        {!isMobile && (
+          <div className="flex items-center gap-2">
+            {prevButton}
+            {nextButton}
+            {closeButton}
+          </div>
+        )}
       </div>
 
       {/* Content. Keyed so each article opens at the top; the subtree holds no state worth keeping. */}
