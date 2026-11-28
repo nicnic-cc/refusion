@@ -62,6 +62,7 @@ Manage feeds and the edit button in search stay as other ways in.
 - Sidebar is a left sheet/drawer
 - Main content remains single-column
 - Modals/drawers share the same UI flow as desktop
+- Keep the open article's close control clear of its action icons. It sits at the left padding, the action icons stay at the right padding, and wider windows keep close with prev/next on the right.
 
 The reading view is an infinite list with per-card read/star quick actions
 (its all/unread/starred switch sits in the sidebar header, see section 3); the
